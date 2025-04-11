@@ -23,7 +23,7 @@ const sizes = {
         mapHeight: window.innerHeight * 3,
 };
 
-class Level1 extends Phaser.Scene {
+class Level2 extends Phaser.Scene {
     constructor() {
         super("scene-game");
         this.player;
@@ -120,4 +120,4 @@ class Level1 extends Phaser.Scene {
     }
 }
 
-export { sizes, GameScene };
+export { sizes, Level2 };

@@ -1,6 +1,6 @@
 import "../css/style.css";
 import Phaser from "phaser";
-import { Level2, sizes, speedDown} from "./level2.js";
+import { Level2, sizes } from "./level2.js";
 
 const speedDown = 300;
 
