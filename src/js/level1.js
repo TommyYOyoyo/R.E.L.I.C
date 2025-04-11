@@ -1,5 +1,5 @@
 /**
  * Level 1 game file
- * @author Ray Lam
+ * @author 
  * @version beta
  */

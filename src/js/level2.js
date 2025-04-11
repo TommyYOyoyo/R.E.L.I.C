@@ -1,10 +1,11 @@
 /**
  * Level 2 game file
- * @author Honglue Zheng
+ * @author 
  * @version beta
  */
 
 import Phaser from "phaser";
+import { createMenu, removeMenu } from './mainMenu';
 
 let platforms;
 let floorTiles;
@@ -27,14 +28,19 @@ class Level2 extends Phaser.Scene {
     constructor() {
         super("scene-game");
         this.player;
+        this.menuActive = false;
     }
 
     // Preload all assets (init)
     preload() {
+        this.toggleMenu();
+
+        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+
         this.load.image("bgBack", "../../public/assets/img/Layers/back.png");
         this.load.image("bgFront", "../../public/assets/img/Layers/front.png");
-        const grassTile1 = this.load.image("grassTile1", "../../public/assets/img/Tiles/grassTile1.png");
-        const grassTile2 = this.load.image("grassTile2", "../../public/assets/img/Tiles/grassTile2.png");
+        this.load.image("grassTile1", "../../public/assets/img/Tiles/grassTile1.png");
+        this.load.image("grassTile2", "../../public/assets/img/Tiles/grassTile2.png");
 
         // Load new keyboard keys
         this.keys = this.input.keyboard.addKeys({
@@ -116,6 +122,17 @@ class Level2 extends Phaser.Scene {
         // Jump
         if (this.keys.w.isDown && player.body.touching.down) {
             player.setVelocityY(-600);
+        }
+    }
+
+    // Menu toggler
+    toggleMenu() {
+        if (!this.menuActive) {
+            createMenu(this);
+            this.menuActive = true;
+        } else {
+            removeMenu(this);
+            this.menuActive = false;
         }
     }
 }
