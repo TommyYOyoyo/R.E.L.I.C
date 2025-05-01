@@ -1,6 +1,6 @@
 import "../css/style.css";
 import Phaser from "phaser";
-import { Level2, sizes } from "./level2.js";
+import { Level1, sizes } from "./level1.js";
 
 const speedDown = 300;
 
@@ -16,7 +16,7 @@ const config = {
             debug: false,
         },
     },
-    scene: [Level2]
+    scene: [Level1]
 };
 
 const game = new Phaser.Game(config);
