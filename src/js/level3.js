@@ -1,5 +1,5 @@
 /**
  * Level 3 game file
- * @author 
+ * @author Rui Qi Ren
  * @version beta
  */

@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { createMenu, removeMenu } from './mainMenu';
+//import { createMenu, removeMenu } from './MainMenu';
 
 const speedDown = 0;
 
@@ -25,7 +25,7 @@ class Level1 extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('bg', '../../public/assets/img/Tiles/bg.webp');
+        this.load.image('bg', '../../public/assets/img/bg.webp');
         this.load.image('player','../../public/assets/img/Player/Player1.png');
         // Create a 1x1 transparent pixel image named 'invisible.png' for collisions
         this.load.image('invisible', './Sprites/invisible.png');
@@ -116,4 +116,4 @@ class Level1 extends Phaser.Scene {
     }
 }
 
-export { sizes, Level1 }
+export { Level1 }

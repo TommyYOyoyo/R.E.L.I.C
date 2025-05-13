@@ -1,4 +1,68 @@
+/**
+ * Main menu file
+ * @author Honglue Zheng
+ * @version beta
+ */
+
 import Phaser from 'phaser';
+
+class MainMenu extends Phaser.Scene {
+    constructor() {
+        super('MainMenu');
+    }
+
+    // Preload background image
+    preload() {
+        this.load.image('bg', '/assets/img/bg.webp');
+    }
+
+    create() {
+        const windowWidth = this.cameras.main.width;
+        const windowHeight = this.cameras.main.height;
+        const titleStyle = {
+            fontFamily: 'minecraft',
+            fontSize: '150px',
+            color: '#FFFFFF',
+            stroke: '#000000',
+            strokeThickness: 3,
+        };
+
+        // Add background image
+        const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0);
+        // Blur + scale change
+        bg.postFX.addBlur();
+        bg.scale = 0.75;
+
+        // Render title
+        this.add.text(windowWidth / 2, windowHeight / 2 - 150, 'R.E.L.I.C', titleStyle).setOrigin(0.5, 0.5);
+
+        // Render play button
+        const button = this.add.text(windowWidth / 2, windowHeight / 2 + 50, 'Play', {
+            fontFamily: 'minecraft',
+            fontSize: '32px',
+            color: '#ffffff',
+            align: 'center',
+            fixedWidth: 260,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        }).setPadding(32).setOrigin(0.5, 0.5);
+
+        // Button hover animation
+        button.on("pointerover", () => {
+            button.setBackgroundColor("rgba(0, 0, 0, 0.75");
+        });
+        button.on("pointerout", () => {
+            button.setBackgroundColor("rgba(0, 0, 0, 0.5");
+        });
+
+        // Cursor change while hover
+        button.setInteractive({ useHandCursor: true });
+
+    }    
+}
+
+export { MainMenu };
+
+/*
 
 const menuStyle = {
     title: {
@@ -16,6 +80,7 @@ const menuStyle = {
         strokeThickness: 2
     }
 };
+
 
 export function createMenu(scene) {
     const { width, height } = scene.cameras.main;
@@ -96,3 +161,4 @@ function createButton(scene, x, y, text, callback) {
     
     return btn;
 }
+*/

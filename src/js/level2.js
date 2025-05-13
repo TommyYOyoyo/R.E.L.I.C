@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { createMenu, removeMenu } from './mainMenu';
+//import { createMenu, removeMenu } from './MainMenu';
 
 let platforms;
 let floorTiles;
@@ -24,23 +24,29 @@ const sizes = {
         mapHeight: window.innerHeight * 3,
 };
 
+// Load assets for the current level
+function loadAssets(scene) {
+    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+
+    scene.load.image("bgBack", "../../public/assets/img/Layers/back.png");
+    scene.load.image("bgFront", "../../public/assets/img/Layers/front.png");
+    scene.load.image("grassTile1", "../../public/assets/img/Tiles/grassTile1.png");
+    scene.load.image("grassTile2", "../../public/assets/img/Tiles/grassTile2.png");
+}
+
 class Level2 extends Phaser.Scene {
     constructor() {
         super("scene-game");
         this.player;
-        this.menuActive = false;
+        //this.menuActive = false;
     }
 
     // Preload all assets (init)
     preload() {
-        this.toggleMenu();
+        //this.toggleMenu();
 
-        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
-
-        this.load.image("bgBack", "../../public/assets/img/Layers/back.png");
-        this.load.image("bgFront", "../../public/assets/img/Layers/front.png");
-        this.load.image("grassTile1", "../../public/assets/img/Tiles/grassTile1.png");
-        this.load.image("grassTile2", "../../public/assets/img/Tiles/grassTile2.png");
+        // Load assets
+        loadAssets(this);
 
         // Load new keyboard keys
         this.keys = this.input.keyboard.addKeys({
@@ -125,6 +131,7 @@ class Level2 extends Phaser.Scene {
         }
     }
 
+    /*
     // Menu toggler
     toggleMenu() {
         if (!this.menuActive) {
@@ -135,6 +142,7 @@ class Level2 extends Phaser.Scene {
             this.menuActive = false;
         }
     }
+    */
 }
 
-export { sizes, Level2 };
+export { Level2 };
