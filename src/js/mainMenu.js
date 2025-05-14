@@ -37,7 +37,25 @@ class MainMenu extends Phaser.Scene {
         this.add.text(windowWidth / 2, windowHeight / 2 - 150, 'R.E.L.I.C', titleStyle).setOrigin(0.5, 0.5);
 
         // Render play button
-        const button = this.add.text(windowWidth / 2, windowHeight / 2 + 50, 'Play', {
+        const newGameButton = this.add.text(windowWidth / 2, windowHeight / 2 + 50, 'Nouveau jeu', {
+            fontFamily: 'minecraft',
+            fontSize: '32px',
+            color: '#ffffff',
+            align: 'center',
+            fixedWidth: 260,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        }).setPadding(32).setOrigin(0.5, 0.5);
+        // Render play button
+        const continueButton = this.add.text(windowWidth / 2, windowHeight / 2 + 150, 'Continuer', {
+            fontFamily: 'minecraft',
+            fontSize: '32px',
+            color: '#ffffff',
+            align: 'center',
+            fixedWidth: 260,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        }).setPadding(32).setOrigin(0.5, 0.5);
+        // Render play button
+        const guideButton = this.add.text(windowWidth / 2, windowHeight / 2 + 250, 'Guide', {
             fontFamily: 'minecraft',
             fontSize: '32px',
             color: '#ffffff',
@@ -47,15 +65,16 @@ class MainMenu extends Phaser.Scene {
         }).setPadding(32).setOrigin(0.5, 0.5);
 
         // Button hover animation
-        button.on("pointerover", () => {
-            button.setBackgroundColor("rgba(0, 0, 0, 0.75");
+        const buttons = [newGameButton, continueButton, guideButton];
+        buttons.forEach(button => {
+            button.setInteractive({ useHandCursor: true });
+            button.on("pointerover", () => {
+                button.setBackgroundColor("rgba(0, 0, 0, 0.75");
+            });
+            button.on("pointerout", () => {
+                button.setBackgroundColor("rgba(0, 0, 0, 0.5");
+            });
         });
-        button.on("pointerout", () => {
-            button.setBackgroundColor("rgba(0, 0, 0, 0.5");
-        });
-
-        // Cursor change while hover
-        button.setInteractive({ useHandCursor: true });
 
     }    
 }

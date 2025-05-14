@@ -1,6 +1,6 @@
 /**
  * Level 2 game file
- * @author 
+ * @author Honglue Zheng
  * @version beta
  */
 

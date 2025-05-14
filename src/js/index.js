@@ -9,6 +9,7 @@ import Phaser from "phaser";
 import { MainMenu } from "./MainMenu.js";
 import { Level1 } from "./level1.js";
 import { Level2 } from "./level2.js";
+import { Level3 } from "./level3.js";
 
 const sizes = {
         width: window.innerWidth,
@@ -31,7 +32,7 @@ const config = {
             debug: false,
         },
     },
-    scene: [MainMenu]
+    scene: [Level3]
 };
 
 const game = new Phaser.Game(config);
