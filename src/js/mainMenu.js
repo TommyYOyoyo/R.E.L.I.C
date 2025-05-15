@@ -30,14 +30,16 @@ class MainMenu extends Phaser.Scene {
         // Blur change
         bg.postFX.addBlur();
 
-        // Render title
-        this.add.text(windowWidth / 2, windowHeight / 2 - 150, 'R.E.L.I.C', {
+        // Render title with styles
+        const title = this.add.text(windowWidth / 2, windowHeight / 2 - 170, 'R.E.L.I.C', {
             fontFamily: 'minecraft',
-            fontSize: '150px',
-            color: '#FFFFFF',
+            fontSize: '180px',
+            color: '#fcc477',
             stroke: '#000000',
             strokeThickness: 3,
         }).setOrigin(0.5);
+        // Title shadow
+        title.postFX.addShadow(0, 0, 0.1, 3, 0x000000, 3, 0.5)
 
         // Render buttons    
         let buttons = this.rexUI.add.buttons({
@@ -47,7 +49,7 @@ class MainMenu extends Phaser.Scene {
             buttons: [
                 // Button index 0
                 this.rexUI.add.label({
-                    width: 200,
+                    width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
                     text: this.add.text(0, 0, "Nouveau jeu", {
@@ -62,7 +64,7 @@ class MainMenu extends Phaser.Scene {
                 }).setInteractive({useHandCursor: true }), 
                 // Button index 1
                 this.rexUI.add.label({
-                    width: 200,
+                    width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
                     text: this.add.text(0, 0, "Continuer", {
@@ -77,7 +79,7 @@ class MainMenu extends Phaser.Scene {
                 }).setInteractive({useHandCursor: true }), 
                 // Button index 2
                 this.rexUI.add.label({
-                    width: 200,
+                    width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
                     text: this.add.text(0, 0, "Guide", {
@@ -100,11 +102,18 @@ class MainMenu extends Phaser.Scene {
         .on("button.out", (button) => {
             button.getElement('background').setFillStyle(0x000000, 0.5);
         })
+        // Handle clicks - WIP
         .on('button.click', (index) => {
-            console.log(`Button ${index} clicked`);
-        })
-        .layout();
+            const lastGame = localStorage.getItem('lastGame');
+            if (index == 0) {
+                
+            } else if (index == 1) {
 
+            } else {
+
+            }
+        })
+        .layout(); // arrange positions
     }    
 }
 
