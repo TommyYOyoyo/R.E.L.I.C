@@ -6,7 +6,7 @@
 
 @font-face {
     font-family: minecraft;
-    src: url("../../public/assets/fonts/Minecraft.ttf");
+    src: url("/assets/fonts/Minecraft.ttf");
 }
 
 html, body {
