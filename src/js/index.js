@@ -36,7 +36,12 @@ const config = {
             debug: false,
         },
     },
-    scene: [MainMenu],
+    scene: [
+        MainMenu,
+        Level1,
+        Level2,
+        Level3
+    ],
     plugins: {
         scene: [
             // Game UI Plugin

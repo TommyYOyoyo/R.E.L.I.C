@@ -6,6 +6,10 @@
 
 import Phaser from 'phaser';
 
+function guide() {
+    // TODO
+}
+
 class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
@@ -22,6 +26,7 @@ class MainMenu extends Phaser.Scene {
     }
 
     create() {
+        // Get window size
         const windowWidth = this.cameras.main.width;
         const windowHeight = this.cameras.main.height;
 
@@ -47,12 +52,12 @@ class MainMenu extends Phaser.Scene {
             y : windowHeight / 2 + 100,
             orientation: "vertical",
             buttons: [
-                // Button index 0
+                // Button index 0 properties (New game button)
                 this.rexUI.add.label({
                     width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
-                    text: this.add.text(0, 0, "Nouveau jeu", {
+                    text: this.add.text(0, 0, "NOUVEAU JEU", {
                         fontSize: "32px",
                         fontFamily: 'minecraft',
                     }),
@@ -62,12 +67,12 @@ class MainMenu extends Phaser.Scene {
                     },
                     align: "center"
                 }).setInteractive({useHandCursor: true }), 
-                // Button index 1
+                // Button index 1 properties (Continue button)
                 this.rexUI.add.label({
                     width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
-                    text: this.add.text(0, 0, "Continuer", {
+                    text: this.add.text(0, 0, "CONTINUER", {
                         fontSize: "32px",
                         fontFamily: 'minecraft',
                     }),
@@ -77,12 +82,12 @@ class MainMenu extends Phaser.Scene {
                     },
                     align: "center"
                 }).setInteractive({useHandCursor: true }), 
-                // Button index 2
+                // Button index 2 properties (Guide button)
                 this.rexUI.add.label({
                     width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
-                    text: this.add.text(0, 0, "Guide", {
+                    text: this.add.text(0, 0, "GUIDE", {
                         fontSize: "32px",
                         fontFamily: 'minecraft',
                     }),
@@ -103,14 +108,28 @@ class MainMenu extends Phaser.Scene {
             button.getElement('background').setFillStyle(0x000000, 0.5);
         })
         // Handle clicks - WIP
-        .on('button.click', (index) => {
+        .on('button.click', (button) => {
             const lastGame = localStorage.getItem('lastGame');
-            if (index == 0) {
-                
-            } else if (index == 1) {
-
+            // If nothing was saved, set default
+            if (lastGame == null) localStorage.setItem('lastGame', JSON.stringify({
+                level: "Level1",
+                checkpoint: 1
+            }));
+            // New game
+            if (button.text == "NOUVEAU JEU") {
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level1",
+                    checkpoint: 1
+                }));
+                // Start new game scene
+                this.scene.start('Level1');
+            } else if (button.text == "CONTINUER") {
+                // Restart latest progress
+                const level = JSON.parse(localStorage.getItem('lastGame')).level;
+                this.scene.start(`${level}`);
             } else {
-
+                guide();
             }
         })
         .layout(); // arrange positions

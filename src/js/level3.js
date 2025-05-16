@@ -36,7 +36,7 @@ function loadAssets(scene) {
 
 class Level3 extends Phaser.Scene {
     constructor() {
-        super("scene-game");
+        super("Level3");
         this.player;
         //this.menuActive = false;
     }

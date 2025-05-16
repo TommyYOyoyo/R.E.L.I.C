@@ -18,7 +18,7 @@ const sizes = {
 
 class Level1 extends Phaser.Scene {
     constructor() {
-        super('gameScene');
+        super('Level1');
         this.player;
         this.cursor;
         this.playerVelocity = speedDown + 400;
