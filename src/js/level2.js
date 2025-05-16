@@ -38,7 +38,6 @@ class Level2 extends Phaser.Scene {
     constructor() {
         super("Level2");
         this.player;
-        //this.menuActive = false;
     }
 
     // Preload all assets (init)
