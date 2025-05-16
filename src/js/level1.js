@@ -25,8 +25,8 @@ class Level1 extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('bg', '../../public/assets/img/bg.webp');
-        this.load.image('player','../../public/assets/img/Player/Player1.png');
+        this.load.image('bg', '/assets/img/bg.webp');
+        this.load.image('player','/assets/img/Player/Player1.png');
         // Create a 1x1 transparent pixel image named 'invisible.png' for collisions
     }
 

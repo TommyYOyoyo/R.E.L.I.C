@@ -28,10 +28,10 @@ const sizes = {
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
-    scene.load.image("bgBack", "../../public/assets/img/Layers/back.png");
-    scene.load.image("bgFront", "../../public/assets/img/Layers/front.png");
-    scene.load.image("grassTile1", "../../public/assets/img/Tiles/grassTile1.png");
-    scene.load.image("grassTile2", "../../public/assets/img/Tiles/grassTile2.png");
+    scene.load.image("bgBack", "/assets/img/Layers/back.png");
+    scene.load.image("bgFront", "/assets/img/Layers/front.png");
+    scene.load.image("grassTile1", "/assets/img/Tiles/grassTile1.png");
+    scene.load.image("grassTile2", "/assets/img/Tiles/grassTile2.png");
 }
 
 class Level3 extends Phaser.Scene {
