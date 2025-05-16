@@ -28,7 +28,6 @@ class Level1 extends Phaser.Scene {
         this.load.image('bg', '../../public/assets/img/bg.webp');
         this.load.image('player','../../public/assets/img/Player/Player1.png');
         // Create a 1x1 transparent pixel image named 'invisible.png' for collisions
-        this.load.image('invisible', './Sprites/invisible.png');
     }
 
     create() {
@@ -38,6 +37,7 @@ class Level1 extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Create player (scaled relative to screen size)
+          this.physics.world.gravity.y = 0;
         const playerSize = Math.min(this.scale.width, this.scale.height) * 0.1;
         this.player = this.physics.add.image(
             playerSize,
@@ -51,7 +51,7 @@ class Level1 extends Phaser.Scene {
         const floorCollider = this.add.rectangle(
             0, this.scale.height - 300,  // Changed from -1 to -100 to match your original position
             this.scale.width, 50,         // Increased height from 2 to 50 for better collision
-            0x000000, 0                   // Still completely invisible
+            0x000000, 0.5
         ).setOrigin(0, 0);
         this.physics.add.existing(floorCollider, true);
         this.physics.add.collider(this.player, floorCollider);
@@ -67,18 +67,10 @@ class Level1 extends Phaser.Scene {
             arrowUp: Phaser.Input.Keyboard.KeyCodes.UP,
             arrowDown: Phaser.Input.Keyboard.KeyCodes.DOWN,
             arrowLeft: Phaser.Input.Keyboard.KeyCodes.LEFT,
-            arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-            f: Phaser.Input.Keyboard.KeyCodes.F // For fullscreen toggle
+            arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT
         });
 
-        // Fullscreen toggle
-        this.input.keyboard.on('keydown-F', () => {
-            if (this.scale.isFullscreen) {
-                this.scale.exitFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        });
+
 
         // Handle window resize
         this.scale.on('resize', (gameSize) => {
