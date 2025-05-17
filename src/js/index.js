@@ -1,6 +1,6 @@
 /**
  * Main game file
- * @author everybody
+ * @author Honglue Zheng, Ray Lam, Rui Qi Ren
  * @version beta
  */
 
@@ -8,9 +8,9 @@ import "../css/style.css";
 import Phaser from "phaser";
 import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 import { MainMenu } from "./mainMenu.js";
-import { Level1 } from "./level1.js";
-import { Level2 } from "./level2.js";
-import { Level3 } from "./level3.js";
+import { Level1 } from "./levels/level1.js";
+import { Level2 } from "./levels/level2.js";
+import { Level3 } from "./levels/level3.js";
 
 const sizes = {
         width: window.innerWidth,
