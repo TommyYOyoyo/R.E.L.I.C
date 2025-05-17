@@ -17,7 +17,7 @@ class MainMenu extends Phaser.Scene {
 
     // Preload background image
     preload() {
-        this.load.image('bg', '/assets/img/bg.webp');
+        this.load.image('bg', '/assets/img/backgrounds/background_1/Preview_1.png');
         this.load.scenePlugin({
             key: 'rexuiplugin',
             url: 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js',
@@ -31,7 +31,7 @@ class MainMenu extends Phaser.Scene {
         const windowHeight = this.cameras.main.height;
 
         // Add background image
-        const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0).setScale(0.75);
+        const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0).setScale(0.4);
         // Blur change
         bg.postFX.addBlur();
 
