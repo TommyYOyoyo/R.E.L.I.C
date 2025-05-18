@@ -126,6 +126,12 @@ class Level2 extends Phaser.Scene {
         this.player.direction = 1; // Set player direction (0 = left, 1 = right)
         // Set player collision detection
         this.player.setCollideWorldBounds(true);
+
+        // Set player properties
+        this.player.isSliding = false;
+        this.player.disabledCrouch = false;
+        this.player.isAttacking = false;
+        this.player.direction = 1;
         
         // Set world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);

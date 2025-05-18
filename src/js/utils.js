@@ -115,18 +115,9 @@ function createAnimation(scene) {
         frameRate: 10,
         repeat: -1
     });
-    // Air attack 1 animation
+    // Air attack animation
     scene.anims.create({
         key: "airAttack",
-        frames: scene.anims.generateFrameNumbers("playerSheet", {
-            frames: [21, 22, 23]
-        }),
-        frameRate: 10,
-        repeat: 0
-    });
-    // Air attack 2 animation
-    scene.anims.create({
-        key: "airAttack2",
         frames: scene.anims.generateFrameNumbers("playerSheet", {
             frames: [7, 8, 9, 10]
         }),
@@ -144,7 +135,7 @@ function updatePlayerMovement(scene) {
     if (scene.keys.a.isDown) {
         updateDirection(scene, 0);
         scene.player.setVelocityX(-300);
-        if (scene.player.body.onFloor() && !scene.player.isSliding) {
+        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
             scene.player.setSize(18, 32).setOffset(17, 4);
             scene.player.play("run", true);
         }
@@ -152,14 +143,14 @@ function updatePlayerMovement(scene) {
     } else if (scene.keys.d.isDown) {
         updateDirection(scene, 1);
         scene.player.setVelocityX(300);
-        if (scene.player.body.onFloor() && !scene.player.isSliding) {
+        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
             scene.player.setSize(18, 32).setOffset(17, 4);
             scene.player.play("run", true);
         }
     // Stop x-axis movement and put player in idle
     } else {
         scene.player.setVelocityX(0);
-        if (scene.player.body.onFloor() && !scene.player.isSliding) {
+        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
             scene.player.setSize(18, 32).setOffset(17, 4);
             scene.player.play("idle", true);
         }
@@ -167,11 +158,11 @@ function updatePlayerMovement(scene) {
 
     // Jump
     if (scene.keys.w.isDown && scene.player.body.onFloor()) {
-        if (scene.player.body.onFloor()) {
+        if (scene.player.body.onFloor() && !scene.player.isAttacking) {
             scene.player.play("jump", true);
         }
         // Fall
-        if (!scene.player.body.onFloor() && scene.player.body.velocity.y >0) {
+        if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0  && !scene.player.isAttacking) {
             scene.player.play("fall", true);
         }
 
@@ -179,7 +170,7 @@ function updatePlayerMovement(scene) {
     }
 
     // Fall
-    if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0 && !scene.player.isSliding) {
+    if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0 && !scene.player.isSliding && !scene.player.isAttacking) {
         scene.player.play("fall", true);
     }
 
@@ -194,48 +185,26 @@ function updatePlayerMovement(scene) {
             scene.player.setSize(15, 15).setOffset(20, 20);
         }
     }
-
+    
     // Attack
     if (scene.keys.space.isDown) {
-        // Ground attack
-        if (scene.player.body.onFloor()) {
-            scene.player.play("attack", true);
-        // Air attack
-        } else {
-            scene.player.play("airAttack", true);
-        }
+        attack(scene);
     }
     
 }
 
 // Function to update player direction
 function updateDirection(scene, direction) {
-    // Player direction didn't change
-    if (scene.player.direction == direction) {
+    // Don't flip sprites if player is facing right
+    if (direction == 1) {
+        scene.player.direction = 1;
+        scene.player.setFlipX(false);
         return;
-    } else {
-        scene.player.direction = direction;
-        // Don't flip sprites if player is facing right
-        if (direction == 1) {
-            scene.player.setFlipX(false);
-            // Set player's hitbox according to attack or not
-            if (scene.player.isAttacking == true) {
-                scene.player.setSize(32, 32).setOffset(32, 32);
-            } else {
-                scene.player.setSize(18, 32).setOffset(17, 4);
-            }
-            return;
-        }
-       
-        // Flip if player is facing left
-        scene.player.setFlipX(true);
-        // Set player's hitbox according to attack or not
-        if (scene.player.isAttacking == true) {
-            scene.player.setSize(32, 32).setOffset(32, 32);
-        } else {
-            scene.player.setSize(18, 32).setOffset(17, 4);
-        }
     }
+
+    // Flip if player is facing left
+    scene.player.direction = 0;
+    scene.player.setFlipX(true);
 }
 
 // Functions to initiate and end player sliding appropriately
@@ -258,7 +227,35 @@ function endSlide(scene) {
     } else {
         scene.player.play("idle", true);
     }
+}
 
+// Functions to initiate and end player attacking appropriately
+function attack(scene) {
+    // Prevent other animations from overriding
+    scene.player.isAttacking = true;
+
+    const heading = scene.player.direction;
+
+    // Change player's hitbox according to direction
+    if (heading == 1) {
+        scene.player.setSize(40, 32).setOffset(15, 4);
+    } else {
+        scene.player.setSize(40, 32).setOffset(-5, 4);
+    }
+
+    // Ground attack
+    if (scene.player.body.onFloor()) {
+        scene.player.play("attack", true).on("animationcomplete", () => {
+            scene.player.isAttacking = false;
+            scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
+        });
+    // Air attack
+    } else {
+        scene.player.play("airAttack", true).on("animationcomplete", () => {
+            scene.player.isAttacking = false;
+            scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
+        });
+    }
 }
 
 export { createAnimation, updatePlayerMovement, updateDirection };
