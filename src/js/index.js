@@ -28,6 +28,7 @@ const config = {
     width: sizes.width,
     height: sizes.height,
     canvas: gameCanvas,
+    pixelArt: true, // Improve texture quality
     // Physics configurations
     physics: {
         default: "arcade",
@@ -51,6 +52,13 @@ const config = {
                 mapping: 'rexUI'
             },
         ]
+    },
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        parent: 'gameContainer',
+        width: 256,
+        height: 256,
+        autoCenter: Phaser.Scale.CENTER_BOTH
     }
 };
 
