@@ -5,9 +5,7 @@
  */
 
 import Phaser from "phaser";
-//import { createMenu, removeMenu } from './MainMenu';
-
-let player;
+import { createAnimation, updatePlayerMovement, updateDirection } from "../utils.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -20,8 +18,30 @@ const sizes = {
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
-    scene.load.image("grassTile1", "/assets/img/Tiles/grassTile1.png");
-    scene.load.image("grassTile2", "/assets/img/Tiles/grassTile2.png");
+    // Load ruins tileset
+    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
+    // Load dungeon tileset
+    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
+    // Load background image collection
+    scene.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/Bg_images.tmj");
+    scene.load.image("bg2_1", "/assets/img/backgrounds/background_2/Plan_1.png");
+    scene.load.image("bg2_2", "/assets/img/backgrounds/background_2/Plan_2.png");
+    scene.load.image("bg2_3", "/assets/img/backgrounds/background_2/Plan_3.png");
+    scene.load.image("bg2_4", "/assets/img/backgrounds/background_2/Plan_4.png");
+    scene.load.image("bg2_5", "/assets/img/backgrounds/background_2/Plan_5.png");
+    scene.load.image("bg3_1", "/assets/img/backgrounds/background_3/Plan_1.png");
+    scene.load.image("bg3_2", "/assets/img/backgrounds/background_3/Plan_2.png");
+    scene.load.image("bg3_3", "/assets/img/backgrounds/background_3/Plan_3.png");
+    scene.load.image("bg3_4", "/assets/img/backgrounds/background_3/Plan_4.png");
+    scene.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");
+    // Load map
+    scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
+
+    // Load player spritesheet
+    scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
+        frameWidth: 50,
+        frameHeight: 37
+    });
 }
 
 class Level2 extends Phaser.Scene {
@@ -45,25 +65,6 @@ class Level2 extends Phaser.Scene {
             w:  Phaser.Input.Keyboard.KeyCodes.W,
             space: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
-
-        // Load ruins tileset
-        this.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
-        // Load dungeon tileset
-        this.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
-        // Load background image collection
-        this.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/Bg_images.tmj");
-        this.load.image("bg2_1", "/assets/img/backgrounds/background_2/Plan_1.png");
-        this.load.image("bg2_2", "/assets/img/backgrounds/background_2/Plan_2.png");
-        this.load.image("bg2_3", "/assets/img/backgrounds/background_2/Plan_3.png");
-        this.load.image("bg2_4", "/assets/img/backgrounds/background_2/Plan_4.png");
-        this.load.image("bg2_5", "/assets/img/backgrounds/background_2/Plan_5.png");
-        this.load.image("bg3_1", "/assets/img/backgrounds/background_3/Plan_1.png");
-        this.load.image("bg3_2", "/assets/img/backgrounds/background_3/Plan_2.png");
-        this.load.image("bg3_3", "/assets/img/backgrounds/background_3/Plan_3.png");
-        this.load.image("bg3_4", "/assets/img/backgrounds/background_3/Plan_4.png");
-        this.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");
-        // Load map
-        this.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
     }
 
     // Create all game objects
@@ -85,11 +86,11 @@ class Level2 extends Phaser.Scene {
         const img8 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_2.png", "bg2_2");
         const img9 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_3.png", "bg2_3");
         const img10 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_4.png", "bg2_4");
-        const sky = bgMap.createLayer("Sky", img1, 0, 0);
-        const clouds = bgMap.createLayer("Clouds", img5, 0, 0);
-        const bgenv1 = bgMap.createLayer("Background_environment(1)", [img4, img5], 0, 0);
-        const bgenv2 = bgMap.createLayer("Background_environment(2)", [img1, img3, img4, img7, img8, img9, img10], 0, 0);
-        const bgenv3 = bgMap.createLayer("Background_environment(3)", [img2, img4, img7, img8], 0, 0);
+        //const sky = bgMap.createLayer("Sky", img1, 0, 0);
+        //const clouds = bgMap.createLayer("Clouds", img5, 0, 0);
+        //const bgenv1 = bgMap.createLayer("Background_environment(1)", [img4, img5], 0, 0);
+        //const bgenv2 = bgMap.createLayer("Background_environment(2)", [img1, img3, img4, img7, img8, img9, img10], 0, 0);
+        //const bgenv3 = bgMap.createLayer("Background_environment(3)", [img2, img4, img7, img8], 0, 0);
         
         // Load main tilesets
         const ruinSet = map.addTilesetImage("Ruins", "ruinSet");
@@ -101,58 +102,49 @@ class Level2 extends Phaser.Scene {
         const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
 
         // Set layer depth
-        sky.setDepth(-5);
-        clouds.setDepth(-4);
-        bgenv1.setDepth(-3);
-        bgenv2.setDepth(-2);
-        bgenv3.setDepth(-1);
+        //sky.setDepth(-5);
+        //clouds.setDepth(-4);
+        //bgenv1.setDepth(-3);
+        //bgenv2.setDepth(-2);
+        //bgenv3.setDepth(-1);
         walls.setDepth(0);
         decorations.setDepth(1);
 
         // Scale layers
-        const layers = [sky, clouds, bgenv1, bgenv2, bgenv3, walls, ground, decorations];
+        const layers = [walls, ground, decorations];
         layers.forEach(layer => layer.setScale(scale).setOrigin(0, 0));
 
         // Get main camera
         const camera = this.cameras.main;
+    
+        // Create animation
+        createAnimation(this);
 
         // Load player
-        player = this.physics.add.sprite(0, 0, 'dude');
+        this.player = this.physics.add.sprite(0, 0, "playerSheet");
+        this.player.setScale(3).setSize(18, 32).setOffset(17, 4);
+        this.player.direction = 1; // Set player direction (0 = left, 1 = right)
         // Set player collision detection
-        player.setCollideWorldBounds(true);
+        this.player.setCollideWorldBounds(true);
         
         // Set world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
 
         // Player gravity
-        player.body.setGravityY(1000);
+        this.player.body.setGravityY(1000);
 
         // Enable floor/wall collision detection, dealt by Phaser game engine
-        this.physics.add.collider(player, ground);
+        this.physics.add.collider(this.player, ground);
         ground.setCollisionByExclusion(-1);
         
         // Camera movement and delimitation
         this.cameras.main.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
-        camera.startFollow(player);
+        camera.startFollow(this.player);
     }
 
     // Game update loop
     update() {
-        // Move left
-        if (this.keys.a.isDown) {
-            player.setVelocityX(-300);
-        // Move right
-        } else if (this.keys.d.isDown) {
-            player.setVelocityX(300);
-        // Stop x-axis movement
-        } else {
-            player.setVelocityX(0);
-        }
-
-        // Jump
-        if (this.keys.w.isDown && player.body.onFloor()) {
-            player.setVelocityY(-600);
-        }
+        updatePlayerMovement(this);
     }
 }
 

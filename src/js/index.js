@@ -34,7 +34,7 @@ const config = {
         default: "arcade",
         arcade: {
             gravity: { y: speedDown },
-            debug: false,
+            debug: true,
         },
     },
     scene: [
@@ -53,13 +53,6 @@ const config = {
             },
         ]
     },
-    scale: {
-        mode: Phaser.Scale.RESIZE,
-        parent: 'gameContainer',
-        width: 256,
-        height: 256,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    }
 };
 
 const game = new Phaser.Game(config);
