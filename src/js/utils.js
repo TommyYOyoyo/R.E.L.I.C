@@ -275,4 +275,17 @@ function createAttackHitbox(scene) {
     */
 }
 
-export { createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox };
+// Function to update the attack hitbox position
+function hitboxUpdater(scene) {
+    // Update player attack hitbox
+    scene.attackHitbox.body.y = scene.player.body.y - 20;
+
+    // Change player's hitbox according to direction
+    if (scene.player.direction == 1) {
+        scene.attackHitbox.body.x = scene.player.x - scene.player.width / 2;
+    } else {
+        scene.attackHitbox.body.x = scene.player.x - 145 + scene.player.width / 2;
+    }
+}
+
+export { createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater };
