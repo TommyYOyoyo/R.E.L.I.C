@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { createAnimation, updatePlayerMovement, updateDirection } from "../utils.js";
+import { createAnimation, updatePlayerMovement, createAttackHitbox } from "../utils.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -146,11 +146,24 @@ class Level2 extends Phaser.Scene {
         // Camera movement and delimitation
         this.cameras.main.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
         camera.startFollow(this.player);
+
+        // Create player attack hitbox
+        createAttackHitbox(this);
     }
 
     // Game update loop
     update() {
         updatePlayerMovement(this);
+
+        // Update player attack hitbox
+        this.attackHitbox.body.y = this.player.body.y - 20;
+
+        // Change player's hitbox according to direction
+        if (this.player.direction == 1) {
+            this.attackHitbox.body.x = this.player.x - this.player.width / 2;
+        } else {
+            this.attackHitbox.body.x = this.player.x - 145 + this.player.width / 2;
+        }
     }
 }
 

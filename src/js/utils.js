@@ -234,14 +234,7 @@ function attack(scene) {
     // Prevent other animations from overriding
     scene.player.isAttacking = true;
 
-    const heading = scene.player.direction;
-
-    // Change player's hitbox according to direction
-    if (heading == 1) {
-        scene.player.setSize(40, 32).setOffset(15, 4);
-    } else {
-        scene.player.setSize(40, 32).setOffset(-5, 4);
-    }
+    // Attack mech here TODO
 
     // Ground attack
     if (scene.player.body.onFloor()) {
@@ -258,4 +251,28 @@ function attack(scene) {
     }
 }
 
-export { createAnimation, updatePlayerMovement, updateDirection };
+// Function to create an attack hitbox
+function createAttackHitbox(scene) {
+    const heading = scene.player.direction;
+
+    scene.attackHitbox = scene.add.rectangle(
+        0,
+        0,
+        150, // width
+        120, // height
+        0xff0000, // color (red for visualization)
+        0.3 // alpha (for debugging)
+    );
+
+    // Add physics to hitbox
+    scene.physics.add.existing(scene.attackHitbox);
+    scene.attackHitbox.body.setAllowGravity(false);
+
+    /* PC DESTROYER 3000 BEAM, DO NOT COMMENT OUT UNLESS...
+    // Make hitbox follow player
+    scene.attackHitbox.body.setVelocityX(scene.player.body.velocity.x);
+    scene.attackHitbox.body.setVelocityY(scene.player.body.velocity.y);
+    */
+}
+
+export { createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox };
