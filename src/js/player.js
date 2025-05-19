@@ -151,7 +151,7 @@ function createAnimation(scene) {
 function updatePlayerMovement(scene) {
 
     // Limit player falling velocity to prevent speed being faster than game update ticks
-    if (scene.player.body.velocity.y > 1000) scene.player.body.setVelocityY(1000);
+    if (scene.player.body.velocity.y > 950) scene.player.body.setVelocityY(950);
 
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
