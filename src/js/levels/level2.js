@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { createAnimation, updatePlayerMovement, createAttackHitbox, hitboxUpdater } from "../utils.js";
+import { loadPlayer, updatePlayerMovement, hitboxUpdater, climb } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -63,7 +63,8 @@ class Level2 extends Phaser.Scene {
             s:  Phaser.Input.Keyboard.KeyCodes.S,
             d:  Phaser.Input.Keyboard.KeyCodes.D,
             w:  Phaser.Input.Keyboard.KeyCodes.W,
-            space: Phaser.Input.Keyboard.KeyCodes.SPACE
+            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+            f: Phaser.Input.Keyboard.KeyCodes.F
         });
     }
 
@@ -110,34 +111,45 @@ class Level2 extends Phaser.Scene {
         walls.setDepth(0);
         decorations.setDepth(1);
 
+        // Create vines
+        const vines = map.createFromObjects("Objects", {
+            name: "vine",
+            class: "Ladder",
+        });
+        
+        // Scale vines and enable physics
+        vines.forEach(vine => {
+            // Scale the vine sprite
+            vine.setScale(scale);
+            
+            // Scale the physics body
+            this.physics.add.existing(vine, true);
+
+            vine.width *= scale;
+            vine.height *= scale;
+            
+            // Adjust position to match scaled tilemap
+            vine.x *= scale;
+            vine.y *= scale;
+        }); 
+
+        // Add this after creating the vines
+        const vineGroup = this.physics.add.staticGroup(vines);
+
+
         // Scale layers
         const layers = [walls, ground, decorations];
         layers.forEach(layer => layer.setScale(scale).setOrigin(0, 0));
 
         // Get main camera
         const camera = this.cameras.main;
-    
-        // Create animation
-        createAnimation(this);
 
-        // Load player
-        this.player = this.physics.add.sprite(0, 0, "playerSheet");
-        this.player.setScale(3).setSize(18, 32).setOffset(17, 4);
-        this.player.direction = 1; // Set player direction (0 = left, 1 = right)
-        // Set player collision detection
-        this.player.setCollideWorldBounds(true);
-
-        // Set player properties
-        this.player.isSliding = false;
-        this.player.disabledCrouch = false;
-        this.player.isAttacking = false;
-        this.player.direction = 1;
+        loadPlayer(this);
+        // Update your overlap check to use the group
+        //this.physics.add.overlap(this.player, vineGroup, this.startClimbing());
         
         // Set world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
-
-        // Player gravity
-        this.player.body.setGravityY(1000);
 
         // Enable floor/wall collision detection, dealt by Phaser game engine
         this.physics.add.collider(this.player, ground);
@@ -147,15 +159,16 @@ class Level2 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
         camera.startFollow(this.player);
 
-        // Create player attack hitbox
-        createAttackHitbox(this);
     }
 
     // Game update loop
     update() {
         updatePlayerMovement(this);
-
         hitboxUpdater(this);
+    }
+
+    startClimbing() {
+        this.player.isClimbing = true;
     }
 }
 

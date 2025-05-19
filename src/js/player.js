@@ -1,9 +1,29 @@
 /**
  * @author Honglue Zheng
  * @version beta
- * @note Universal utility functions
+ * @note Universal player functions
  */
 
+function loadPlayer(scene) {
+    // LOAD PLAYER
+    scene.player = scene.physics.add.sprite(0, 0, "playerSheet");
+    // Create playeranimation
+    createAnimation(scene);
+    scene.player.setScale(3).setSize(18, 32).setOffset(17, 4);
+    scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
+    // Set player collision detection
+    scene.player.setCollideWorldBounds(true);
+    // Set player properties
+    scene.player.direction = 1;
+    scene.player.disabledCrouch = false;
+    scene.player.isSliding = false;
+    scene.player.isAttacking = false;
+    scene.player.isClimbing = false;
+    // Player gravity
+    scene.player.body.setGravityY(1000);
+    // Create player attack hitbox
+    createAttackHitbox(scene);
+}
 
 // Function to create animations for the player
 function createAnimation(scene) {
@@ -126,66 +146,44 @@ function createAnimation(scene) {
     });
 }
 
-// Player movement update
+// Player movement updator
 function updatePlayerMovement(scene) {
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
     // Move left
     if (scene.keys.a.isDown) {
-        updateDirection(scene, 0);
-        scene.player.setVelocityX(-300);
-        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-            scene.player.setSize(18, 32).setOffset(17, 4);
-            scene.player.play("run", true);
-        }
+        moveLeft(scene);
     // Move right
     } else if (scene.keys.d.isDown) {
-        updateDirection(scene, 1);
-        scene.player.setVelocityX(300);
-        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-            scene.player.setSize(18, 32).setOffset(17, 4);
-            scene.player.play("run", true);
-        }
+        moveRight(scene);
     // Stop x-axis movement and put player in idle
     } else {
-        scene.player.setVelocityX(0);
-        if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-            scene.player.setSize(18, 32).setOffset(17, 4);
-            scene.player.play("idle", true);
-        }
+        idle(scene);
     }
 
-    // Jump
+    // Jump / climb
     if (scene.keys.w.isDown && scene.player.body.onFloor()) {
-        if (scene.player.body.onFloor() && !scene.player.isAttacking) {
-            scene.player.play("jump", true);
+        if (scene.player.isClimbing) {
+            climb(scene);
+        } else {
+            jump(scene);
         }
-        // Fall
-        if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0  && !scene.player.isAttacking) {
-            scene.player.play("fall", true);
-        }
-
-        scene.player.setVelocityY(-600);
     }
 
     // Fall
-    if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0 && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.play("fall", true);
+    if (!scene.player.body.onFloor() &&
+        scene.player.body.velocity.y > 0 &&
+        !scene.player.isSliding &&
+        !scene.player.isAttacking) {
+        fall(scene);
     }
 
     // Crouch
-    if (scene.keys.s.isDown && !scene.disableCrouch) {
-        // Player is moving
-        if (!scene.player.isSliding && scene.player.body.velocity.x != 0 && scene.player.body.onFloor()) {
-            startSlide(scene);
-        // Player is not moving
-        } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
-            scene.player.play("crouch", true);
-            scene.player.setSize(15, 15).setOffset(20, 20);
-        }
+    if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking) {
+        crouch(scene);
     }
-    
+
     // Attack
     if (scene.keys.space.isDown) {
         attack(scene);
@@ -229,47 +227,24 @@ function endSlide(scene) {
     }
 }
 
-// Functions to initiate and end player attacking appropriately
-function attack(scene) {
-    // Prevent other animations from overriding
-    scene.player.isAttacking = true;
-
-    // Attack mech here TODO
-
-    // Ground attack
-    if (scene.player.body.onFloor()) {
-        scene.player.play("attack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
-            scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
-        });
-    // Air attack
-    } else {
-        scene.player.play("airAttack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
-            scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
-        });
-    }
-}
-
 // Function to create an attack hitbox
 function createAttackHitbox(scene) {
-    const heading = scene.player.direction;
-
+    // Create attack hitbox
     scene.attackHitbox = scene.add.rectangle(
         0,
         0,
-        150, // width
+        175, // width
         120, // height
-        0xff0000, // color (red for visualization)
-        0.3 // alpha (for debugging)
+        0x000000, // color (red for visualization)
+        0 // alpha (for debugging)
     );
 
     // Add physics to hitbox
     scene.physics.add.existing(scene.attackHitbox);
     scene.attackHitbox.body.setAllowGravity(false);
 
-    /* PC DESTROYER 3000 BEAM, DO NOT COMMENT OUT UNLESS...
-    // Make hitbox follow player
+    /* 
+    // PC DESTROYER 3000 BEAM, DO NOT COMMENT OUT UNLESS...
     scene.attackHitbox.body.setVelocityX(scene.player.body.velocity.x);
     scene.attackHitbox.body.setVelocityY(scene.player.body.velocity.y);
     */
@@ -282,10 +257,94 @@ function hitboxUpdater(scene) {
 
     // Change player's hitbox according to direction
     if (scene.player.direction == 1) {
-        scene.attackHitbox.body.x = scene.player.x - scene.player.width / 2;
+        scene.attackHitbox.body.x = scene.player.x - scene.player.width / 2 - 25;
     } else {
         scene.attackHitbox.body.x = scene.player.x - 145 + scene.player.width / 2;
     }
 }
 
-export { createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater };
+// Functions to initiate and end player attacking appropriately
+function attack(scene) {
+    // Prevent other animations from overriding
+    scene.player.isAttacking = true;
+    scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
+
+    // Attack mech here TODO
+
+    // Ground attack
+    if (scene.player.body.onFloor()) {
+        scene.player.play("attack", true).on("animationcomplete", () => {
+            scene.player.isAttacking = false;
+        });
+    // Air attack
+    } else {
+        scene.player.play("airAttack", true).on("animationcomplete", () => {
+            scene.player.isAttacking = false;
+        });
+    }
+}
+
+// Player move functions
+function moveLeft(scene) {
+    updateDirection(scene, 0);
+    scene.player.setVelocityX(-300);
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+        scene.player.setSize(18, 32).setOffset(17, 4);
+        scene.player.play("run", true);
+    }
+
+}
+
+function moveRight(scene) {
+    updateDirection(scene, 1);
+    scene.player.setVelocityX(300);
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+        scene.player.setSize(18, 32).setOffset(17, 4);
+        scene.player.play("run", true);
+    }
+}
+
+function idle(scene) {
+    scene.player.setVelocityX(0);
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+        scene.player.setSize(18, 32).setOffset(17, 4);
+        scene.player.play("idle", true);
+    }
+}
+
+// Player jump function
+function jump(scene) {
+    if (scene.player.body.onFloor() && !scene.player.isAttacking) {
+        scene.player.play("jump", true);
+    }
+    // Fall
+    if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0  && !scene.player.isAttacking) {
+        scene.player.play("fall", true);
+    }
+
+    scene.player.setVelocityY(-600);
+}
+
+// Player fall function
+function fall(scene) {
+    scene.player.play("fall", true);
+}
+
+// Player crouch function
+function crouch(scene) {
+    // Player is moving
+    if (!scene.player.isSliding && scene.player.body.velocity.x != 0 && scene.player.body.onFloor()) {
+        startSlide(scene);
+    // Player is not moving
+    } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
+        scene.player.play("crouch", true);
+        scene.player.setSize(15, 15).setOffset(20, 20);
+    }
+}
+
+// Function to ensure player can climb vines
+function climb(scene) {
+    scene.player.play("climb", true);
+}
+
+export { loadPlayer, createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater, climb };
