@@ -51,6 +51,7 @@ class Level2 extends Phaser.Scene {
         this.player;
         this.groundCollider;
         this.vineGroup;
+        this.ground;
     }
 
     // Preload all assets (init)
@@ -102,6 +103,7 @@ class Level2 extends Phaser.Scene {
         const walls = map.createLayer("Walls", [ruinSet, dungeonSet], 0, 0);
         const ground = map.createLayer("Ground", [dungeonSet, ruinSet], 0, 0);
         const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
+        this.ground = ground;
 
         // Set layer depth
         //sky.setDepth(-5);
@@ -111,8 +113,6 @@ class Level2 extends Phaser.Scene {
         //bgenv3.setDepth(-1);
         walls.setDepth(0);
         decorations.setDepth(1);
-
-        const objects = map.createFromObjects("Objects");
         
         // Create vines
         const vines = map.createFromObjects("Objects", {

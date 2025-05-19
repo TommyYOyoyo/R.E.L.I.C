@@ -150,6 +150,9 @@ function createAnimation(scene) {
 // Player movement updator
 function updatePlayerMovement(scene) {
 
+    // Limit player falling velocity to prevent speed being faster than game update ticks
+    if (scene.player.body.velocity.y > 1000) scene.player.body.setVelocityY(1000);
+
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
@@ -370,10 +373,10 @@ function enterClimb(scene) {
 // Player exit climbing function
 function exitClimb(scene, impulse) {
     scene.groundCollider.active = true;
+    scene.player.body.setAllowGravity(true);
     scene.player.isClimbing = false;
     scene.player.canClimb = false;
-    scene.player.body.setAllowGravity(true);
-    
+
     // Apply small vertical impulse when exiting
     if (impulse) jump(scene);
     
@@ -402,7 +405,6 @@ function climb(scene) {
             scene.player.setVelocityY(-50); // Climb up
             scene.player.play("climb", true);
         } else if (scene.keys.s.isDown) {
-            console.log("aoijsdf")
             scene.player.setVelocityY(50); // Climb down
             scene.player.play("climb", true);
         } else {
