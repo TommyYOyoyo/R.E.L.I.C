@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayerMovement, hitboxUpdater, climb } from "../player.js";
+import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -47,7 +47,10 @@ function loadAssets(scene) {
 class Level2 extends Phaser.Scene {
     constructor() {
         super("Level2");
+        this.scaleMultiplier = 3.5;
         this.player;
+        this.groundCollider;
+        this.vineGroup;
     }
 
     // Preload all assets (init)
@@ -69,9 +72,7 @@ class Level2 extends Phaser.Scene {
     }
 
     // Create all game objects
-    create() {
-        const scale = 3.5;
-
+    create() {       
         // Map creation
         const map = this.add.tilemap("map");
         const bgMap = this.add.tilemap("bgCollection");
@@ -111,65 +112,73 @@ class Level2 extends Phaser.Scene {
         walls.setDepth(0);
         decorations.setDepth(1);
 
+        const objects = map.createFromObjects("Objects");
+        
         // Create vines
         const vines = map.createFromObjects("Objects", {
-            name: "vine",
-            class: "Ladder",
+            type: "Ladder",
         });
+
+        const checkpoints = map.createFromObjects("Objects", {
+            type: "Checkpoint",
+        });
+
+        this.spawnObjects(vines);
+        this.spawnObjects(checkpoints);
         
-        // Scale vines and enable physics
+        // Add vines to vineGroup
+        this.vineGroup = this.physics.add.staticGroup();
         vines.forEach(vine => {
-            // Scale the vine sprite
-            vine.setScale(scale);
-            
-            // Scale the physics body
-            this.physics.add.existing(vine, true);
-
-            vine.width *= scale;
-            vine.height *= scale;
-            
-            // Adjust position to match scaled tilemap
-            vine.x *= scale;
-            vine.y *= scale;
+            this.vineGroup.add(vine);
         }); 
-
-        // Add this after creating the vines
-        const vineGroup = this.physics.add.staticGroup(vines);
-
 
         // Scale layers
         const layers = [walls, ground, decorations];
-        layers.forEach(layer => layer.setScale(scale).setOrigin(0, 0));
+        layers.forEach(layer => layer.setScale(this.scaleMultiplier).setOrigin(0, 0));
 
         // Get main camera
         const camera = this.cameras.main;
 
         loadPlayer(this);
-        // Update your overlap check to use the group
-        //this.physics.add.overlap(this.player, vineGroup, this.startClimbing());
         
         // Set world bounds
-        this.physics.world.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
+        this.physics.world.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
 
         // Enable floor/wall collision detection, dealt by Phaser game engine
-        this.physics.add.collider(this.player, ground);
+        this.groundCollider = this.physics.add.collider(this.player, ground);
         ground.setCollisionByExclusion(-1);
         
         // Camera movement and delimitation
-        this.cameras.main.setBounds(0, 0, map.widthInPixels*scale, map.heightInPixels*scale);
+        this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
         camera.startFollow(this.player);
 
     }
 
     // Game update loop
     update() {
+        // Check if player overlaps with the vines (enable climbing), or else disable player climbing
+        if (this.physics.overlap(this.player, this.vineGroup)) {
+            this.player.canClimb = true;
+        } else {
+            this.player.canClimb = false;
+        }
         updatePlayerMovement(this);
         hitboxUpdater(this);
     }
 
-    startClimbing() {
-        this.player.isClimbing = true;
+    // Spawn all objects from tilemap, scale them and enable physics
+    spawnObjects(objects) {
+        // Scale vines and enable physics
+        objects.forEach(element => {
+            // Scale the vine sprite and position it accordingly
+            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
+
+            // Enable physics and scale collision body
+            this.physics.add.existing(element, true);
+            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
+        });
     }
+
 }
 
 export { Level2 };

@@ -18,6 +18,7 @@ function loadPlayer(scene) {
     scene.player.disabledCrouch = false;
     scene.player.isSliding = false;
     scene.player.isAttacking = false;
+    scene.player.canClimb = false;
     scene.player.isClimbing = false;
     // Player gravity
     scene.player.body.setGravityY(1000);
@@ -121,7 +122,7 @@ function createAnimation(scene) {
     scene.anims.create({
         key: "climb",
         frames: scene.anims.generateFrameNumbers("playerSheet", {
-            frames: [70, 71, 72, 73]
+            frames: [140, 141, 142, 143]
         }),
         frameRate: 10,
         repeat: -1
@@ -148,6 +149,7 @@ function createAnimation(scene) {
 
 // Player movement updator
 function updatePlayerMovement(scene) {
+
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
@@ -162,26 +164,42 @@ function updatePlayerMovement(scene) {
         idle(scene);
     }
 
-    // Jump / climb
-    if (scene.keys.w.isDown && scene.player.body.onFloor()) {
-        if (scene.player.isClimbing) {
-            climb(scene);
-        } else {
-            jump(scene);
-        }
-    }
-
     // Fall
     if (!scene.player.body.onFloor() &&
         scene.player.body.velocity.y > 0 &&
         !scene.player.isSliding &&
-        !scene.player.isAttacking) {
+        !scene.player.isAttacking &&
+        !scene.player.isClimbing) {
         fall(scene);
     }
 
     // Crouch
     if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking) {
         crouch(scene);
+    }
+
+    // Climbing/jumping logics
+    if (scene.player.isClimbing) {
+        climb(scene);
+    } else {
+        // Regular jump/fall logic
+        if (scene.keys.w.isDown && scene.player.body.onFloor()) {
+            jump(scene);
+        }
+    }
+
+    // Enter climbing state
+    if (scene.player.canClimb && scene.keys.w.isDown && !scene.player.isClimbing) {
+        // Cancel climbing if any non-climbing input detected
+        const hasHorizontalInput = scene.keys.a.isDown || scene.keys.d.isDown;
+        const hasAttackInput = scene.keys.space.isDown;
+        const hasConflictingInput = hasHorizontalInput || hasAttackInput;
+        
+        if (!hasConflictingInput) {
+            enterClimb(scene); // Enter climbing state if no conflicting input detected
+        } else {
+            exitClimb(scene, false); // Voluntary exit, no impulse
+        }
     }
 
     // Attack
@@ -284,10 +302,10 @@ function attack(scene) {
     }
 }
 
-// Player move functions
+// Player move left functions
 function moveLeft(scene) {
     updateDirection(scene, 0);
-    scene.player.setVelocityX(-300);
+    scene.player.setVelocityX(-300); 
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
         scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
@@ -295,6 +313,7 @@ function moveLeft(scene) {
 
 }
 
+// Player move right function
 function moveRight(scene) {
     updateDirection(scene, 1);
     scene.player.setVelocityX(300);
@@ -304,6 +323,7 @@ function moveRight(scene) {
     }
 }
 
+// Player idle function
 function idle(scene) {
     scene.player.setVelocityX(0);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
@@ -317,11 +337,6 @@ function jump(scene) {
     if (scene.player.body.onFloor() && !scene.player.isAttacking) {
         scene.player.play("jump", true);
     }
-    // Fall
-    if (!scene.player.body.onFloor() && scene.player.body.velocity.y > 0  && !scene.player.isAttacking) {
-        scene.player.play("fall", true);
-    }
-
     scene.player.setVelocityY(-600);
 }
 
@@ -342,9 +357,59 @@ function crouch(scene) {
     }
 }
 
-// Function to ensure player can climb vines
-function climb(scene) {
+// Player enter climbing function
+function enterClimb(scene) {
+    scene.groundCollider.active = false;
+    scene.player.isClimbing = true;
+    scene.player.body.setAllowGravity(false);
+    scene.player.setVelocityY(0);
+    scene.player.setVelocityX(0);
     scene.player.play("climb", true);
 }
 
-export { loadPlayer, createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater, climb };
+// Player exit climbing function
+function exitClimb(scene, impulse) {
+    scene.groundCollider.active = true;
+    scene.player.isClimbing = false;
+    scene.player.canClimb = false;
+    scene.player.body.setAllowGravity(true);
+    
+    // Apply small vertical impulse when exiting
+    if (impulse) jump(scene);
+    
+    // Transition to appropriate animation
+    if (!scene.player.body.onFloor()) {
+        scene.player.play("jump", true);
+    }
+}
+
+// Function that deals with player climbing
+function climb(scene) {
+    // Horizontal movement/attack cancels climbing
+    // End of ladder/vine also cancels climbing
+    if (!scene.player.canClimb || scene.keys.a.isDown || scene.keys.d.isDown || scene.keys.space.isDown) {
+        if (!scene.player.canClimb) {
+            if (scene.player.body.velocity.y < 0) {
+                exitClimb(scene, true);   // Player has reached the end of vine/ladder while climbing, exit with impulse
+            } else {
+                exitClimb(scene, false);   // Player has reached the end of vine/ladder while descending, exit without impulse
+            }
+        } else {
+            exitClimb(scene, false);  // Voluntary exit, no impulse
+        }
+    } else {
+        if (scene.keys.w.isDown) {
+            scene.player.setVelocityY(-50); // Climb up
+            scene.player.play("climb", true);
+        } else if (scene.keys.s.isDown) {
+            console.log("aoijsdf")
+            scene.player.setVelocityY(50); // Climb down
+            scene.player.play("climb", true);
+        } else {
+            scene.player.setVelocityY(0);
+            scene.player.play("climb", true).stop(); // Idle on ladder/vine
+        }
+    }
+}
+
+export { loadPlayer, createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater };
