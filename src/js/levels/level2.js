@@ -23,7 +23,7 @@ function loadAssets(scene) {
     // Load dungeon tileset
     scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
     // Load background image collection
-    scene.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/Bg_images.tmj");
+    scene.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/l2_map.tmj");
     scene.load.image("bg2_1", "/assets/img/backgrounds/background_2/Plan_1.png");
     scene.load.image("bg2_2", "/assets/img/backgrounds/background_2/Plan_2.png");
     scene.load.image("bg2_3", "/assets/img/backgrounds/background_2/Plan_3.png");
