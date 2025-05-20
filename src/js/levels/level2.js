@@ -42,6 +42,16 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
+
+    // Load musics
+    scene.load.audio("childrenOfOmnissiah", "/assets/sounds/musics/childreOfOmnissiah.mp3");
+    scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
+    scene.load.audio("death", "/assets/sounds/sfx/climb.wav");
+    scene.load.audio("death", "/assets/sounds/sfx/hurt.mp3");
+    scene.load.audio("death", "/assets/sounds/sfx/jump.wav");
+    scene.load.audio("death", "/assets/sounds/sfx/step.wav");
+    scene.load.audio("death", "/assets/sounds/sfx/teleport.wav");
+    scene.load.audio("death", "/assets/sounds/sfx/landing.wav");
 }
 
 class Level2 extends Phaser.Scene {
