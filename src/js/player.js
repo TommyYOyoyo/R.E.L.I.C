@@ -402,10 +402,10 @@ function climb(scene) {
         }
     } else {
         if (scene.keys.w.isDown) {
-            scene.player.setVelocityY(-50); // Climb up
+            scene.player.setVelocityY(-150); // Climb up
             scene.player.play("climb", true);
         } else if (scene.keys.s.isDown) {
-            scene.player.setVelocityY(50); // Climb down
+            scene.player.setVelocityY(100); // Climb down
             scene.player.play("climb", true);
         } else {
             scene.player.setVelocityY(0);

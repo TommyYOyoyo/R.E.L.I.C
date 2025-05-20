@@ -126,11 +126,12 @@ class Level2 extends Phaser.Scene {
         this.spawnObjects(vines);
         this.spawnObjects(checkpoints);
         
-        // Add vines to vineGroup
+        // Add vines to vineGroup as physics object groups
         this.vineGroup = this.physics.add.staticGroup();
         vines.forEach(vine => {
             this.vineGroup.add(vine);
         }); 
+        this.vineGroup.setVisible(false); // Hide objects
 
         // Scale layers
         const layers = [walls, ground, decorations];
