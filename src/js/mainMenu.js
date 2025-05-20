@@ -23,6 +23,7 @@ class MainMenu extends Phaser.Scene {
             url: 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js',
             sceneKey: 'rexUI',
         });
+        this.load.audio("childrenOfOmnissiah", "/assets/sounds/musics/childrenOfOmnissiah.mp3");
     }
 
     create() {
@@ -44,7 +45,7 @@ class MainMenu extends Phaser.Scene {
             strokeThickness: 3,
         }).setOrigin(0.5);
         // Title shadow
-        title.postFX.addShadow(0, 0, 0.1, 3, 0x000000, 3, 0.5)
+        title.postFX.addShadow(0, 0, 0.1, 3, 0x000000, 3, 0.5);
 
         // Render buttons    
         let buttons = this.rexUI.add.buttons({
@@ -124,15 +125,23 @@ class MainMenu extends Phaser.Scene {
                 }));
                 // Start new game scene
                 this.scene.start('Level2');
+                this.sound.stopAll(); // Stop all sounds
             } else if (button.text == "CONTINUER") {
                 // Restart latest progress
                 const level = JSON.parse(localStorage.getItem('lastGame')).level;
                 this.scene.start(`${level}`);
+                this.sound.stopAll(); // Stop all sounds
             } else {
                 guide();
             }
         })
         .layout(); // arrange positions
+
+        const music = this.sound.add('childrenOfOmnissiah', {
+            loop: true,
+            volume: 0.5,
+        });
+        music.play();
     }    
 }
 

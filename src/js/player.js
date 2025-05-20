@@ -20,6 +20,7 @@ function loadPlayer(scene) {
     scene.player.isAttacking = false;
     scene.player.canClimb = false;
     scene.player.isClimbing = false;
+    scene.player.wasFalling = false;
     // Player gravity
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
@@ -150,6 +151,14 @@ function createAnimation(scene) {
 // Player movement updator
 function updatePlayerMovement(scene) {
 
+    // Landing sound mechanism
+    if (scene.player.wasFalling && scene.player.body.onFloor()) scene.sound.play("landing");
+    if (scene.player.body.velocity.y > 0) {
+        scene.player.wasFalling = true;
+    } else {
+        scene.player.wasFalling = false;
+    }
+
     // Limit player falling velocity to prevent speed being faster than game update ticks
     if (scene.player.body.velocity.y > 950) scene.player.body.setVelocityY(950);
 
@@ -231,6 +240,7 @@ function startSlide(scene) {
     scene.player.isSliding = true;
     scene.player.setSize(15, 15).setOffset(20, 20); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
+    scene.sound.play("jump"); // Play jump sound effect
     // Reset after 250ms
     setTimeout(() => {
         endSlide(scene);
@@ -312,6 +322,7 @@ function moveLeft(scene) {
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
         scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
+        if (scene.gameTick % 10 == 0) scene.sound.play("run"); // Play run sound effect
     }
 
 }
@@ -323,6 +334,7 @@ function moveRight(scene) {
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
         scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
+        if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
 }
 
@@ -339,6 +351,7 @@ function idle(scene) {
 function jump(scene) {
     if (scene.player.body.onFloor() && !scene.player.isAttacking) {
         scene.player.play("jump", true);
+        scene.sound.play("jump"); // Play jump sound effect
     }
     scene.player.setVelocityY(-600);
 }
@@ -402,9 +415,11 @@ function climb(scene) {
         }
     } else {
         if (scene.keys.w.isDown) {
+            if (scene.gameTick % 15 == 0) scene.sound.play("climb"); // Play climbing sound effect
             scene.player.setVelocityY(-150); // Climb up
             scene.player.play("climb", true);
         } else if (scene.keys.s.isDown) {
+            if (scene.gameTick % 20 == 0) scene.sound.play("climb"); // Play climbing sound effect
             scene.player.setVelocityY(100); // Climb down
             scene.player.play("climb", true);
         } else {

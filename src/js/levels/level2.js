@@ -23,6 +23,7 @@ function loadAssets(scene) {
     // Load dungeon tileset
     scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
     // Load background image collection
+    /*
     scene.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/l2_map.tmj");
     scene.load.image("bg2_1", "/assets/img/backgrounds/background_2/Plan_1.png");
     scene.load.image("bg2_2", "/assets/img/backgrounds/background_2/Plan_2.png");
@@ -33,7 +34,7 @@ function loadAssets(scene) {
     scene.load.image("bg3_2", "/assets/img/backgrounds/background_3/Plan_2.png");
     scene.load.image("bg3_3", "/assets/img/backgrounds/background_3/Plan_3.png");
     scene.load.image("bg3_4", "/assets/img/backgrounds/background_3/Plan_4.png");
-    scene.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");
+    scene.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");*/
     // Load map
     scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
 
@@ -44,14 +45,15 @@ function loadAssets(scene) {
     });
 
     // Load musics
-    scene.load.audio("childrenOfOmnissiah", "/assets/sounds/musics/childreOfOmnissiah.mp3");
+    scene.load.audio("onceInALullaby", "/assets/sounds/musics/onceInALullaby.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
-    scene.load.audio("death", "/assets/sounds/sfx/climb.wav");
-    scene.load.audio("death", "/assets/sounds/sfx/hurt.mp3");
-    scene.load.audio("death", "/assets/sounds/sfx/jump.wav");
-    scene.load.audio("death", "/assets/sounds/sfx/step.wav");
-    scene.load.audio("death", "/assets/sounds/sfx/teleport.wav");
-    scene.load.audio("death", "/assets/sounds/sfx/landing.wav");
+    scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
+    scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
+    scene.load.audio("jump", "/assets/sounds/sfx/jump.wav");
+    scene.load.audio("run", "/assets/sounds/sfx/step.mp3");
+    scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
+    scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
+    scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
 }
 
 class Level2 extends Phaser.Scene {
@@ -62,6 +64,7 @@ class Level2 extends Phaser.Scene {
         this.groundCollider;
         this.vineGroup;
         this.ground;
+        this.gameTick = 0;
     }
 
     // Preload all assets (init)
@@ -88,6 +91,13 @@ class Level2 extends Phaser.Scene {
         const map = this.add.tilemap("map");
         const bgMap = this.add.tilemap("bgCollection");
 
+        const music = this.sound.add('onceInALullaby', {
+            loop: true,
+            volume: 0.5,
+        });
+        music.play();
+
+        /*
         // Loading background images
         const img1 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_3\/Plan_5.png", "bg3_5");
         const img2 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_3\/Plan_2.png", "bg3_2");
@@ -104,7 +114,7 @@ class Level2 extends Phaser.Scene {
         //const bgenv1 = bgMap.createLayer("Background_environment(1)", [img4, img5], 0, 0);
         //const bgenv2 = bgMap.createLayer("Background_environment(2)", [img1, img3, img4, img7, img8, img9, img10], 0, 0);
         //const bgenv3 = bgMap.createLayer("Background_environment(3)", [img2, img4, img7, img8], 0, 0);
-        
+        */
         // Load main tilesets
         const ruinSet = map.addTilesetImage("Ruins", "ruinSet");
         const dungeonSet = map.addTilesetImage("Dungeon", "dungeonSet");
@@ -167,6 +177,10 @@ class Level2 extends Phaser.Scene {
 
     // Game update loop
     update() {
+        // Update game tick
+        this.gameTick++;
+        if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
+
         // Check if player overlaps with the vines (enable climbing), or else disable player climbing
         if (this.physics.overlap(this.player, this.vineGroup)) {
             this.player.canClimb = true;
