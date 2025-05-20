@@ -21,6 +21,7 @@ function loadPlayer(scene) {
     scene.player.canClimb = false;
     scene.player.isClimbing = false;
     scene.player.wasFalling = false;
+    scene.player.attackCooldown = 0;
     // Player gravity
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
@@ -150,6 +151,9 @@ function createAnimation(scene) {
 
 // Player movement updator
 function updatePlayerMovement(scene) {
+
+    // Player attack cooldown countdown mech
+    if (scene.player.attackCooldown > 0) --scene.player.attackCooldown;
 
     // Landing sound mechanism
     if (scene.player.wasFalling && scene.player.body.onFloor()) scene.sound.play("landing");
@@ -296,22 +300,33 @@ function hitboxUpdater(scene) {
 
 // Functions to initiate and end player attacking appropriately
 function attack(scene) {
-    // Prevent other animations from overriding
-    scene.player.isAttacking = true;
-    scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
+    // Player's attack cooldown is over
+    if (scene.player.attackCooldown == 0) {
+        // Set player attack cooldown
+        scene.player.attackCooldown = 50;
 
-    // Attack mech here TODO
+        // Play attack sound
+        scene.sound.play("attack", {
+            volume: 0.5
+        });
 
-    // Ground attack
-    if (scene.player.body.onFloor()) {
-        scene.player.play("attack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
-        });
-    // Air attack
-    } else {
-        scene.player.play("airAttack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
-        });
+        // PLAYER ATTACK MECH TODO HERE
+
+        // Prevent other animations from overriding
+        scene.player.isAttacking = true;
+        scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox TO CHECK WHY DO I EVEN WRITE THIS?
+
+        // Ground attack 
+        if (scene.player.body.onFloor()) {
+            scene.player.play("attack", true).on("animationcomplete", () => {
+                scene.player.isAttacking = false;
+            });
+        // Air attack
+        } else {
+            scene.player.play("airAttack", true).on("animationcomplete", () => {
+                scene.player.isAttacking = false;
+            });
+        }
     }
 }
 
