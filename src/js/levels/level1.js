@@ -5,9 +5,7 @@
  */
 
 import Phaser from "phaser";
-//import { createMenu, removeMenu } from './MainMenu';
-
-const speedDown = 0;
+import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -16,96 +14,165 @@ const sizes = {
     mapHeight: window.innerHeight * 3,
 };
 
+// Load assets for the current level
+function loadAssets(scene) {
+    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+
+    // Main tileset
+    scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset.png");
+    
+    // Background images
+    scene.load.image("bgLayer1", "assets/img/backgrounds/background_1/Plan_3.png");
+    scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
+    
+    // Main map - ensure this path is correct!
+    scene.load.tilemapTiledJSON("map", "assets/img/maps/l1_map.tmj");
+
+    // Player spritesheet
+    scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {
+        frameWidth: 50,
+        frameHeight: 37
+    });
+}
+
 class Level1 extends Phaser.Scene {
     constructor() {
-        super('Level1');
-        this.player;
-        this.cursor;
-        this.playerVelocity = speedDown + 400;
+        super("Level1");
+        this.scaleMultiplier = 3.5;
+        this.player = null;
+        this.groundCollider = null;
+        this.ladderGroup = null;
+        this.ground = null;
     }
 
     preload() {
-        this.load.image('bg', '/assets/img/bg.webp');
-        this.load.image('player','/assets/img/Player/Player1.png');
-        // Create a 1x1 transparent pixel image named 'invisible.png' for collisions
+        loadAssets(this);
+
+        this.keys = this.input.keyboard.addKeys({
+            a: Phaser.Input.Keyboard.KeyCodes.A,
+            s: Phaser.Input.Keyboard.KeyCodes.S,
+            d: Phaser.Input.Keyboard.KeyCodes.D,
+            w: Phaser.Input.Keyboard.KeyCodes.W,
+            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+            f: Phaser.Input.Keyboard.KeyCodes.F
+        });
     }
 
-    create() {
-        // Set background to cover full screen
+    create() {       
+        // Create background
+        this.add.image(0, 0, "bgLayer1").setOrigin(0).setScrollFactor(0.5).setDepth(-5);
+        this.add.image(0, 0, "bgLayer2").setOrigin(0).setScrollFactor(0.3).setDepth(-4);
 
-        const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0);
-        bg.setDisplaySize(this.scale.width, this.scale.height);
+        // Main map creation - with error handling
+        const map = this.make.tilemap({ key: "map" });
+        if (!map) {
+            console.error("Failed to load tilemap!");
+            return;
+        }
 
-        // Create player (scaled relative to screen size)
-          this.physics.world.gravity.y = 0;
-        const playerSize = Math.min(this.scale.width, this.scale.height) * 0.1;
-        this.player = this.physics.add.image(
-            playerSize,
-            this.scale.height - playerSize * 1.5,
-            'player'
-        );
-        this.player.setDisplaySize(playerSize, playerSize);
-        this.player.setCollideWorldBounds(true);
+        // Add tileset - ensure "Dungeon" matches your Tiled tileset name
+        const tileset = map.addTilesetImage("Tileset", "dungeonTileset");
+        if (!tileset) {
+            console.error("Failed to load tileset!");
+            return;
+        }
 
-        // Create floor collider (using physics body)
-        const floorCollider = this.add.rectangle(
-            0, this.scale.height - 300,  // Changed from -1 to -100 to match your original position
-            this.scale.width, 50,         // Increased height from 2 to 50 for better collision
-            0x000000, 0.5
-        ).setOrigin(0, 0);
-        this.physics.add.existing(floorCollider, true);
-        this.physics.add.collider(this.player, floorCollider);
+        // Create all layers with null checks
+        const layers = {
+            backwalls: map.createLayer("backwalls", tileset, 0, 0),
+            walls: map.createLayer("walls", tileset, 0, 0),
+            deco: map.createLayer("deco", tileset, 0, 0),
+            collidables: map.createLayer("collidables", tileset, 0, 0),
+            layering: map.createLayer("layering", tileset, 0, 0)
+        };
 
-
-
-        // Keyboard controls
-        this.cursor = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D,
-            arrowUp: Phaser.Input.Keyboard.KeyCodes.UP,
-            arrowDown: Phaser.Input.Keyboard.KeyCodes.DOWN,
-            arrowLeft: Phaser.Input.Keyboard.KeyCodes.LEFT,
-            arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT
-        });
+        // Scale layers and set depth
+        const layerDepths = {
+    backwalls: -5,    // farthest back
+    walls: -4,
+    deco: -3,
+    collidables: 2,
+    player: 1,
+    layering: 10      // front most
+};
 
 
+Object.entries(layers).forEach(([name, layer]) => {
+    if (layer) {
+        layer.setScale(this.scaleMultiplier).setOrigin(0, 0);
+        layer.setDepth(layerDepths[name] ?? 0);  // default 0 if missing
+    } else {
+        console.warn(`Failed to create layer: ${name}`);
+    }
+});
+        // Create object groups
+        this.ladderGroup = this.physics.add.staticGroup();
+        this.checkpointGroup = this.physics.add.staticGroup();
 
-        // Handle window resize
-        this.scale.on('resize', (gameSize) => {
-            bg.setDisplaySize(gameSize.width, gameSize.height);
-            floorCollider.setSize(gameSize.width, 2);
-            floorCollider.y = gameSize.height - 100;
-            this.scale.on('resize', (gameSize) => {
-                floorCollider.y = gameSize.height + 10000;  // Updated to match new position
+        // Load objects from interact layer
+        const objectLayer = map.getObjectLayer("interact");
+        if (objectLayer) {
+            objectLayer.objects.forEach(obj => {
+                const x = obj.x * this.scaleMultiplier;
+                const y = obj.y * this.scaleMultiplier;
+                const width = obj.width * this.scaleMultiplier;
+                const height = obj.height * this.scaleMultiplier;
+
+                if (obj.type === "Ladder") {
+                    const ladder = this.physics.add.sprite(x, y, "")
+                        .setSize(width, height)
+                        .setOrigin(0, 0);
+                    this.ladderGroup.add(ladder);
+                }
+                // Add other object types as needed
             });
-        });
+        }
+
+        // Load player
+        loadPlayer(this);
+        this.player.setScale(this.scaleMultiplier);
+
+        // Set up physics world bounds
+        this.physics.world.setBounds(
+            0, 
+            0, 
+            map.widthInPixels * this.scaleMultiplier, 
+            map.heightInPixels * this.scaleMultiplier
+        );
+
+        // Enable collisions - collidables layer should collide
+        if (layers.collidables) {
+            layers.collidables.setCollisionByExclusion([-1]);
+            this.physics.add.collider(this.player, layers.collidables);
+        }
+
+        // Also collide with walls if needed
+        if (layers.walls) {
+            this.physics.add.collider(this.player, layers.walls);
+        }
+
+        // Camera setup
+        this.cameras.main.setBounds(
+            0, 
+            0, 
+            map.widthInPixels * this.scaleMultiplier, 
+            map.heightInPixels * this.scaleMultiplier
+        );
+        this.cameras.main.startFollow(this.player);
     }
 
     update() {
-        const { left, right, up, down, arrowLeft, arrowRight, arrowUp, arrowDown } = this.cursor;
-
-        let velocityX = 0;
-        let velocityY = 0;
-
-        // Horizontal Movement
-        if (left.isDown || arrowLeft.isDown) velocityX = -this.playerVelocity;
-        if (right.isDown || arrowRight.isDown) velocityX = this.playerVelocity;
-
-        // Vertical Movement
-        if (up.isDown || arrowUp.isDown) velocityY = -this.playerVelocity;
-        if (down.isDown || arrowDown.isDown) velocityY = this.playerVelocity;
-
-        // Normalize diagonal speed
-        if (velocityX !== 0 && velocityY !== 0) {
-            const diagonalSpeed = this.playerVelocity / Math.sqrt(2);
-            velocityX = velocityX < 0 ? -diagonalSpeed : diagonalSpeed;
-            velocityY = velocityY < 0 ? -diagonalSpeed : diagonalSpeed;
+        // Check ladder collisions
+        if (this.player && this.ladderGroup) {
+            this.player.canClimb = this.physics.overlap(this.player, this.ladderGroup);
         }
-
-        this.player.setVelocity(velocityX, velocityY);
+        
+        // Update player
+        if (this.player) {
+            updatePlayerMovement(this);
+            hitboxUpdater(this);
+        }
     }
 }
 
-export { Level1 }
+export { Level1 };
