@@ -346,7 +346,7 @@ function moveLeft(scene) {
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
         scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
-        if (scene.gameTick % 10 == 0) scene.sound.play("run"); // Play run sound effect
+        if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
 
 }
