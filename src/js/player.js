@@ -26,6 +26,18 @@ function loadPlayer(scene) {
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
     createAttackHitbox(scene);
+
+    // Reset player isAttacking property when attack animations finish or get interrupted
+    scene.player.on("animationcomplete", (anim) => {
+        if (anim.key === "attack" || anim.key === "airAttack") {
+            scene.player.isAttacking = false; // Reset when attack anims finish naturally
+        }
+    });
+    scene.player.on("animationstop", (anim) => {
+        if (anim.key === "attack" || anim.key === "airAttack") {
+            scene.player.isAttacking = false; // Reset if attack anims are interrupted by other anims
+        }
+    });
 }
 
 // Function to create animations for the player
@@ -302,6 +314,9 @@ function hitboxUpdater(scene) {
 function attack(scene) {
     // Player's attack cooldown is over
     if (scene.player.attackCooldown == 0) {
+        // Prevent other animations from overriding
+        scene.player.isAttacking = true;
+
         // Set player attack cooldown
         scene.player.attackCooldown = 50;
 
@@ -312,20 +327,14 @@ function attack(scene) {
 
         // PLAYER ATTACK MECH TODO HERE
 
-        // Prevent other animations from overriding
-        scene.player.isAttacking = true;
         scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox TO CHECK WHY DO I EVEN WRITE THIS?
 
         // Ground attack 
         if (scene.player.body.onFloor()) {
-            scene.player.play("attack", true).on("animationcomplete", () => {
-                scene.player.isAttacking = false;
-            });
+            scene.player.play("attack", true);
         // Air attack
         } else {
-            scene.player.play("airAttack", true).on("animationcomplete", () => {
-                scene.player.isAttacking = false;
-            });
+            scene.player.play("airAttack", true);
         }
     }
 }
