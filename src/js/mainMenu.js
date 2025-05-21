@@ -24,6 +24,8 @@ class MainMenu extends Phaser.Scene {
             sceneKey: 'rexUI',
         });
         this.load.audio("childrenOfOmnissiah", "/assets/sounds/musics/childrenOfOmnissiah.mp3");
+        this.load.audio("hover", "/assets/sounds/sfx/hover.wav");
+        this.load.audio("click", "/assets/sounds/sfx/click.mp3");
     }
 
     create() {
@@ -104,6 +106,7 @@ class MainMenu extends Phaser.Scene {
         // on hover: change color
         .on("button.over", (button) => {
             button.getElement('background').setFillStyle(0x000000, 0.75);
+            this.sound.play("hover");
         })
         .on("button.out", (button) => {
             button.getElement('background').setFillStyle(0x000000, 0.5);
@@ -111,6 +114,7 @@ class MainMenu extends Phaser.Scene {
         // Handle clicks - WIP
         .on('button.click', (button) => {
             const lastGame = localStorage.getItem('lastGame');
+            this.sound.play("click");
             // If nothing was saved, set default
             if (lastGame == null) localStorage.setItem('lastGame', JSON.stringify({
                 level: "Level1",

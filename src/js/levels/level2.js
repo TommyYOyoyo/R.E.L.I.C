@@ -93,7 +93,7 @@ class Level2 extends Phaser.Scene {
 
         const music = this.sound.add('onceInALullaby', {
             loop: true,
-            volume: 0.5,
+            volume: 0.25,
         });
         music.play();
 
