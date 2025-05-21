@@ -49,8 +49,8 @@ class MainMenu extends Phaser.Scene {
         });
         bg.play("bgCycle", true);
         bg.setScale(1.75).setOrigin(0.5, 0.4).setPosition(windowWidth / 2, windowHeight / 2);
-        
-        // Blur change
+
+        // Blur the bg
         bg.postFX.addBlur();
 
         // Render title with styles
@@ -153,17 +153,22 @@ class MainMenu extends Phaser.Scene {
         })
         .layout(); // arrange positions
 
-        const music = this.sound.add('childrenOfOmnissiah', {
+        this.music = this.sound.add('childrenOfOmnissiah', {
             loop: true,
             volume: 0.5,
         });
-        music.play();
+        this.music.play();
     } 
 
     // Start new scene with fade effect
     newScene(scene) {
         // Start a 1-second fade to black
-        this.cameras.main.fadeOut(1000, 0, 0, 0); // (duration, red, green, blue)
+        this.cameras.main.fadeOut(2000, 0, 0, 0); // (duration, red, green, blue)
+
+        // Gradually decrease music volume
+        setInterval(() => {
+            if (this.music.volume > 0) this.music.volume -= 0.1;
+        }, 200);
 
         // When fade completes, switch scenes
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
