@@ -69,8 +69,6 @@ class Level2 extends Phaser.Scene {
 
     // Preload all assets (init)
     preload() {
-        //this.toggleMenu();
-
         // Load assets
         loadAssets(this);
 
@@ -86,7 +84,11 @@ class Level2 extends Phaser.Scene {
     }
 
     // Create all game objects
-    create() {       
+    create() {
+
+        // Fade in from black over 1 second
+        this.cameras.main.fadeIn(2000, 0, 0, 0);
+        
         // Map creation
         const map = this.add.tilemap("map");
         const bgMap = this.add.tilemap("bgCollection");

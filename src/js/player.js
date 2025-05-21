@@ -2,6 +2,7 @@
  * @author Honglue Zheng
  * @version beta
  * @note Universal player functions
+ * @comment I should've made this a Player class... But it's too late to change :(
  */
 
 function loadPlayer(scene) {
