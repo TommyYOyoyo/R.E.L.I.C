@@ -9,7 +9,7 @@ function loadPlayer(scene) {
     scene.player = scene.physics.add.sprite(0, 0, "playerSheet");
     // Create playeranimation
     createAnimation(scene);
-    scene.player.setScale(3).setSize(18, 32).setOffset(17, 4);
+    scene.player.setScale(3).setSize(13, 32).setOffset(19, 4);
     scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
     // Set player collision detection
     scene.player.setCollideWorldBounds(true);
@@ -21,6 +21,7 @@ function loadPlayer(scene) {
     scene.player.canClimb = false;
     scene.player.isClimbing = false;
     scene.player.wasFalling = false;
+    scene.player.isCrouching = false;
     scene.player.attackCooldown = 0;
     // Player gravity
     scene.player.body.setGravityY(1000);
@@ -162,9 +163,14 @@ function createAnimation(scene) {
 }
 
 // Player movement updator
-function updatePlayerMovement(scene) {
+function updatePlayer(scene) {
 
-    // Player attack cooldown countdown mech
+    // Player disable crouch hitbox if not sliding nor crouching
+    if (!scene.player.isCrouching && !scene.player.isSliding) {
+        scene.player.setSize(13, 32).setOffset(19, 4);  // Reset player hitbox
+    }
+
+    // Player attack cooldown countdown
     if (scene.player.attackCooldown > 0) --scene.player.attackCooldown;
 
     // Landing sound mechanism
@@ -181,6 +187,7 @@ function updatePlayerMovement(scene) {
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
+    // MOVEMENTS TRIGGERS BELOW ----------------------------------------------------------
     // Move left
     if (scene.keys.a.isDown) {
         moveLeft(scene);
@@ -204,6 +211,8 @@ function updatePlayerMovement(scene) {
     // Crouch
     if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking) {
         crouch(scene);
+    } else {
+        scene.player.isCrouching = false; // Disable user isCrouching property for appropriate hitbox management
     }
 
     // Climbing/jumping logics
@@ -254,7 +263,7 @@ function updateDirection(scene, direction) {
 // Functions to initiate and end player sliding appropriately
 function startSlide(scene) {
     scene.player.isSliding = true;
-    scene.player.setSize(15, 15).setOffset(20, 20); // Shrink player hitbox
+    scene.player.setSize(13, 15).setOffset(20, 20); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
     scene.sound.play("jump"); // Play jump sound effect
     // Reset after 250ms
@@ -264,7 +273,6 @@ function startSlide(scene) {
 }
 function endSlide(scene) {
     scene.disableCrouch = true;             // Disable crouching until key release to prevent abuse
-    scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
     scene.player.isSliding = false;         // Reset sliding flag
     // Resume appropriate animation
     if (scene.player.body.velocity.x > 0) {
@@ -327,8 +335,6 @@ function attack(scene) {
 
         // PLAYER ATTACK MECH TODO HERE
 
-        scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox TO CHECK WHY DO I EVEN WRITE THIS?
-
         // Ground attack 
         if (scene.player.body.onFloor()) {
             scene.player.play("attack", true);
@@ -344,7 +350,6 @@ function moveLeft(scene) {
     updateDirection(scene, 0);
     scene.player.setVelocityX(-300); 
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
@@ -356,7 +361,6 @@ function moveRight(scene) {
     updateDirection(scene, 1);
     scene.player.setVelocityX(300);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
@@ -366,7 +370,6 @@ function moveRight(scene) {
 function idle(scene) {
     scene.player.setVelocityX(0);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("idle", true);
     }
 }
@@ -393,7 +396,8 @@ function crouch(scene) {
     // Player is not moving
     } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
         scene.player.play("crouch", true);
-        scene.player.setSize(15, 15).setOffset(20, 20);
+        scene.player.setSize(13, 15).setOffset(20, 20);
+        scene.player.isCrouching = true;
     }
 }
 
@@ -453,4 +457,4 @@ function climb(scene) {
     }
 }
 
-export { loadPlayer, createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater };
+export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater };

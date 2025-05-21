@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
+import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -187,7 +187,7 @@ class Level2 extends Phaser.Scene {
         } else {
             this.player.canClimb = false;
         }
-        updatePlayerMovement(this);
+        updatePlayer(this);
         hitboxUpdater(this);
     }
 
