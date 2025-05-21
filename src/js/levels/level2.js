@@ -181,12 +181,6 @@ class Level2 extends Phaser.Scene {
         this.gameTick++;
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
 
-        // Check if player overlaps with the vines (enable climbing), or else disable player climbing
-        if (this.physics.overlap(this.player, this.vineGroup)) {
-            this.player.canClimb = true;
-        } else {
-            this.player.canClimb = false;
-        }
         updatePlayer(this);
         hitboxUpdater(this);
     }

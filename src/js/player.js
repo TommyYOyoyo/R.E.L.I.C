@@ -9,12 +9,9 @@ function loadPlayer(scene) {
     scene.player = scene.physics.add.sprite(0, 0, "playerSheet");
     // Create playeranimation
     createAnimation(scene);
-    scene.player.setScale(3).setSize(13, 32).setOffset(19, 4);
-    scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
-    // Set player collision detection
-    scene.player.setCollideWorldBounds(true);
     // Set player properties
     scene.player.direction = 1;
+    scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
     scene.player.disabledCrouch = false;
     scene.player.isSliding = false;
     scene.player.isAttacking = false;
@@ -23,10 +20,23 @@ function loadPlayer(scene) {
     scene.player.wasFalling = false;
     scene.player.isCrouching = false;
     scene.player.attackCooldown = 0;
+    scene.player.hitboxWidth = 15;
+    scene.player.hitboxHeight = 32;
+    scene.player.hitboxOffsetX = 18;
+    scene.player.hitboxOffsetY = 4;
+    scene.player.crouchHitboxWidth = 15;
+    scene.player.crouchHitboxHeight = 15;
+    scene.player.crouchHitboxOffsetX = 20;
+    scene.player.crouchHitboxOffsetY = 20;
+    scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
+                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
+    // Set player collision detection
+    scene.player.setCollideWorldBounds(true);
     // Player gravity
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
     createAttackHitbox(scene);
+    scene.player.body.setMaxSpeed(950); // Cap velocity to prevent going through blocks
 
     // Reset player isAttacking property when attack animations finish or get interrupted
     scene.player.on("animationcomplete", (anim) => {
@@ -167,7 +177,15 @@ function updatePlayer(scene) {
 
     // Player disable crouch hitbox if not sliding nor crouching
     if (!scene.player.isCrouching && !scene.player.isSliding) {
-        scene.player.setSize(13, 32).setOffset(19, 4);  // Reset player hitbox
+        scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
+                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
+    }
+
+    // Check if player overlaps with the vines (enable climbing), or else disable player climbing
+    if (scene.physics.overlap(scene.player, scene.vineGroup)) {
+        scene.player.canClimb = true;
+    } else {
+        scene.player.canClimb = false;
     }
 
     // Player attack cooldown countdown
@@ -180,9 +198,6 @@ function updatePlayer(scene) {
     } else {
         scene.player.wasFalling = false;
     }
-
-    // Limit player falling velocity to prevent speed being faster than game update ticks
-    if (scene.player.body.velocity.y > 950) scene.player.body.setVelocityY(950);
 
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
@@ -226,7 +241,7 @@ function updatePlayer(scene) {
     }
 
     // Enter climbing state
-    if (scene.player.canClimb && scene.keys.w.isDown && !scene.player.isClimbing) {
+    if (scene.player.canClimb && (scene.keys.w.isDown || scene.keys.s.isDown) && !scene.player.isClimbing) {
         // Cancel climbing if any non-climbing input detected
         const hasHorizontalInput = scene.keys.a.isDown || scene.keys.d.isDown;
         const hasAttackInput = scene.keys.space.isDown;
@@ -263,7 +278,8 @@ function updateDirection(scene, direction) {
 // Functions to initiate and end player sliding appropriately
 function startSlide(scene) {
     scene.player.isSliding = true;
-    scene.player.setSize(13, 15).setOffset(20, 20); // Shrink player hitbox
+    scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
+                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
     scene.sound.play("jump"); // Play jump sound effect
     // Reset after 250ms
@@ -396,7 +412,8 @@ function crouch(scene) {
     // Player is not moving
     } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
         scene.player.play("crouch", true);
-        scene.player.setSize(13, 15).setOffset(20, 20);
+        scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
+                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
         scene.player.isCrouching = true;
     }
 }
