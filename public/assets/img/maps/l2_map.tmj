@@ -61,7 +61,7 @@
          "name":"Clouds",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":140,
          "x":0,
          "y":0
@@ -93,7 +93,7 @@
          "name":"Background_environment(1)",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":140,
          "x":0,
          "y":0
@@ -124,7 +124,7 @@
          "name":"Background_environment(2)",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":140,
          "x":0,
          "y":0
@@ -155,7 +155,7 @@
          "name":"Background_environment(3)",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":140,
          "x":0,
          "y":0
@@ -186,7 +186,7 @@
          "name":"Background_environment(4)",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":140,
          "x":0,
          "y":0
@@ -323,7 +323,7 @@
                 {
                  "height":0,
                  "id":3,
-                 "name":"spawnpoint",
+                 "name":"checkpoint_0",
                  "rotation":0,
                  "type":"Checkpoint",
                  "visible":true,

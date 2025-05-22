@@ -6,8 +6,27 @@
  */
 
 function loadPlayer(scene) {
-    // LOAD PLAYER
-    scene.player = scene.physics.add.sprite(0, 0, "playerSheet");
+    scene.latestCheckpoint;
+    scene.nextCheckpoint;
+    const fetchedCheckpoint = JSON.parse(localStorage.getItem('lastGame')).checkpoint;
+    // Set fetched checkpoints
+    if (fetchedCheckpoint == 0) { 
+        scene.latestCheckpoint = scene.checkpoints[0]; // Default spawnpoint
+        scene.nextCheckpoint = scene.checkpoints[1];
+    } else {
+        scene.latestCheckpoint = fetchedCheckpoint;
+        const fetchedCheckpointIndex = fetchedCheckpoint.name.substr(fetchedCheckpoint.name.length - 1);
+        if (fetchedCheckpointIndex == scene.checkpoints.length - 1) {
+            scene.nextCheckpoint = scene.checkpoints[scene.checkpoints.length - 1]; // No more checkpoints
+        } else {
+            scene.nextCheckpoint = scene.checkpoints[parseInt(fetchedCheckpointIndex) + 1];
+        }
+    }
+    // Spawn player at latest checkpoint
+    let spawnX = scene.latestCheckpoint.x;
+    let spawnY = scene.latestCheckpoint.y - 10;
+    // LOAD/SPAWN PLAYER
+    scene.player = scene.physics.add.sprite(spawnX, spawnY, "playerSheet");
     // Create playeranimation
     createAnimation(scene);
     // Set player properties
@@ -20,6 +39,7 @@ function loadPlayer(scene) {
     scene.player.isClimbing = false;
     scene.player.wasFalling = false;
     scene.player.isCrouching = false;
+    scene.player.isJumping = false;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
     scene.player.hitboxHeight = 32;
@@ -48,6 +68,11 @@ function loadPlayer(scene) {
     scene.player.on("animationstop", (anim) => {
         if (anim.key === "attack" || anim.key === "airAttack") {
             scene.player.isAttacking = false; // Reset if attack anims are interrupted by other anims
+        }
+    });
+    scene.player.on("animationstop", (anim) => {
+        if (anim.key === "slide") {
+            scene.player.isSliding = false; // Reset if sliding anims are interrupted by other anims
         }
     });
 }
@@ -176,8 +201,16 @@ function createAnimation(scene) {
 // Player movement updator
 function updatePlayer(scene) {
 
-    // Player disable crouch hitbox if not sliding nor crouching
-    if (!scene.player.isCrouching && !scene.player.isSliding) {
+    // Checkpoint updater
+    updateCheckpoint(scene);
+
+    // Player disable isJumping property if on ground
+    if (scene.player.body.onFloor()) scene.player.isJumping = false;
+
+    // Player disable crouch hitbox if not sliding nor crouching, or is in the air while trying to crouch/slide
+    // To prevent crouch+jump thru wall glitch abuse
+    if ((!scene.player.isCrouching && !scene.player.isSliding) ||
+        (scene.player.isJumping && scene.player.isCrouching)) {
         scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
     }
@@ -283,10 +316,10 @@ function startSlide(scene) {
                             .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
     scene.sound.play("jump"); // Play jump sound effect
-    // Reset after 250ms
+    // Reset after 500ms
     setTimeout(() => {
         endSlide(scene);
-    }, 250);
+    }, 500);
 }
 function endSlide(scene) {
     scene.disableCrouch = true;             // Disable crouching until key release to prevent abuse
@@ -393,6 +426,7 @@ function idle(scene) {
 
 // Player jump function
 function jump(scene) {
+    scene.player.isJumping = true;
     if (scene.player.body.onFloor() && !scene.player.isAttacking) {
         scene.player.play("jump", true);
         scene.sound.play("jump"); // Play jump sound effect
@@ -471,6 +505,36 @@ function climb(scene) {
         } else {
             scene.player.setVelocityY(0);
             scene.player.play("climb", true).stop(); // Idle on ladder/vine
+        }
+    }
+}
+
+// Function to update latest checkpoint
+function updateCheckpoint(scene) {
+
+    // Safety checks
+    if (!scene.nextCheckpoint || !scene.latestCheckpoint) console.log("[WARNING] No checkpoints found.");
+
+    if (scene.nextCheckpoint.name == scene.latestCheckpoint.name) return; // No new checkpoint, ignore
+
+    // Check if player is within 20 pixels of the checkpoint (X and Y)
+    const isNearX = Math.abs(scene.player.x - scene.nextCheckpoint.x) <= 50;
+    const isNearY = Math.abs(scene.player.y - scene.nextCheckpoint.y) <= 50;
+
+    if (isNearX && isNearY) {
+        console.log("New checkpoint");
+        const nextCheckpointIndex = scene.checkpoints.indexOf(scene.nextCheckpoint) + 1;
+        scene.latestCheckpoint = scene.nextCheckpoint;
+        // Set new latest checkpoint in localStorage
+        localStorage.setItem("lastGame", JSON.stringify({
+            level: JSON.parse(localStorage.getItem('lastGame')).level,
+            checkpoint: scene.latestCheckpoint
+        }));
+        // Set new next checkpoint
+        if (nextCheckpointIndex < scene.checkpoints.length) {
+            scene.nextCheckpoint = scene.checkpoints[nextCheckpointIndex];
+        } else {
+            return;     // No next checkpoint
         }
     }
 }

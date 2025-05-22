@@ -133,14 +133,14 @@ class MainMenu extends Phaser.Scene {
             // If nothing was saved, set default
             if (lastGame == null) localStorage.setItem('lastGame', JSON.stringify({
                 level: "Level1",
-                checkpoint: 1
+                checkpoint: 0
             }));
             // New game
             if (button.text == "NOUVEAU JEU") {
                 // Set last game checkpoint to default
                 localStorage.setItem('lastGame', JSON.stringify({
                     level: "Level2", /** @note DEV: CHANGE HERE TO SKIP TO YOUR LEVEL */ 
-                    checkpoint: 1
+                    checkpoint: 0
                 }));
                 this.newScene("Level2");
             } else if (button.text == "CONTINUER") {
