@@ -220,7 +220,7 @@ function updatePlayer(scene) {
     }
 
     // Check if player overlaps with the vines (enable climbing), or else disable player climbing
-    if (scene.physics.overlap(scene.player, scene.vineGroup)) {
+    if (scene.physics.overlap(scene.player, scene.climbableGroup)) {
         scene.player.canClimb = true;
     } else {
         scene.player.canClimb = false;

@@ -62,7 +62,7 @@ class Level2 extends Phaser.Scene {
         this.scaleMultiplier = 3.5;
         this.player;
         this.groundCollider;
-        this.vineGroup;
+        this.climbableGroup;
         this.ground;
         this.gameTick = 0;
         this.latestCheckpoint;
@@ -174,10 +174,10 @@ class Level2 extends Phaser.Scene {
         this.enemySpawnsGroup = this.physics.add.staticGroup();
         this.leversGroup = this.physics.add.staticGroup();
         this.questSpawnsGroup = this.physics.add.staticGroup();
-        this.vineGroup = this.physics.add.staticGroup();
+        this.climbableGroup = this.physics.add.staticGroup();
 
         // Add object collections to physics groups
-        this.addToGroup(this.vines, this.vineGroup);
+        this.addToGroup(this.vines, this.climbableGroup);
         this.addToGroup(this.checkpoints, this.checkpointsGroup);
         this.addToGroup(this.fragments, this.fragmentsGroup);
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);

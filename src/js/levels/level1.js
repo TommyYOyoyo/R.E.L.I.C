@@ -86,6 +86,12 @@ class Level1 extends Phaser.Scene {
         this.checkpoints = map.createFromObjects("interact", {
                 type:"Checkpoint"
         });
+        this.ladders = map.createFromObjects("interact", {
+            type:"Ladder"
+        });
+
+        this.spawnObjects(this.checkpoints);
+        this.spawnObjects(this.ladders);
 
 
         this.outsideLayer = layers.outside;
@@ -98,12 +104,13 @@ class Level1 extends Phaser.Scene {
         });
 
         // Create object groups
-         this.ladderGroup = this.physics.add.staticGroup();
+         this.climbableGroup = this.physics.add.staticGroup();
     this.inoutGroup = this.physics.add.staticGroup();
     this.inout2Group = this.physics.add.staticGroup();
     this.checkpointGroup = this.physics.add.staticGroup();
 
-    this.addToGroup(this.checkpoints, this.checkpointGroup);
+    this.addToGroup(this.checkpoints, this.checkpointGroup)
+    this.addToGroup(this.ladders, this.climbableGroup);
 
     // Get all interactive objects from the map
     const interactObjects = map.getObjectLayer("interact")?.objects || [];
@@ -116,12 +123,14 @@ class Level1 extends Phaser.Scene {
         const height = obj.height * scale;
         
         // Create invisible physics bodies instead of sprites
-        if (obj.type === "ladder") {
+        /*
+        if (obj.type === "Ladder") {
             const ladder = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
             this.physics.add.existing(ladder, true);
             this.ladderGroup.add(ladder);
         } 
-        else if (obj.type === "INOUT") {
+            */
+        if (obj.type === "INOUT") {
             const inout = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
             this.physics.add.existing(inout, true);
             this.inoutGroup.add(inout);
@@ -158,7 +167,7 @@ class Level1 extends Phaser.Scene {
         this.gameTick++;
 
         // Level2-style climbing detection
-        if (this.physics.overlap(this.player, this.ladderGroup)) {
+        if (this.physics.overlap(this.player, this.climbableGroup)) {
             this.player.canClimb = true;
         } else {
             this.player.canClimb = false;
@@ -190,6 +199,20 @@ class Level1 extends Phaser.Scene {
 
         updatePlayer(this);
         hitboxUpdater(this);
+    }
+
+    // Spawn all objects from tilemap, scale them and enable physics
+    spawnObjects(objects) {
+        // Scale vines and enable physics
+        objects.forEach(element => {
+            element.setOrigin(0.5, 0.5);
+            // Scale the vine sprite and position it accordingly
+            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
+
+            // Enable physics and scale collision body
+            this.physics.add.existing(element, true);
+            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
+        });
     }
 
     // Add object to group
