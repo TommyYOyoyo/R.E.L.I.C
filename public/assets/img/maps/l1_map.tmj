@@ -322,7 +322,7 @@
                 {
                  "height":30,
                  "id":14,
-                 "name":"Door",
+                 "name":"door",
                  "properties":[
                         {
                          "name":"Door",
@@ -339,7 +339,7 @@
                 {
                  "height":13.25,
                  "id":15,
-                 "name":"Chest",
+                 "name":"chest",
                  "properties":[
                         {
                          "name":"Chest",
@@ -354,7 +354,7 @@
                  "y":306
                 }, 
                 {
-                 "height":75.5,
+                 "height":89,
                  "id":16,
                  "name":"ladder",
                  "rotation":0,
@@ -362,7 +362,7 @@
                  "visible":true,
                  "width":15.75,
                  "x":1296.25,
-                 "y":242.75
+                 "y":229.25
                 }, 
                 {
                  "height":137.333333333333,
@@ -378,7 +378,7 @@
                 {
                  "height":62.25,
                  "id":23,
-                 "name":"Door",
+                 "name":"door",
                  "rotation":0,
                  "type":"Door",
                  "visible":true,
@@ -389,9 +389,9 @@
                 {
                  "height":41.25,
                  "id":24,
-                 "name":"Next",
+                 "name":"level2",
                  "rotation":0,
-                 "type":"Next",
+                 "type":"Portal",
                  "visible":true,
                  "width":37.75,
                  "x":3444.75,
@@ -451,6 +451,17 @@
                  "width":899.25,
                  "x":540.375,
                  "y":85
+                }, 
+                {
+                 "height":0,
+                 "id":40,
+                 "name":"checkpoint_0",
+                 "rotation":0,
+                 "type":"Checkpoint",
+                 "visible":true,
+                 "width":0,
+                 "x":60,
+                 "y":308
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -459,7 +470,7 @@
          "y":0
         }],
  "nextlayerid":14,
- "nextobjectid":40,
+ "nextobjectid":41,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

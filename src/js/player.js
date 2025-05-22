@@ -12,7 +12,11 @@ function loadPlayer(scene) {
     // Set fetched checkpoints
     if (fetchedCheckpoint == 0) { 
         scene.latestCheckpoint = scene.checkpoints[0]; // Default spawnpoint
-        scene.nextCheckpoint = scene.checkpoints[1];
+        if (scene.checkpoints.length > 1) {
+            scene.nextCheckpoint = scene.checkpoints[1]; // Grab next checkpoint only if it exists
+        } else {
+            scene.nextCheckpoint = scene.checkpoints[0]; // No more checkpoints
+        } 
     } else {
         scene.latestCheckpoint = fetchedCheckpoint;
         const fetchedCheckpointIndex = fetchedCheckpoint.name.substr(fetchedCheckpoint.name.length - 1);

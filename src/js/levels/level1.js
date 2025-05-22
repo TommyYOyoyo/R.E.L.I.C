@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
+import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -36,6 +36,8 @@ class Level1 extends Phaser.Scene {
         super("Level1");
         this.scaleMultiplier = 3.5;
         this.gameTick = 0;
+        this.latestCheckpoint;
+        this.nextCheckpoint;
     }
 
     preload() {
@@ -77,11 +79,19 @@ class Level1 extends Phaser.Scene {
             collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(3),
             outside: map.createLayer("outside", tileset, 0, 0).setDepth(4),
             outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(5),
-            layering: map.createLayer("layering", tileset, 0, 0).setDepth(10) 
-        };
+            layering: map.createLayer("layering", tileset, 0, 0).setDepth(10),
+           
+            
+        }
+        this.checkpoints = map.createFromObjects("interact", {
+                type:"Checkpoint"
+        });
+
 
         this.outsideLayer = layers.outside;
-        this.outside2Layer = layers.outside2; // Store reference to outside2
+        this.outside2Layer = layers.outside2;
+
+         // Store reference to outside2
         // Scale all layers
         Object.values(layers).forEach(layer => {
             if (layer) layer.setScale(scale).setOrigin(0);
@@ -91,6 +101,9 @@ class Level1 extends Phaser.Scene {
          this.ladderGroup = this.physics.add.staticGroup();
     this.inoutGroup = this.physics.add.staticGroup();
     this.inout2Group = this.physics.add.staticGroup();
+    this.checkpointGroup = this.physics.add.staticGroup();
+
+    this.addToGroup(this.checkpoints, this.checkpointGroup);
 
     // Get all interactive objects from the map
     const interactObjects = map.getObjectLayer("interact")?.objects || [];
@@ -123,7 +136,7 @@ class Level1 extends Phaser.Scene {
         // Load and scale player
         loadPlayer(this);
         this.player.setScale(scale).setDepth(5);
-        this.player.setPosition(100,1000); // Set initial position
+        
 
         // Store ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
@@ -175,8 +188,17 @@ class Level1 extends Phaser.Scene {
             this.outside2Layer.setVisible(true);
         }
 
-        updatePlayerMovement(this);
+        updatePlayer(this);
         hitboxUpdater(this);
+    }
+
+    // Add object to group
+    addToGroup(objects, group) {
+        // Add each objects collection to the appropriate physics objects group
+        objects.forEach(element => {
+            group.add(element);
+        });
+        group.setVisible(false);
     }
 }
 
