@@ -1,9 +1,3 @@
-/**
- * Level 1 game file
- * @author Ray Lam
- * @version beta
- */
-
 import Phaser from "phaser";
 import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
 
@@ -14,40 +8,38 @@ const sizes = {
     mapHeight: window.innerHeight * 3,
 };
 
-// Load assets for the current level
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
-
-    // Main tileset
     scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset.png");
-    
-    // Background images
     scene.load.image("bgLayer1", "assets/img/backgrounds/background_1/Plan_3.png");
     scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
-    
-    // Main map - ensure this path is correct!
     scene.load.tilemapTiledJSON("map", "assets/img/maps/l1_map.tmj");
-
-    // Player spritesheet
     scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {
         frameWidth: 50,
         frameHeight: 37
     });
+
+    // Sound assets
+    scene.load.audio("onceInALullaby", "/assets/sounds/musics/onceInALullaby.mp3");
+    scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
+    scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
+    scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
+    scene.load.audio("jump", "/assets/sounds/sfx/jump.wav");
+    scene.load.audio("run", "/assets/sounds/sfx/step.mp3");
+    scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
+    scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
+    scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
 }
 
 class Level1 extends Phaser.Scene {
     constructor() {
         super("Level1");
         this.scaleMultiplier = 3.5;
-        this.player = null;
-        this.groundCollider = null;
-        this.ladderGroup = null;
-        this.ground = null;
+        this.gameTick = 0;
     }
 
     preload() {
         loadAssets(this);
-
         this.keys = this.input.keyboard.addKeys({
             a: Phaser.Input.Keyboard.KeyCodes.A,
             s: Phaser.Input.Keyboard.KeyCodes.S,
@@ -58,120 +50,133 @@ class Level1 extends Phaser.Scene {
         });
     }
 
-    create() {       
-        // Create background
-        this.add.image(0, 0, "bgLayer1").setOrigin(0).setScrollFactor(0.5).setDepth(-5);
-        this.add.image(0, 0, "bgLayer2").setOrigin(0).setScrollFactor(0.3).setDepth(-4);
+    create() {
+        const scale = this.scaleMultiplier;
+  this.bg1 = this.add.image(0, 0, "bgLayer1")
+        .setOrigin(0)
+        .setScrollFactor(0.5)
+        .setDepth(-5)
+        .setScale(scale);  // Added scale
+    
+    this.bg2 = this.add.image(0, 0, "bgLayer2")
+        .setOrigin(0)
+        .setScrollFactor(0.3)
+        .setDepth(-2)
+        .setScale(scale); 
 
-        // Main map creation - with error handling
+        // Create map and tileset
         const map = this.make.tilemap({ key: "map" });
-        if (!map) {
-            console.error("Failed to load tilemap!");
-            return;
-        }
-
-        // Add tileset - ensure "Dungeon" matches your Tiled tileset name
         const tileset = map.addTilesetImage("Tileset", "dungeonTileset");
-        if (!tileset) {
-            console.error("Failed to load tileset!");
-            return;
-        }
 
-        // Create all layers with null checks
+        // Create all layers with proper depth ordering
         const layers = {
-            backwalls: map.createLayer("backwalls", tileset, 0, 0),
-            walls: map.createLayer("walls", tileset, 0, 0),
-            deco: map.createLayer("deco", tileset, 0, 0),
-            collidables: map.createLayer("collidables", tileset, 0, 0),
-            layering: map.createLayer("layering", tileset, 0, 0)
+            skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(-3),
+            backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(0),
+            walls: map.createLayer("walls", tileset, 0, 0).setDepth(1),
+            deco: map.createLayer("deco", tileset, 0, 0).setDepth(2),
+            collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(3),
+            outside: map.createLayer("outside", tileset, 0, 0).setDepth(4),
+            outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(5),
+            layering: map.createLayer("layering", tileset, 0, 0).setDepth(10) 
         };
 
-        // Scale layers and set depth
-        const layerDepths = {
-    backwalls: -5,    // farthest back
-    walls: -4,
-    deco: -3,
-    collidables: 2,
-    player: 1,
-    layering: 10      // front most
-};
+        this.outsideLayer = layers.outside;
+        this.outside2Layer = layers.outside2; // Store reference to outside2
+        // Scale all layers
+        Object.values(layers).forEach(layer => {
+            if (layer) layer.setScale(scale).setOrigin(0);
+        });
 
-
-Object.entries(layers).forEach(([name, layer]) => {
-    if (layer) {
-        layer.setScale(this.scaleMultiplier).setOrigin(0, 0);
-        layer.setDepth(layerDepths[name] ?? 0);  // default 0 if missing
-    } else {
-        console.warn(`Failed to create layer: ${name}`);
-    }
-});
         // Create object groups
-        this.ladderGroup = this.physics.add.staticGroup();
-        this.checkpointGroup = this.physics.add.staticGroup();
+         this.ladderGroup = this.physics.add.staticGroup();
+    this.inoutGroup = this.physics.add.staticGroup();
+    this.inout2Group = this.physics.add.staticGroup();
 
-        // Load objects from interact layer
-        const objectLayer = map.getObjectLayer("interact");
-        if (objectLayer) {
-            objectLayer.objects.forEach(obj => {
-                const x = obj.x * this.scaleMultiplier;
-                const y = obj.y * this.scaleMultiplier;
-                const width = obj.width * this.scaleMultiplier;
-                const height = obj.height * this.scaleMultiplier;
-
-                if (obj.type === "Ladder") {
-                    const ladder = this.physics.add.sprite(x, y, "")
-                        .setSize(width, height)
-                        .setOrigin(0, 0);
-                    this.ladderGroup.add(ladder);
-                }
-                // Add other object types as needed
-            });
+    // Get all interactive objects from the map
+    const interactObjects = map.getObjectLayer("interact")?.objects || [];
+    
+    // Process each interactive object - MODIFIED SECTION
+    interactObjects.forEach(obj => {
+        const x = obj.x * scale;
+        const y = obj.y * scale;
+        const width = obj.width * scale;
+        const height = obj.height * scale;
+        
+        // Create invisible physics bodies instead of sprites
+        if (obj.type === "ladder") {
+            const ladder = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
+            this.physics.add.existing(ladder, true);
+            this.ladderGroup.add(ladder);
+        } 
+        else if (obj.type === "INOUT") {
+            const inout = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
+            this.physics.add.existing(inout, true);
+            this.inoutGroup.add(inout);
         }
+        else if (obj.type === "INOUT2") {
+            const inout2 = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
+            this.physics.add.existing(inout2, true);
+            this.inout2Group.add(inout2);
+        }
+    });
 
-        // Load player
+        // Load and scale player
         loadPlayer(this);
-        this.player.setScale(this.scaleMultiplier);
+        this.player.setScale(scale).setDepth(5);
+        this.player.setPosition(100,1000); // Set initial position
 
-        // Set up physics world bounds
-        this.physics.world.setBounds(
-            0, 
-            0, 
-            map.widthInPixels * this.scaleMultiplier, 
-            map.heightInPixels * this.scaleMultiplier
-        );
+        // Store ground collider reference
+        this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
 
-        // Enable collisions - collidables layer should collide
+        // Set up collisions
         if (layers.collidables) {
             layers.collidables.setCollisionByExclusion([-1]);
-            this.physics.add.collider(this.player, layers.collidables);
         }
 
-        // Also collide with walls if needed
-        if (layers.walls) {
-            this.physics.add.collider(this.player, layers.walls);
-        }
-
-        // Camera setup
-        this.cameras.main.setBounds(
-            0, 
-            0, 
-            map.widthInPixels * this.scaleMultiplier, 
-            map.heightInPixels * this.scaleMultiplier
-        );
+        // Set world and camera bounds
+        this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
+        this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
+
+        this.gameTick = 0;
     }
 
-    update() {
-        // Check ladder collisions
-        if (this.player && this.ladderGroup) {
-            this.player.canClimb = this.physics.overlap(this.player, this.ladderGroup);
+     update() {
+        this.gameTick++;
+
+        // Level2-style climbing detection
+        if (this.physics.overlap(this.player, this.ladderGroup)) {
+            this.player.canClimb = true;
+        } else {
+            this.player.canClimb = false;
+            if (this.player.isClimbing) {
+                this.player.isClimbing = false;
+                this.groundCollider.active = true;
+                this.player.body.setAllowGravity(true);
+            }
         }
-        
-        // Update player
-        if (this.player) {
-            updatePlayerMovement(this);
-            hitboxUpdater(this);
+
+        // Check for INOUT interactions
+        const touchingInout = this.physics.overlap(this.player, this.inoutGroup);
+        const touchingInout2 = this.physics.overlap(this.player, this.inout2Group);
+
+        // Toggle layer visibility
+        if (touchingInout2) {
+            // When touching INOUT2, hide outside and show outside2
+            this.outsideLayer.setVisible(true);
+            this.outside2Layer.setVisible(false);
+        } else if (touchingInout) {
+            // When touching INOUT (but not INOUT2), hide outside
+            this.outsideLayer.setVisible(false);
+            this.outside2Layer.setVisible(true);
+        } else {
+            // When not touching either, show outside and hide outside2
+            this.outsideLayer.setVisible(true);
+            this.outside2Layer.setVisible(true);
         }
+
+        updatePlayerMovement(this);
+        hitboxUpdater(this);
     }
 }
 
