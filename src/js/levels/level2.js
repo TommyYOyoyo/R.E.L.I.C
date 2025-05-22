@@ -5,7 +5,7 @@
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayerMovement, hitboxUpdater } from "../player.js";
+import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -65,12 +65,12 @@ class Level2 extends Phaser.Scene {
         this.vineGroup;
         this.ground;
         this.gameTick = 0;
+        this.latestCheckpoint;
+        this.nextCheckpoint;
     }
 
     // Preload all assets (init)
     preload() {
-        //this.toggleMenu();
-
         // Load assets
         loadAssets(this);
 
@@ -86,14 +86,17 @@ class Level2 extends Phaser.Scene {
     }
 
     // Create all game objects
-    create() {       
+    create() {
+        // Fade in from black over 1 second
+        this.cameras.main.fadeIn(2000, 0, 0, 0);
+        
         // Map creation
         const map = this.add.tilemap("map");
         const bgMap = this.add.tilemap("bgCollection");
 
         const music = this.sound.add('onceInALullaby', {
             loop: true,
-            volume: 0.5,
+            volume: 0.25,
         });
         music.play();
 
@@ -134,24 +137,52 @@ class Level2 extends Phaser.Scene {
         walls.setDepth(0);
         decorations.setDepth(1);
         
-        // Create vines
-        const vines = map.createFromObjects("Objects", {
+        // Create interactive objects from tilemap
+        this.vines = map.createFromObjects("Objects", {
             type: "Ladder",
         });
 
-        const checkpoints = map.createFromObjects("Objects", {
+        this.checkpoints = map.createFromObjects("Objects", {
             type: "Checkpoint",
         });
 
-        this.spawnObjects(vines);
-        this.spawnObjects(checkpoints);
-        
-        // Add vines to vineGroup as physics object groups
+        this.fragments = map.createFromObjects("Objects", {
+            type: "Fragment",
+        });
+
+        this.enemySpawns = map.createFromObjects("Objects", {
+            type: "EnemySpawn",
+        });
+
+        this.levers = map.createFromObjects("Objects", {
+            type: "Lever",
+        });
+
+        this.questSpawns = map.createFromObjects("Objects", {
+            type: "QuestSpawn",
+        });
+
+        // Spawn all objects
+        const objects = [this.vines, this.checkpoints, this.fragments, this.enemySpawns, this.levers, this.questSpawns];
+        objects.forEach(element => {
+            this.spawnObjects(element);
+        });
+
+        // Object groups
+        this.checkpointsGroup = this.physics.add.staticGroup();
+        this.fragmentsGroup = this.physics.add.staticGroup();
+        this.enemySpawnsGroup = this.physics.add.staticGroup();
+        this.leversGroup = this.physics.add.staticGroup();
+        this.questSpawnsGroup = this.physics.add.staticGroup();
         this.vineGroup = this.physics.add.staticGroup();
-        vines.forEach(vine => {
-            this.vineGroup.add(vine);
-        }); 
-        this.vineGroup.setVisible(false); // Hide objects
+
+        // Add object collections to physics groups
+        this.addToGroup(this.vines, this.vineGroup);
+        this.addToGroup(this.checkpoints, this.checkpointsGroup);
+        this.addToGroup(this.fragments, this.fragmentsGroup);
+        this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
+        this.addToGroup(this.levers, this.leversGroup);
+        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
 
         // Scale layers
         const layers = [walls, ground, decorations];
@@ -181,13 +212,7 @@ class Level2 extends Phaser.Scene {
         this.gameTick++;
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
 
-        // Check if player overlaps with the vines (enable climbing), or else disable player climbing
-        if (this.physics.overlap(this.player, this.vineGroup)) {
-            this.player.canClimb = true;
-        } else {
-            this.player.canClimb = false;
-        }
-        updatePlayerMovement(this);
+        updatePlayer(this);
         hitboxUpdater(this);
     }
 
@@ -195,6 +220,7 @@ class Level2 extends Phaser.Scene {
     spawnObjects(objects) {
         // Scale vines and enable physics
         objects.forEach(element => {
+            element.setOrigin(0.5, 0.5);
             // Scale the vine sprite and position it accordingly
             element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
 
@@ -202,6 +228,15 @@ class Level2 extends Phaser.Scene {
             this.physics.add.existing(element, true);
             element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
         });
+    }
+
+    // Add object to group
+    addToGroup(objects, group) {
+        // Add each objects collection to the appropriate physics objects group
+        objects.forEach(element => {
+            group.add(element);
+        });
+        group.setVisible(false);
     }
 
 }

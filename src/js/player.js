@@ -2,29 +2,79 @@
  * @author Honglue Zheng
  * @version beta
  * @note Universal player functions
+ * @comment I should've made this a Player class... But it's too late to change :(
  */
 
 function loadPlayer(scene) {
-    // LOAD PLAYER
-    scene.player = scene.physics.add.sprite(0, 0, "playerSheet");
+    scene.latestCheckpoint;
+    scene.nextCheckpoint;
+    const fetchedCheckpoint = JSON.parse(localStorage.getItem('lastGame')).checkpoint;
+    // Set fetched checkpoints
+    if (fetchedCheckpoint == 0) { 
+        scene.latestCheckpoint = scene.checkpoints[0]; // Default spawnpoint
+        scene.nextCheckpoint = scene.checkpoints[1];
+    } else {
+        scene.latestCheckpoint = fetchedCheckpoint;
+        const fetchedCheckpointIndex = fetchedCheckpoint.name.substr(fetchedCheckpoint.name.length - 1);
+        if (fetchedCheckpointIndex == scene.checkpoints.length - 1) {
+            scene.nextCheckpoint = scene.checkpoints[scene.checkpoints.length - 1]; // No more checkpoints
+        } else {
+            scene.nextCheckpoint = scene.checkpoints[parseInt(fetchedCheckpointIndex) + 1];
+        }
+    }
+    // Spawn player at latest checkpoint
+    let spawnX = scene.latestCheckpoint.x;
+    let spawnY = scene.latestCheckpoint.y - 10;
+    // LOAD/SPAWN PLAYER
+    scene.player = scene.physics.add.sprite(spawnX, spawnY, "playerSheet");
     // Create playeranimation
     createAnimation(scene);
-    scene.player.setScale(3).setSize(18, 32).setOffset(17, 4);
-    scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
-    // Set player collision detection
-    scene.player.setCollideWorldBounds(true);
     // Set player properties
     scene.player.direction = 1;
+    scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
     scene.player.disabledCrouch = false;
     scene.player.isSliding = false;
     scene.player.isAttacking = false;
     scene.player.canClimb = false;
     scene.player.isClimbing = false;
     scene.player.wasFalling = false;
+    scene.player.isCrouching = false;
+    scene.player.isJumping = false;
+    scene.player.attackCooldown = 0;
+    scene.player.hitboxWidth = 15;
+    scene.player.hitboxHeight = 32;
+    scene.player.hitboxOffsetX = 18;
+    scene.player.hitboxOffsetY = 4;
+    scene.player.crouchHitboxWidth = 15;
+    scene.player.crouchHitboxHeight = 15;
+    scene.player.crouchHitboxOffsetX = 20;
+    scene.player.crouchHitboxOffsetY = 20;
+    scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
+                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
+    // Set player collision detection
+    scene.player.setCollideWorldBounds(true);
     // Player gravity
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
     createAttackHitbox(scene);
+    scene.player.body.setMaxSpeed(950); // Cap velocity to prevent going through blocks
+
+    // Reset player isAttacking property when attack animations finish or get interrupted
+    scene.player.on("animationcomplete", (anim) => {
+        if (anim.key === "attack" || anim.key === "airAttack") {
+            scene.player.isAttacking = false; // Reset when attack anims finish naturally
+        }
+    });
+    scene.player.on("animationstop", (anim) => {
+        if (anim.key === "attack" || anim.key === "airAttack") {
+            scene.player.isAttacking = false; // Reset if attack anims are interrupted by other anims
+        }
+    });
+    scene.player.on("animationstop", (anim) => {
+        if (anim.key === "slide") {
+            scene.player.isSliding = false; // Reset if sliding anims are interrupted by other anims
+        }
+    });
 }
 
 // Function to create animations for the player
@@ -149,7 +199,31 @@ function createAnimation(scene) {
 }
 
 // Player movement updator
-function updatePlayerMovement(scene) {
+function updatePlayer(scene) {
+
+    // Checkpoint updater
+    updateCheckpoint(scene);
+
+    // Player disable isJumping property if on ground
+    if (scene.player.body.onFloor()) scene.player.isJumping = false;
+
+    // Player disable crouch hitbox if not sliding nor crouching, or is in the air while trying to crouch/slide
+    // To prevent crouch+jump thru wall glitch abuse
+    if ((!scene.player.isCrouching && !scene.player.isSliding) ||
+        (scene.player.isJumping && scene.player.isCrouching)) {
+        scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
+                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
+    }
+
+    // Check if player overlaps with the vines (enable climbing), or else disable player climbing
+    if (scene.physics.overlap(scene.player, scene.vineGroup)) {
+        scene.player.canClimb = true;
+    } else {
+        scene.player.canClimb = false;
+    }
+
+    // Player attack cooldown countdown
+    if (scene.player.attackCooldown > 0) --scene.player.attackCooldown;
 
     // Landing sound mechanism
     if (scene.player.wasFalling && scene.player.body.onFloor()) scene.sound.play("landing");
@@ -159,12 +233,10 @@ function updatePlayerMovement(scene) {
         scene.player.wasFalling = false;
     }
 
-    // Limit player falling velocity to prevent speed being faster than game update ticks
-    if (scene.player.body.velocity.y > 950) scene.player.body.setVelocityY(950);
-
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
+    // MOVEMENTS TRIGGERS BELOW ----------------------------------------------------------
     // Move left
     if (scene.keys.a.isDown) {
         moveLeft(scene);
@@ -188,6 +260,8 @@ function updatePlayerMovement(scene) {
     // Crouch
     if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking) {
         crouch(scene);
+    } else {
+        scene.player.isCrouching = false; // Disable user isCrouching property for appropriate hitbox management
     }
 
     // Climbing/jumping logics
@@ -201,7 +275,7 @@ function updatePlayerMovement(scene) {
     }
 
     // Enter climbing state
-    if (scene.player.canClimb && scene.keys.w.isDown && !scene.player.isClimbing) {
+    if (scene.player.canClimb && (scene.keys.w.isDown || scene.keys.s.isDown) && !scene.player.isClimbing) {
         // Cancel climbing if any non-climbing input detected
         const hasHorizontalInput = scene.keys.a.isDown || scene.keys.d.isDown;
         const hasAttackInput = scene.keys.space.isDown;
@@ -238,17 +312,17 @@ function updateDirection(scene, direction) {
 // Functions to initiate and end player sliding appropriately
 function startSlide(scene) {
     scene.player.isSliding = true;
-    scene.player.setSize(15, 15).setOffset(20, 20); // Shrink player hitbox
+    scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
+                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
     scene.sound.play("jump"); // Play jump sound effect
-    // Reset after 250ms
+    // Reset after 500ms
     setTimeout(() => {
         endSlide(scene);
-    }, 250);
+    }, 500);
 }
 function endSlide(scene) {
     scene.disableCrouch = true;             // Disable crouching until key release to prevent abuse
-    scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
     scene.player.isSliding = false;         // Reset sliding flag
     // Resume appropriate animation
     if (scene.player.body.velocity.x > 0) {
@@ -296,22 +370,28 @@ function hitboxUpdater(scene) {
 
 // Functions to initiate and end player attacking appropriately
 function attack(scene) {
-    // Prevent other animations from overriding
-    scene.player.isAttacking = true;
-    scene.player.setSize(18, 32).setOffset(17, 4);  // Reset player hitbox
+    // Player's attack cooldown is over
+    if (scene.player.attackCooldown == 0) {
+        // Prevent other animations from overriding
+        scene.player.isAttacking = true;
 
-    // Attack mech here TODO
+        // Set player attack cooldown
+        scene.player.attackCooldown = 50;
 
-    // Ground attack
-    if (scene.player.body.onFloor()) {
-        scene.player.play("attack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
+        // Play attack sound
+        scene.sound.play("attack", {
+            volume: 0.5
         });
-    // Air attack
-    } else {
-        scene.player.play("airAttack", true).on("animationcomplete", () => {
-            scene.player.isAttacking = false;
-        });
+
+        // PLAYER ATTACK MECH TODO HERE
+
+        // Ground attack 
+        if (scene.player.body.onFloor()) {
+            scene.player.play("attack", true);
+        // Air attack
+        } else {
+            scene.player.play("airAttack", true);
+        }
     }
 }
 
@@ -320,9 +400,8 @@ function moveLeft(scene) {
     updateDirection(scene, 0);
     scene.player.setVelocityX(-300); 
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
-        if (scene.gameTick % 10 == 0) scene.sound.play("run"); // Play run sound effect
+        if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
 
 }
@@ -332,7 +411,6 @@ function moveRight(scene) {
     updateDirection(scene, 1);
     scene.player.setVelocityX(300);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
@@ -342,13 +420,13 @@ function moveRight(scene) {
 function idle(scene) {
     scene.player.setVelocityX(0);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
-        scene.player.setSize(18, 32).setOffset(17, 4);
         scene.player.play("idle", true);
     }
 }
 
 // Player jump function
 function jump(scene) {
+    scene.player.isJumping = true;
     if (scene.player.body.onFloor() && !scene.player.isAttacking) {
         scene.player.play("jump", true);
         scene.sound.play("jump"); // Play jump sound effect
@@ -369,7 +447,9 @@ function crouch(scene) {
     // Player is not moving
     } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
         scene.player.play("crouch", true);
-        scene.player.setSize(15, 15).setOffset(20, 20);
+        scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
+                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
+        scene.player.isCrouching = true;
     }
 }
 
@@ -429,4 +509,34 @@ function climb(scene) {
     }
 }
 
-export { loadPlayer, createAnimation, updatePlayerMovement, updateDirection, createAttackHitbox, hitboxUpdater };
+// Function to update latest checkpoint
+function updateCheckpoint(scene) {
+
+    // Safety checks
+    if (!scene.nextCheckpoint || !scene.latestCheckpoint) console.log("[WARNING] No checkpoints found.");
+
+    if (scene.nextCheckpoint.name == scene.latestCheckpoint.name) return; // No new checkpoint, ignore
+
+    // Check if player is within 20 pixels of the checkpoint (X and Y)
+    const isNearX = Math.abs(scene.player.x - scene.nextCheckpoint.x) <= 50;
+    const isNearY = Math.abs(scene.player.y - scene.nextCheckpoint.y) <= 50;
+
+    if (isNearX && isNearY) {
+        console.log("New checkpoint");
+        const nextCheckpointIndex = scene.checkpoints.indexOf(scene.nextCheckpoint) + 1;
+        scene.latestCheckpoint = scene.nextCheckpoint;
+        // Set new latest checkpoint in localStorage
+        localStorage.setItem("lastGame", JSON.stringify({
+            level: JSON.parse(localStorage.getItem('lastGame')).level,
+            checkpoint: scene.latestCheckpoint
+        }));
+        // Set new next checkpoint
+        if (nextCheckpointIndex < scene.checkpoints.length) {
+            scene.nextCheckpoint = scene.checkpoints[nextCheckpointIndex];
+        } else {
+            return;     // No next checkpoint
+        }
+    }
+}
+
+export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater };
