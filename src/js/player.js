@@ -219,7 +219,7 @@ function updatePlayer(scene) {
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
     }
 
-    // Check if player overlaps with the vines (enable climbing), or else disable player climbing
+    // Check if player overlaps with the climbable objects (ladders/vines) (enable climbing), or else disable player climbing
     if (scene.physics.overlap(scene.player, scene.climbableGroup)) {
         scene.player.canClimb = true;
     } else {
