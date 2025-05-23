@@ -6,13 +6,128 @@
 
 import Phaser from 'phaser';
 
-function guide() {
-    // TODO
+// devMode level selector
+function devMode(scene, windowWidth, windowHeight) {
+    if (!scene.devActive) {
+        // Spawn title
+        scene.devText = scene.add.text(0, 0, "Les niveaux sont suggérés d'être joué en ordre.", {
+            fontSize: "16px",
+            fontFamily: 'minecraft',
+            color: "red"
+        });
+        // Position titles
+        scene.devText.x = windowWidth / 5 - scene.devText.width / 2;
+        scene.devText.y = windowHeight / 2 - 30;
+        // Level selectors
+        scene.devSelector = scene.rexUI.add.buttons({
+            x : windowWidth / 5,
+            y : windowHeight / 2 + 100,
+            orientation: "vertical",
+            buttons: [
+                // Button index 1 properties (1st level button)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Niveau 1", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }), 
+                // Button index 2 properties (2nd level button)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Niveau 2", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }), 
+                // Button index 3 properties (3rd level button)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Niveau 3", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }),     
+            ],
+            space: { item: 10 }
+        })// on hover: change color
+        .on("button.over", (button) => {
+            button.getElement('background').setFillStyle(0x000000, 0.75);
+            scene.sound.play("hover");
+        })
+        .on("button.out", (button) => {
+            button.getElement('background').setFillStyle(0x000000, 0.5);
+        })
+        // Level selector
+        .on('button.click', (button) => {
+            scene.sound.play("click");
+            const lastGame = localStorage.getItem('lastGame');
+            // If nothing was saved, set default
+            if (lastGame == null) localStorage.setItem('lastGame', JSON.stringify({
+                level: "Level1",
+                checkpoint: 0
+            }));
+            // New game
+            if (button.text == "Niveau 1") {
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level1", 
+                    checkpoint: 0
+                }));
+                scene.newScene("Level1");
+            } else if (button.text == "Niveau 2") {
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level2",
+                    checkpoint: 0
+                }));
+                scene.newScene("Level2");
+            } else {
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level3",
+                    checkpoint: 0
+                }));
+                scene.newScene("Level3");
+            }
+        }).layout();
+
+        scene.devActive = true;
+    } else {
+        // Destroy all items
+        scene.devText.destroy();
+        scene.devSelector.destroy();
+        scene.devActive = false;
+    }
 }
 
 class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
+        this.devActive = false;
+        this.devText;
+        this.devSelector;
     }
 
     // Preload background image
@@ -84,7 +199,7 @@ class MainMenu extends Phaser.Scene {
                         right: 20,
                     },
                     align: "center"
-                }).setInteractive({useHandCursor: true }), 
+                }).setInteractive({ useHandCursor: true }), 
                 // Button index 1 properties (Continue button)
                 this.rexUI.add.label({
                     width: 300,
@@ -99,13 +214,13 @@ class MainMenu extends Phaser.Scene {
                         right: 20,
                     },
                     align: "center"
-                }).setInteractive({useHandCursor: true }), 
+                }).setInteractive({ useHandCursor: true }), 
                 // Button index 2 properties (Guide button)
                 this.rexUI.add.label({
                     width: 300,
                     height: 100,
                     background: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
-                    text: this.add.text(0, 0, "GUIDE", {
+                    text: this.add.text(0, 0, "DEV", {
                         fontSize: "32px",
                         fontFamily: 'minecraft',
                     }),
@@ -114,7 +229,7 @@ class MainMenu extends Phaser.Scene {
                         right: 20,
                     },
                     align: "center"
-                }).setInteractive({useHandCursor: true }),     
+                }).setInteractive({ useHandCursor: true }),     
             ],
             space: { item: 10 }
         })
@@ -148,7 +263,7 @@ class MainMenu extends Phaser.Scene {
                 const level = JSON.parse(localStorage.getItem('lastGame')).level;
                 this.newScene(`${level}`);
             } else {
-                guide();
+                devMode(this, windowWidth, windowHeight);
             }
         })
         .layout(); // arrange positions
