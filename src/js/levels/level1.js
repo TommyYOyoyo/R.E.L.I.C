@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import PlayerUI from "../playerUI.js";
+
 
 const sizes = {
     width: window.innerWidth,
@@ -11,7 +13,6 @@ const sizes = {
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset.png");
-    scene.load.image("bgLayer1", "assets/img/backgrounds/background_1/Plan_3.png");
     scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
     scene.load.tilemapTiledJSON("map", "assets/img/maps/l1_map.tmj");
     scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {
@@ -20,7 +21,7 @@ function loadAssets(scene) {
     });
 
     // Sound assets
-    scene.load.audio("onceInALullaby", "/assets/sounds/musics/onceInALullaby.mp3");
+    scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
     scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
     scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
@@ -53,18 +54,23 @@ class Level1 extends Phaser.Scene {
     }
 
     create() {
-        const scale = this.scaleMultiplier;
-  this.bg1 = this.add.image(0, 0, "bgLayer1")
-        .setOrigin(0)
-        .setScrollFactor(0.5)
-        .setDepth(-5)
-        .setScale(scale);  // Added scale
+        
+    this.playerUI = new PlayerUI(this);
+
     
+    
+        const scale = this.scaleMultiplier;
     this.bg2 = this.add.image(0, 0, "bgLayer2")
         .setOrigin(0)
-        .setScrollFactor(0.3)
+        .setScrollFactor(0.001)
         .setDepth(-2)
         .setScale(scale); 
+
+        const music = this.sound.add('wellDead', {
+            loop: true,
+            volume: 0.5,
+        });
+        music.play();
 
         // Create map and tileset
         const map = this.make.tilemap({ key: "map" });
@@ -72,15 +78,15 @@ class Level1 extends Phaser.Scene {
 
         // Create all layers with proper depth ordering
         const layers = {
-            skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(-3),
-            backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(0),
-            walls: map.createLayer("walls", tileset, 0, 0).setDepth(1),
-            deco: map.createLayer("deco", tileset, 0, 0).setDepth(2),
-            collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(3),
-            outside: map.createLayer("outside", tileset, 0, 0).setDepth(4),
-            outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(5),
-            layering: map.createLayer("layering", tileset, 0, 0).setDepth(10),
-           
+            skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(1).setScrollFactor(0.2),
+            backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(3),
+            collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(5),
+            walls: map.createLayer("walls", tileset, 0, 0).setDepth(8),
+            deco: map.createLayer("deco", tileset, 0, 0).setDepth(9),
+            door: map.createLayer("door", tileset, 0, 0).setDepth(10),
+            outside: map.createLayer("outside", tileset, 0, 0).setDepth(13),
+            outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(14),
+            layering: map.createLayer("layering", tileset, 0, 0).setDepth(15)
             
         }
         this.checkpoints = map.createFromObjects("interact", {
@@ -90,12 +96,13 @@ class Level1 extends Phaser.Scene {
             type:"Ladder"
         });
 
+
         this.spawnObjects(this.checkpoints);
         this.spawnObjects(this.ladders);
 
-
         this.outsideLayer = layers.outside;
         this.outside2Layer = layers.outside2;
+
 
          // Store reference to outside2
         // Scale all layers
@@ -108,6 +115,7 @@ class Level1 extends Phaser.Scene {
     this.inoutGroup = this.physics.add.staticGroup();
     this.inout2Group = this.physics.add.staticGroup();
     this.checkpointGroup = this.physics.add.staticGroup();
+
 
     this.addToGroup(this.checkpoints, this.checkpointGroup)
     this.addToGroup(this.ladders, this.climbableGroup);
@@ -122,14 +130,6 @@ class Level1 extends Phaser.Scene {
         const width = obj.width * scale;
         const height = obj.height * scale;
         
-        // Create invisible physics bodies instead of sprites
-        /*
-        if (obj.type === "Ladder") {
-            const ladder = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
-            this.physics.add.existing(ladder, true);
-            this.ladderGroup.add(ladder);
-        } 
-            */
         if (obj.type === "INOUT") {
             const inout = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
             this.physics.add.existing(inout, true);
@@ -144,7 +144,7 @@ class Level1 extends Phaser.Scene {
 
         // Load and scale player
         loadPlayer(this);
-        this.player.setScale(scale).setDepth(5);
+        this.player.setScale(scale).setDepth(11);
         
 
         // Store ground collider reference
