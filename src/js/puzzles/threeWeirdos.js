@@ -5,15 +5,15 @@
 const variations = {
     1: {
         1: {
-            dialogue: "The reward is not in my chest!",
+            dialogue: "La récompense n'est pas dans mon coffre !",
             correctAnswer: true
         },
         2: {
-            dialogue: "One of us is telling the truth!",
+            dialogue: "L'un de nous dit la vérité !",
             correctAnswer: false
         },
         3: {
-            dialogue: "They are both telling the truth. The reward isn't in the first chest.",
+            dialogue: "Ils disent tous les deux la vérité. La récompense n'est pas dans le coffre de Nom 1.",
             correctAnswer: false
         }
     },

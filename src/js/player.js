@@ -331,6 +331,8 @@ function endSlide(scene) {
     // Resume appropriate animation
     if (scene.player.body.velocity.x > 0) {
         scene.player.play("run", true);
+    } else if (scene.player.body.velocity.y < 0) {
+        scene.player.play("jump", true);
     } else {
         scene.player.play("idle", true);
     }
