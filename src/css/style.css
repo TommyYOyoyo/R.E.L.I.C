@@ -9,6 +9,11 @@
     src: url("/assets/fonts/Minecraft.ttf") format("truetype");
 }
 
+@font-face {
+    font-family: noita;
+    src: url("/assets/fonts/NoitaBlackletter-Regular.ttf") format("truetype");
+}
+
 html, body {
     height: 100%;
 }

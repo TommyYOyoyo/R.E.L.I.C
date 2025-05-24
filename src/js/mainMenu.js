@@ -169,9 +169,9 @@ class MainMenu extends Phaser.Scene {
         bg.postFX.addBlur();
 
         // Render title with styles
-        const title = this.add.text(windowWidth / 2, windowHeight / 2 - 170, 'R.E.L.I.C', {
-            fontFamily: 'minecraft',
-            fontSize: '180px',
+        const title = this.add.text(windowWidth / 2, windowHeight / 2 - 170, 'R. E. L. I. C.', {
+            fontFamily: 'noita',
+            fontSize: '200px',
             color: '#fcc477',
             stroke: '#000000',
             strokeThickness: 3,
