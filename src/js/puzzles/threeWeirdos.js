@@ -276,7 +276,6 @@ function revert(scene) {
     // Reenable keyboard input
     scene.input.keyboard.enabled = true;
     scene.player.isQuestActive = false;
-    scene.player.currentQuest = null;
 }
 
 export { spawnWeirdos, interactWithWeirdos };

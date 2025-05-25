@@ -5,6 +5,7 @@
  */
 
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
+import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
@@ -609,6 +610,15 @@ function runQuest(scene) {
     switch(true) {
         case scene.player.currentQuest.name.startsWith("threeweirdos"):
             interactWithWeirdos(scene);
+            break;
+        case scene.player.currentQuest.name.startsWith("sequencer"):
+            const sequencerDiv = document.getElementById('puzzleDiv');
+            sequencerDiv.style.display = 'block';
+            // Timeout to prevent ghost key hold glitch
+            setTimeout(() => {
+                echoing_chimes_puzzle(sequencerDiv, scene);
+                scene.children.bringToTop(sequencerDiv);
+            }, 100);
             break;
         default:
             break;

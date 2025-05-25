@@ -400,9 +400,9 @@
                 {
                  "height":14.9527300791048,
                  "id":26,
-                 "name":"lever_1",
+                 "name":"sequencer",
                  "rotation":0,
-                 "type":"Lever",
+                 "type":"Quest",
                  "visible":true,
                  "width":15.4350762106887,
                  "x":657.437777349026,
