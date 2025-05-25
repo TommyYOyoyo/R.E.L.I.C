@@ -1,9 +1,16 @@
+
+//fix showGameOverScreen
+//fix createMenuButton
+
+
+
+
 export default class PlayerUI {
     constructor(scene) {
         this.scene = scene;
         this.currentHealth = 100;
         this.maxHealth = 100;
-        this.totalTime = 5;
+        this.totalTime = 900;
         this.timeUp = false;
         
         this.createTimerText();
@@ -33,6 +40,11 @@ export default class PlayerUI {
             .fillStyle(this.getHealthColor())
             .fillRoundedRect(x, y, (this.currentHealth/this.maxHealth)*barWidth, barHeight, 5);
     }
+
+    updateHealth(newHealth) {
+    this.currentHealth = Phaser.Math.Clamp(newHealth, 0, this.maxHealth);
+    this.drawHealthBar();
+}
 
     getHealthColor() {
         if(this.currentHealth < 30) return 0xFF0000;

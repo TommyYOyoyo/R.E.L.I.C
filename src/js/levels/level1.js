@@ -18,6 +18,26 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
+    scene.load.spritesheet("skeletonAttack", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Attack.png", {
+        frameWidth: 43,
+        frameHeight: 37
+    });
+    scene.load.spritesheet("skeletonWalk", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Walk.png", {
+        frameWidth: 22,
+        frameHeight: 33
+    });
+    scene.load.spritesheet("skeletonDead", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Dead.png", {
+        frameWidth: 33,
+        frameHeight: 32
+    });
+    scene.load.spritesheet("skeletonHit", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Hit.png", {
+        frameWidth: 30,
+        frameHeight: 32
+    });
+    scene.load.spritesheet("skeletonIdle", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Idle.png", {
+        frameWidth: 24,
+        frameHeight: 32
+    });
 
     // Sound assets
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
@@ -43,7 +63,6 @@ class Level1 extends Phaser.Scene {
     }
 
     preload() {
-
         loadAssets(this);
         this.keys = this.input.keyboard.addKeys({
             a: Phaser.Input.Keyboard.KeyCodes.A,
@@ -106,7 +125,6 @@ class Level1 extends Phaser.Scene {
         this.spawnObjects(this.ladders);
         this.spawnObjects(this.activateWalls);
 
-
         this.outsideLayer = layers.outside;
         this.outside2Layer = layers.outside2;
         this.walls1 = layers.backwalls2;
@@ -129,14 +147,12 @@ class Level1 extends Phaser.Scene {
         this.addToGroup(this.activateWalls, this.activateWallsGroup);
 
         this.walls1.setVisible(false);
-this.walls2.setVisible(false);
-this.walls1.setCollisionByExclusion([-1], false); // No collision for walls1
-this.walls2.setCollisionByExclusion([-1], true);  // Enable collision tiles for walls2
+        this.walls2.setVisible(false);
+        this.walls1.setCollisionByExclusion([-1], false);
+        this.walls2.setCollisionByExclusion([-1], true);
 
-        // Get all interactive objects from the map
+        // Process interactive objects
         const interactObjects = map.getObjectLayer("interact")?.objects || [];
-        
-        // Process each interactive object
         interactObjects.forEach(obj => {
             const x = obj.x * scale;
             const y = obj.y * scale;
@@ -155,12 +171,11 @@ this.walls2.setCollisionByExclusion([-1], true);  // Enable collision tiles for 
             }
         });
 
-        // Initialize walls state
-        // Initialize walls state
-
         // Load and scale player
         loadPlayer(this);
         this.player.setScale(scale).setDepth(11);
+        this.player.health = 5;
+        this.playerUI.updateHealth(5);
         
         // Store ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
@@ -170,83 +185,209 @@ this.walls2.setCollisionByExclusion([-1], true);  // Enable collision tiles for 
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
 
+        // Enemy setup
+        this.enemies = this.physics.add.group();
+        this.createSkeletonAnimations();
+        this.spawnSkeleton(800, 500);
+        this.physics.add.collider(this.enemies, layers.collidables);
+
         this.gameTick = 0;
     }
 
-    update() {
-        this.gameTick++;
+    createSkeletonAnimations() {
+        this.anims.create({
+            key: 'skeletonIdle',
+            frames: this.anims.generateFrameNumbers('skeletonIdle', { start: 0, end: 10 }),
+            frameRate: 5,
+            repeat: -1
+        });
 
-        // Level2-style climbing detection
-        if (this.physics.overlap(this.player, this.climbableGroup)) {
-            this.player.canClimb = true;
-        } else {
-            this.player.canClimb = false;
-            if (this.player.isClimbing) {
-                this.player.isClimbing = false;
-                this.groundCollider.active = true;
-                this.player.body.setAllowGravity(true);
-            }
-        }
+        this.anims.create({
+            key: 'skeletonWalk',
+            frames: this.anims.generateFrameNumbers('skeletonWalk', { start: 0, end: 12 }),
+            frameRate: 8,
+            repeat: -1
+        });
 
-        // Check for INOUT interactions
-        const touchingInout = this.physics.overlap(this.player, this.inoutGroup);
-        const touchingInout2 = this.physics.overlap(this.player, this.inout2Group);
+        this.anims.create({
+            key: 'skeletonAttack',
+            frames: this.anims.generateFrameNumbers('skeletonAttack', { start: 0, end: 17 }),
+            frameRate: 10,
+            repeat: 0
+        });
 
-        // Toggle layer visibility
-        if (touchingInout2) {
-            // When touching INOUT2, hide outside and show outside2
-            this.outsideLayer.setVisible(true);
-            this.outside2Layer.setVisible(false);
-        } else if (touchingInout) {
-            // When touching INOUT (but not INOUT2), hide outside
-            this.outsideLayer.setVisible(false);
-            this.outside2Layer.setVisible(true);
-        } else {
-            // When not touching either, show outside and hide outside2
-            this.outsideLayer.setVisible(true);
-            this.outside2Layer.setVisible(true);
-        }
+        this.anims.create({
+            key: 'skeletonHit',
+            frames: this.anims.generateFrameNumbers('skeletonHit', { start: 0, end: 7 }),
+            frameRate: 5,
+            repeat: 0
+        });
 
-        // Handle activate walls
-        const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
-if (touchingActivateWalls) {
-    this.walls1.setVisible(true);
-    this.walls2.setVisible(true);
-
-    this.walls1.setCollisionByExclusion([-1], false);
-
-    this.time.addEvent({
-        delay: 50,
-        callback: () => {
-            if (!this.scene) return; // Safety check
-
-            this.walls2.setCollisionByExclusion([-1], true);
-
-            // Now safe to create collider if it doesn't exist
-            if (!this.wallCollider) {
-                this.wallCollider = this.physics.add.collider(this.player, this.walls2);
-            }
-        },
-        callbackScope: this
-    });
-} else {
-    this.walls1.setVisible(false);
-    this.walls2.setVisible(false);
-    this.walls2.setCollisionByExclusion([-1], false);
-
-    // Destroy the collider if it exists
-    if (this.wallCollider) {
-        this.wallCollider.destroy();
-        this.wallCollider = null;
+        this.anims.create({
+            key: 'skeletonDead',
+            frames: this.anims.generateFrameNumbers('skeletonDead', { start: 0, end: 14 }),
+            frameRate: 8,
+            repeat: 0
+        });
     }
-}
+
+    spawnSkeleton(x, y) {
+        const skeleton = this.physics.add.sprite(x, y, 'skeletonIdle')
+            .setScale(this.scaleMultiplier)
+            .setDepth(11)
+            .setSize(22, 30)
+            .setOffset(0, 3);
         
-
-        updatePlayer(this);
-        hitboxUpdater(this);
+        skeleton.health = 3;
+        skeleton.attackRange = 50;
+        skeleton.detectionRange = 200;
+        skeleton.isAttacking = false;
+        skeleton.isDead = false;
+        skeleton.attackConnected = false;
+        this.enemies.add(skeleton);
     }
 
-    // Spawn all objects from tilemap, scale them and enable physics
+    update() {
+    this.gameTick++;
+
+    // Level2-style climbing detection
+    if (this.physics.overlap(this.player, this.climbableGroup)) {
+        this.player.canClimb = true;
+    } else {
+        this.player.canClimb = false;
+        if (this.player.isClimbing) {
+            this.player.isClimbing = false;
+            this.groundCollider.active = true;
+            this.player.body.setAllowGravity(true);
+        }
+    }
+
+    // Check for INOUT interactions
+    const touchingInout = this.physics.overlap(this.player, this.inoutGroup);
+    const touchingInout2 = this.physics.overlap(this.player, this.inout2Group);
+
+    // Toggle layer visibility
+    if (touchingInout2) {
+        this.outsideLayer.setVisible(true);
+        this.outside2Layer.setVisible(false);
+    } else if (touchingInout) {
+        this.outsideLayer.setVisible(false);
+        this.outside2Layer.setVisible(true);
+    } else {
+        this.outsideLayer.setVisible(true);
+        this.outside2Layer.setVisible(true);
+    }
+
+    // Handle activate walls
+    const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
+    if (touchingActivateWalls) {
+        this.walls1.setVisible(true);
+        this.walls2.setVisible(true);
+        this.walls1.setCollisionByExclusion([-1], false);
+        this.time.addEvent({
+            delay: 50,
+            callback: () => {
+                if (!this.scene) return;
+                this.walls2.setCollisionByExclusion([-1], true);
+                if (!this.wallCollider) {
+                    this.wallCollider = this.physics.add.collider(this.player, this.walls2);
+                }
+            }
+        });
+    } else {
+        this.walls1.setVisible(false);
+        this.walls2.setVisible(false);
+        this.walls2.setCollisionByExclusion([-1], false);
+        if (this.wallCollider) {
+            this.wallCollider.destroy();
+            this.wallCollider = null;
+        }
+    }
+
+    // Update enemies
+    this.enemies.getChildren().forEach(enemy => {
+        if (!enemy || enemy.isDead) return;
+
+        // Add null checks for animations
+        const currentAnim = enemy.anims?.currentAnim;
+        const currentFrame = enemy.anims?.currentFrame;
+
+        // Add hit reaction
+        if (currentAnim?.key === 'skeletonHit' && enemy.anims.isPlaying) {
+            enemy.setVelocityX(0);
+            return;
+        }
+
+        const dx = this.player.x - enemy.x;
+        const distance = Math.abs(dx);
+        const direction = dx > 0 ? 1 : -1;
+
+        enemy.flipX = direction < 0;
+
+        // Adjust hitbox based on current animation
+        if (currentAnim) {
+            if (currentAnim.key === 'skeletonAttack') {
+                // Attack hitbox (wider and properly aligned)
+                enemy.body.setSize(40, 28);
+                enemy.body.setOffset(enemy.flipX ? 3 : -15, 2);
+            }
+            
+            if (currentFrame && currentFrame.index >= 6 && currentFrame.index <= 12 && !enemy.attackConnected) {
+                if (distance <= enemy.attackRange) {
+                    this.player.health -= 1;
+                    this.playerUI.updateHealth(this.player.health);
+                    enemy.attackConnected = true;
+                    
+                    // Play hurt animation
+                    if (this.player.health > 0) {
+                        this.player.play('hurt', true);
+                    } else {
+                        this.player.play('death', true);
+                    }
+                }
+            } else {
+                // Default hitbox for idle/walk
+                enemy.body.setSize(22, 30);
+                enemy.body.setOffset(0, 3);
+                enemy.attackConnected = false;
+            }
+        }
+
+        if (distance < enemy.detectionRange) {
+            if (distance > enemy.attackRange) {
+                // Movement state
+                enemy.setVelocityX(100 * direction);
+                if (!enemy.anims.isPlaying || !currentAnim || currentAnim.key !== 'skeletonWalk') {
+                    enemy.anims.play('skeletonWalk', true);
+                }
+                enemy.isAttacking = false;
+            } else {
+                // Attack state
+                enemy.setVelocityX(0);
+                if (!enemy.isAttacking) {
+                    enemy.isAttacking = true;
+                    enemy.attackConnected = false;
+                    enemy.anims.play('skeletonAttack', true);
+                    enemy.once('animationcomplete', () => {
+                        enemy.isAttacking = false;
+                        enemy.anims.play('skeletonIdle', true);
+                    });
+                }
+            }
+        } else {
+            // Idle state
+            enemy.setVelocityX(0);
+            if (!enemy.anims.isPlaying || !currentAnim || currentAnim.key !== 'skeletonIdle') {
+                enemy.anims.play('skeletonIdle', true);
+            }
+            enemy.isAttacking = false;
+        }
+    });
+
+    updatePlayer(this);
+    hitboxUpdater(this);
+}
+
     spawnObjects(objects) {
         objects.forEach(element => {
             element.setOrigin(0.5, 0.5);
@@ -256,7 +397,6 @@ if (touchingActivateWalls) {
         });
     }
 
-    // Add object to group
     addToGroup(objects, group) {
         objects.forEach(element => {
             group.add(element);

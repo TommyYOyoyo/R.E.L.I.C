@@ -435,31 +435,37 @@ function hitboxUpdater(scene) {
 }
 
 // Functions to initiate and end player attacking appropriately
-function attack(scene) {
-    // Player's attack cooldown is over
+    function attack(scene) {
     if (scene.player.attackCooldown == 0) {
-        // Prevent other animations from overriding
         scene.player.isAttacking = true;
-
-        // Set player attack cooldown
         scene.player.attackCooldown = 50;
+        scene.sound.play("attack", { volume: 0.5 });
 
-        // Play attack sound
-        scene.sound.play("attack", {
-            volume: 0.5
+        // Add enemy damage detection
+        scene.physics.overlap(scene.attackHitbox, scene.enemies, (hitbox, enemy) => {
+            if (!enemy.isDead) {
+                enemy.health -= 1;
+                enemy.play('skeletonHit', true);
+                enemy.isAttacking = false; // Cancel current attack
+                
+                if (enemy.health <= 0) {
+                    enemy.isDead = true;
+                    enemy.play('skeletonDead', true);
+                    enemy.body.enable = false;
+                    scene.time.delayedCall(1000, () => enemy.destroy());
+                }
+            }
         });
 
-        // PLAYER ATTACK MECH TODO HERE
-
-        // Ground attack 
         if (scene.player.body.onFloor()) {
             scene.player.play("attack", true);
-        // Air attack
         } else {
             scene.player.play("airAttack", true);
         }
     }
 }
+
+
 
 // Player move left functions
 function moveLeft(scene) {
