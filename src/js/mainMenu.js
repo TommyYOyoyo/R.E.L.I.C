@@ -25,7 +25,7 @@ function devMode(scene, windowWidth, windowHeight) {
         });
         // Position titles
         scene.devText.x = windowWidth / 5 - scene.devText.width / 2;
-        scene.devText.y = windowHeight / 2 - 30;
+        scene.devText.y = windowHeight / 2 - 50;
         // Level selectors
         scene.devSelector = scene.rexUI.add.buttons({
             x : windowWidth / 5,
@@ -76,7 +76,22 @@ function devMode(scene, windowWidth, windowHeight) {
                         right: 20,
                     },
                     align: "center"
-                }).setInteractive({ useHandCursor: true }),     
+                }).setInteractive({ useHandCursor: true }),  
+                // Button index 4 properties (clear storage)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Effacer localStorage", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }),   
             ],
             space: { item: 10 }
         })// on hover: change color
@@ -111,13 +126,15 @@ function devMode(scene, windowWidth, windowHeight) {
                     checkpoint: 0
                 }));
                 scene.newScene("Level2");
-            } else {
+            } else if (button.text == "Niveau 3"){
                 // Set last game checkpoint to default
                 localStorage.setItem('lastGame', JSON.stringify({
                     level: "Level3",
                     checkpoint: 0
                 }));
                 scene.newScene("Level3");
+            } else {
+                clearStorage();
             }
         }).layout();
 

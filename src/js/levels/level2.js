@@ -6,6 +6,7 @@
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 import { spawnWeirdos } from "../puzzles/threeWeirdos.js";
+import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -67,6 +68,9 @@ function loadAssets(scene) {
     scene.load.image("questKey", "/assets/img/interactKey.png");
     
     scene.load.image("chatBox", "/assets/img/chatBox.png");
+
+    // Load enemy assets
+    loadEnemyAssets(scene);
 }
 
 class Level2 extends Phaser.Scene {
@@ -216,7 +220,7 @@ class Level2 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
         camera.startFollow(this.player);
 
-        localStorage.setItem("nbGuesser", "false");
+        createSkeleton(this, this.ground, 1);
     }
 
     // Game update loop

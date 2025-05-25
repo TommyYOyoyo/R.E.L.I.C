@@ -377,6 +377,8 @@ function echoing_chimes_puzzle(targetDiv, scene) {
 
     // Dev solve puzzle
     async function solvePuzzle() {
+        disableButtons();
+
         // Generate new sequence
         masterSequence = [];
         for (let i = 0; i < numChimes; i++) {
