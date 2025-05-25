@@ -95,7 +95,6 @@ function interactWithWeirdos(scene) {
 
     // Spawn weirdo dialogues
     setTimeout(() => {
-        scene.input.keyboard.enabled = false; // Disable keyboard input
 
         let weirdo1 = scene.weirdos[0];
         let weirdo2 = scene.weirdos[1];
@@ -112,6 +111,8 @@ function interactWithWeirdos(scene) {
         // Player has already completed the puzzle
         if (record == "true") {
             dialogue1.setText("Nous n'avons\nplus de \nfragements\npour toi.\nBonne chance\naventurier.");
+            // Reenable keyboard input
+            scene.input.keyboard.enabled = true;
             setTimeout(() => {
                 revert(scene);
                 dialogue1.destroy();
@@ -252,6 +253,8 @@ function interactWithWeirdos(scene) {
                                     dialogue.destroy();
                                     chatBoxes[index].destroy();
                                 });
+                                // Reenable keyboard input
+                                scene.input.keyboard.enabled = true;
                                 revert(scene);
                             }, 3000);
 
@@ -273,9 +276,8 @@ function revert(scene) {
         duration: 2000,
         ease: 'Sine.InOut'
     });
-    // Reenable keyboard input
-    scene.input.keyboard.enabled = true;
     scene.player.isQuestActive = false;
+    scene.player.isQuestOpen = false;
 }
 
 export { spawnWeirdos, interactWithWeirdos };

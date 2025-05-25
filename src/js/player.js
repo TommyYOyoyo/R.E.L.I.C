@@ -49,6 +49,7 @@ function loadPlayer(scene) {
     scene.player.isJumping = false;
     scene.player.isNearQuest = false;
     scene.player.isQuestActive = false;
+    scene.player.isQuestOpen = false;
     scene.player.currentQuest;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
@@ -435,11 +436,20 @@ function hitboxUpdater(scene) {
 }
 
 // Functions to initiate and end player attacking appropriately
-    function attack(scene) {
+function attack(scene) {
+
+    // Player's attack cooldown is over
     if (scene.player.attackCooldown == 0) {
+        // Prevent other animations from overriding
         scene.player.isAttacking = true;
+
+        // Set player attack cooldown
         scene.player.attackCooldown = 50;
-        scene.sound.play("attack", { volume: 0.5 });
+
+        // Play attack sound
+        scene.sound.play("attack", {
+            volume: 0.5
+        });
 
         // Add enemy damage detection
         scene.physics.overlap(scene.attackHitbox, scene.enemies, (hitbox, enemy) => {
@@ -457,8 +467,10 @@ function hitboxUpdater(scene) {
             }
         });
 
+        // Ground attack 
         if (scene.player.body.onFloor()) {
             scene.player.play("attack", true);
+        // Air attack
         } else {
             scene.player.play("airAttack", true);
         }
@@ -613,8 +625,17 @@ function updateCheckpoint(scene) {
 
 // Function to detect and run quest
 function runQuest(scene) {
+
+    // If player spammed the F key and kept opening the quest, ignore
+    if (scene.player.isQuestOpen) return;
+    scene.player.isQuestOpen = true;
+
     const div = document.getElementById('puzzleDiv');
 
+    setTimeout(() => {
+        scene.input.keyboard.enabled = false; // Disable keyboard input after a certain delay to prevent glitch
+    }, 200);
+    
     switch(true) {
         case scene.player.currentQuest.name.startsWith("threeweirdos"):
             interactWithWeirdos(scene);

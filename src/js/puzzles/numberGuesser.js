@@ -153,21 +153,22 @@ function numberGuesser(targetDiv, scene) {
 
     const DOMelements = [h1, indicator, input, messageDiv, devSolveButton, confirmButton];
 
-    scene.input.keyboard.enabled = false; // Prevent player from moving during puzzle
-
     // If puzzle has been solved, make player leave the puzzle
     if (isSolved == "true") {
         messageDiv.textContent = 'Le coffre s\'est déjà ouvert!';
         disableButton(confirmButton);
+        // Reenable keyboard input
+        scene.input.keyboard.enabled = true;
         setTimeout(() => {
             leaveGame();
             return;
-        }, 3000);
+        }, 2000);
     }
 
     // Function to leave the puzzle
     function leaveGame() {
         scene.player.isQuestActive = false;
+        scene.player.isQuestOpen = false;
         scene.input.keyboard.enabled = true;
         // Destroy all items
         document.getElementById('puzzleDiv').style.display = 'none';
@@ -178,17 +179,14 @@ function numberGuesser(targetDiv, scene) {
 
     // Dev solver
     function solvePuzzle() {
+        console.log(masterNumber);
         input.value = masterNumber;
-        submitGuess();
-        setTimeout(() => {
-            leaveGame();
-        }, 1000);
     }
 
     function submitGuess() {
         // Get guess
         const guess = parseInt(input.value);
-        
+
         // Player guesses a number out of range
         if (guess < 1 || guess > 50) {
             messageDiv.style.color = `#dc3545`; // red
@@ -202,6 +200,8 @@ function numberGuesser(targetDiv, scene) {
             messageDiv.textContent = 'Bravo! Vous avez trouvé le code!';
             messageDiv.style.color = `#28a745`; // green
             disableButton(confirmButton);
+            // Reenable keyboard input
+            scene.input.keyboard.enabled = true;
             // Player fixed puzzle
             setTimeout(() => {
                 localStorage.setItem("nbGuesser", "true");
@@ -228,6 +228,8 @@ function numberGuesser(targetDiv, scene) {
             messageDiv.textContent = 'Vous avez atteint le nombre maximum de tentatives.';
             messageDiv.style.color = `#dc3545`; // red
             disableButton(confirmButton);
+            // Reenable keyboard input
+            scene.input.keyboard.enabled = true;
             setTimeout(() => {
                 leaveGame();
             }, 2000);

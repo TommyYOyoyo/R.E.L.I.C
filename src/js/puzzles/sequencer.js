@@ -193,13 +193,13 @@ function echoing_chimes_puzzle(targetDiv, scene) {
 
     const DOMelements = [h1, puzzleContainer, messageDiv, startButton, resetButton, devSolveButton];
 
-    scene.input.keyboard.enabled = false; // Prevent player from moving during puzzle
-
     // If puzzle has been solved, make player leave the puzzle
     if (isSolved == "true") {
         messageDiv.textContent = 'Le coffre s\'est déjà ouvert!';
         disableButtons();
         disableChimes();
+        // Reenable keyboard input
+        scene.input.keyboard.enabled = true;
         setTimeout(() => {
             leaveGame();
         }, 3000);
@@ -282,7 +282,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
             disableChimes();
             currentRound++; // Increment round
 
-            disableButtons(); // Disable start&reset buttons
+            disableButtons(); // Disable start&reset buttons + dev button
 
             if (currentRound > roundLength) { // Check if player has reached the required round
                 // Unlock fragment
@@ -290,6 +290,8 @@ function echoing_chimes_puzzle(targetDiv, scene) {
                 messageDiv.style.color = '#28a745';
                 startButton.disabled = true;
                 localStorage.setItem('sequencer', "true"); // Set sequencer solved to true
+                // Reenable keyboard input
+                scene.input.keyboard.enabled = true;
                 // Leave game
                 setTimeout(() => {
                     leaveGame();
@@ -355,6 +357,9 @@ function echoing_chimes_puzzle(targetDiv, scene) {
        resetButton.disabled = true;
        resetButton.style.pointerEvents = 'none';
        resetButton.style.backgroundColor = '#6a6a6a';
+       devSolveButton.disabled = true;
+       devSolveButton.style.pointerEvents = 'none';
+       devSolveButton.style.backgroundColor = '#6a6a6a';
     }
 
     // Reenable start/reset buttons
@@ -365,6 +370,9 @@ function echoing_chimes_puzzle(targetDiv, scene) {
         resetButton.disabled = false;
         resetButton.style.pointerEvents = 'auto';
         resetButton.style.backgroundColor = '#4a4a4a';
+        devSolveButton.disabled = false;
+        devSolveButton.style.pointerEvents = 'auto';
+        devSolveButton.style.backgroundColor = '#007bff';
     }
 
     // Dev solve puzzle
@@ -391,7 +399,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
     
     function leaveGame() {
         scene.player.isQuestActive = false;
-        scene.input.keyboard.enabled = true;
+        scene.player.isQuestOpen = false;
         // Destroy all items
         document.getElementById('puzzleDiv').style.display = 'none';
         DOMelements.forEach(element => {
