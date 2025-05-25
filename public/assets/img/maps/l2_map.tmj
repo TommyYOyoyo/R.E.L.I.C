@@ -451,6 +451,17 @@
                  "width":1.22279285888976,
                  "x":774.435477296813,
                  "y":158.963071655662
+                }, 
+                {
+                 "height":0,
+                 "id":37,
+                 "name":"numberGuesser",
+                 "rotation":0,
+                 "type":"Quest",
+                 "visible":true,
+                 "width":0,
+                 "x":133.696780893043,
+                 "y":164.20041536864
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -459,7 +470,7 @@
          "y":0
         }],
  "nextlayerid":14,
- "nextobjectid":37,
+ "nextobjectid":38,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

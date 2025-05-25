@@ -6,6 +6,7 @@
 
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
+import { numberGuesser } from "./puzzles/numberGuesser.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
@@ -606,24 +607,31 @@ function updateCheckpoint(scene) {
 
 // Function to detect and run quest
 function runQuest(scene) {
+    const div = document.getElementById('puzzleDiv');
 
     switch(true) {
         case scene.player.currentQuest.name.startsWith("threeweirdos"):
             interactWithWeirdos(scene);
             break;
         case scene.player.currentQuest.name.startsWith("sequencer"):
-            const sequencerDiv = document.getElementById('puzzleDiv');
-            sequencerDiv.style.display = 'block';
+            div.style.display = 'block';
             // Timeout to prevent ghost key hold glitch
             setTimeout(() => {
-                echoing_chimes_puzzle(sequencerDiv, scene);
-                scene.children.bringToTop(sequencerDiv);
-            }, 100);
+                echoing_chimes_puzzle(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
+        case scene.player.currentQuest.name.startsWith("numberGuesser"):
+            div.style.display = 'block';
+            // Timeout to prevent ghost key hold glitch
+            setTimeout(() => {
+                numberGuesser(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
             break;
         default:
             break;
     }
-    
 }
 
 // Function to trigger fragment find animation

@@ -13,7 +13,6 @@ function echoing_chimes_puzzle(targetDiv, scene) {
     const roundLength = Math.floor(Math.random() * (4 - 2)) + 2;  // Min: 2, Max: 4
     const flashDuration = 400;
     const sequenceDelay = 700;
-    console.log(sequenceLength, roundLength);
 
     const runeSymbols = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ'];
     let masterSequence = [];

@@ -6,6 +6,14 @@
 
 import Phaser from 'phaser';
 
+function clearStorage() {
+    localStorage.setItem("1_fragments", 0);
+    localStorage.setItem("2_fragments", 0);
+    localStorage.setItem("3_fragments", 0);
+    localStorage.setItem("threeWeirdos", "false");
+    localStorage.setItem("sequencer", "false");
+}
+
 // devMode level selector
 function devMode(scene, windowWidth, windowHeight) {
     if (!scene.devActive) {
@@ -246,10 +254,13 @@ class MainMenu extends Phaser.Scene {
             this.sound.play("click");
             const lastGame = localStorage.getItem('lastGame');
             // If nothing was saved, set default
-            if (lastGame == null) localStorage.setItem('lastGame', JSON.stringify({
-                level: "Level1",
-                checkpoint: 0
-            }));
+            if (lastGame == null) {
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level1",
+                    checkpoint: 0
+                }));
+                clearStorage();
+            }
             // New game
             if (button.text == "NOUVEAU JEU") {
                 // Set last game checkpoint to default
@@ -257,6 +268,7 @@ class MainMenu extends Phaser.Scene {
                     level: "Level1", /** @note DEV: CHANGE HERE TO SKIP TO YOUR LEVEL */ 
                     checkpoint: 0
                 }));
+                clearStorage();
                 this.newScene("Level1");
             } else if (button.text == "CONTINUER") {
                 // Restart latest progress

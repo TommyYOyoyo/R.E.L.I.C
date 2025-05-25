@@ -215,7 +215,8 @@ class Level2 extends Phaser.Scene {
         // Camera movement and delimitation
         this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
         camera.startFollow(this.player);
-        
+
+        localStorage.setItem("nbGuesser", "false");
     }
 
     // Game update loop
