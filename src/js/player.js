@@ -5,6 +5,8 @@
  * @comment I should've made this a Player class... But it's too late to change :(
  */
 
+import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
+
 function loadPlayer(scene) {
     scene.latestCheckpoint;
     scene.nextCheckpoint;
@@ -44,6 +46,9 @@ function loadPlayer(scene) {
     scene.player.wasFalling = false;
     scene.player.isCrouching = false;
     scene.player.isJumping = false;
+    scene.player.isNearQuest = false;
+    scene.player.isQuestActive = false;
+    scene.player.currentQuest;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
     scene.player.hitboxHeight = 32;
@@ -57,6 +62,9 @@ function loadPlayer(scene) {
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
     // Set player collision detection
     scene.player.setCollideWorldBounds(true);
+    // Enable floor/wall collision detection, dealt by Phaser game engine
+    scene.groundCollider = scene.physics.add.collider(scene.player, scene.ground);
+    scene.ground.setCollisionByExclusion(-1);
     // Player gravity
     scene.player.body.setGravityY(1000);
     // Create player attack hitbox
@@ -78,6 +86,38 @@ function loadPlayer(scene) {
         if (anim.key === "slide") {
             scene.player.isSliding = false; // Reset if sliding anims are interrupted by other anims
         }
+    });
+
+    // Create quest notification text
+    // Resizable div
+    scene.player.questNotifContainer = scene.rexUI.add.sizer({
+        orientation: 0,
+        space: { item: 10 },
+        anchor: { centerX: '50%', centerY: '50%' },
+        x: 0,
+        y: 0,
+    });
+    // Show player that they should press the F key
+    const keyPopup = scene.add.image(0, 0, "questKey").setOrigin(0.5, 0.5).setScale(0.125);
+    // "Interact" text warning
+    const notif = scene.add.text(0, 0, "Intéragir", {
+            fontSize: "16px",
+            fontFamily: 'minecraft',
+            color: "white"
+    }).setOrigin(0.5, 0.5);
+
+    // Ensure texts always stay on top of all other objects
+    keyPopup.setDepth(100);
+    notif.setDepth(100);
+
+    // Add texts to quest notification container
+    scene.player.questNotifContainer.add(keyPopup).add(notif).layout();
+
+    // Add quest detection
+    scene.physics.add.overlap(scene.player, scene.questSpawnsGroup, (player, quest) => {
+        scene.player.isNearQuest = true;
+        if (!scene.player.isQuestActive) scene.player.questNotifContainer.setVisible(true);
+        scene.player.currentQuest = quest;
     });
 }
 
@@ -295,6 +335,25 @@ function updatePlayer(scene) {
     // Attack
     if (scene.keys.space.isDown) {
         attack(scene);
+    }
+
+    if (scene.keys.f.isDown) {
+        if (scene.player.isNearQuest && !scene.player.isQuestActive) {
+            scene.player.isQuestActive = true;
+            runQuest(scene);
+        }
+    }
+
+    scene.player.questNotifContainer.setPosition(scene.player.x + 100, scene.player.y);
+
+    // Untrigger if player is not near quest
+    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup)) {
+        scene.player.isNearQuest = false;
+        scene.player.currentQuest = null;
+    }
+    // Unshow interact warning
+    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isQuestActive) {
+        scene.player.questNotifContainer.setVisible(false);
     }
     
 }
@@ -545,4 +604,22 @@ function updateCheckpoint(scene) {
     }
 }
 
-export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater };
+// Function to detect and run quest
+function runQuest(scene) {
+
+    switch(true) {
+        case scene.player.currentQuest.name.startsWith("threeweirdos"):
+            interactWithWeirdos(scene);
+            break;
+        default:
+            break;
+    }
+    
+}
+
+// Function to trigger fragment find animation
+function fragmentFind(scene) {
+    
+}
+
+export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind };
