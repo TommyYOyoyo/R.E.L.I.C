@@ -230,11 +230,14 @@ function interactWithWeirdos(scene) {
                                         dialogue3.setText("Tu t'es trompé.\nBonne chance\nla prochaine fois.");
                                     }
                                     break;
-                                    
+
                                 default:
                                     console.log("[Error] No correct answer were found in db.")
                                     break;
                             }
+
+                            // Destroy all buttons to prevent abuse
+                            buttons.destroy();
 
                             setTimeout(() => {
                                 // If succeed, trigger fragment find animation
@@ -245,7 +248,6 @@ function interactWithWeirdos(scene) {
                                 // Destroy all dialogues and chatboxes
                                 const dialogues = [dialogue1, dialogue2, dialogue3];
                                 const chatBoxes = [chatBox1, chatBox2, chatBox3];
-                                buttons.destroy();
                                 dialogues.forEach((dialogue, index) => {
                                     dialogue.destroy();
                                     chatBoxes[index].destroy();

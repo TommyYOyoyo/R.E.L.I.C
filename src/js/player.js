@@ -1,6 +1,5 @@
 /**
  * @author Honglue Zheng
- * @version beta
  * @note Universal player functions
  * @comment I should've made this a Player class... But it's too late to change :(
  */
@@ -619,7 +618,7 @@ function runQuest(scene) {
 
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
-    
+
 }
 
 export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind };

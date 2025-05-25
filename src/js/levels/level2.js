@@ -1,7 +1,6 @@
 /**
  * Level 2 game file
  * @author Honglue Zheng
- * @version beta
  */
 
 import Phaser from "phaser";
