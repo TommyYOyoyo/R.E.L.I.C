@@ -58,6 +58,8 @@ class Level1 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint;
         this.nextCheckpoint;
+        this.groundCollider;
+        this.ground;
     }
 
     preload() {
@@ -107,7 +109,8 @@ class Level1 extends Phaser.Scene {
             outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(14),
             layering: map.createLayer("layering", tileset, 0, 0).setDepth(15)
         }
-        
+        this.ground = layers.collidables;
+
         this.checkpoints = map.createFromObjects("interact", {
             type:"Checkpoint"
         });
@@ -176,11 +179,6 @@ class Level1 extends Phaser.Scene {
         
         // Store ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
-
-        // Set up collisions
-        if (layers.collidables) {
-            layers.collidables.setCollisionByExclusion([-1]);
-        }
 
         // Set world and camera bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);

@@ -1,11 +1,11 @@
 /**
  * Level 2 game file
  * @author Honglue Zheng
- * @version beta
  */
 
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import { spawnWeirdos } from "../puzzles/threeWeirdos.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -18,9 +18,9 @@ const sizes = {
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
-    // Load ruins tileset
+    /** @note ADD TO YOUR LEVEL - Load ruins tileset */
     scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
-    // Load dungeon tileset
+    /** @note ADD TO YOUR LEVEL - Load dungeon tileset */
     scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
     // Load background image collection
     /*
@@ -38,13 +38,21 @@ function loadAssets(scene) {
     // Load map
     scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
 
-    // Load player spritesheet
+    /** @note ADD TO YOUR LEVEL - Load player spritesheet */
     scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
         frameWidth: 50,
         frameHeight: 37
     });
 
-    // Load musics
+    // Load weirdos spritesheet
+    scene.load.spritesheet("weirdoSheet", "/assets/img/Weirdos/Idle.png", {
+        frameWidth: 231,
+        frameHeight: 190
+    });
+
+    /** @note ADD TO YOUR LEVEL - Load enemy spritesheet */
+
+    /** @note ADD TO YOUR LEVEL - Load musics & sfx */
     scene.load.audio("onceInALullaby", "/assets/sounds/musics/onceInALullaby.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
     scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
@@ -54,6 +62,11 @@ function loadAssets(scene) {
     scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
+
+    /** @note ADD TO YOUR LEVEL - interact key image */
+    scene.load.image("questKey", "/assets/img/interactKey.png");
+    
+    scene.load.image("chatBox", "/assets/img/chatBox.png");
 }
 
 class Level2 extends Phaser.Scene {
@@ -67,6 +80,7 @@ class Level2 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint;
         this.nextCheckpoint;
+        this.weirdos = [];
     }
 
     // Preload all assets (init)
@@ -159,7 +173,7 @@ class Level2 extends Phaser.Scene {
         });
 
         this.questSpawns = map.createFromObjects("Objects", {
-            type: "QuestSpawn",
+            type: "Quest",
         });
 
         // Spawn all objects
@@ -191,19 +205,17 @@ class Level2 extends Phaser.Scene {
         // Get main camera
         const camera = this.cameras.main;
 
+        // Spawn player
         loadPlayer(this);
+        spawnWeirdos(this); // Spawn first quest
         
         // Set world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
-
-        // Enable floor/wall collision detection, dealt by Phaser game engine
-        this.groundCollider = this.physics.add.collider(this.player, ground);
-        ground.setCollisionByExclusion(-1);
         
         // Camera movement and delimitation
         this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
         camera.startFollow(this.player);
-
+        
     }
 
     // Game update loop

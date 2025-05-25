@@ -1,7 +1,6 @@
 /**
  * Main game file
  * @author Honglue Zheng, Ray Lam, Rui Qi Ren
- * @version beta
  */
 
 import "../css/style.css";
