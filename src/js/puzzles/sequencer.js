@@ -9,7 +9,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
     const puzzleContainerId = 'chimes-puzzle-container';
     const gameTitle = 'RUNES RÉSONANTES';
     const numChimes = 12;
-    const sequenceLength = Math.floor(Math.random() * (8 - 4)) + 4;  // Min: 4, Max: 8
+    const sequenceLength = Math.floor(Math.random() * (6 - 4)) + 4;  // Min: 4, Max: 6
     const roundLength = Math.floor(Math.random() * (4 - 2)) + 2;  // Min: 2, Max: 4
     const flashDuration = 400;
     const sequenceDelay = 700;
@@ -26,6 +26,16 @@ function echoing_chimes_puzzle(targetDiv, scene) {
 
     // Style the puzzle container and its contents
     style.textContent = `
+        @keyframes flash {
+            0% { 
+                box-shadow: 0 0 25px #ffd700, 0 0 10px rgba(255,255,0,0.8) inset;
+                background-color: #ffd700;
+            }
+            100% { 
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+                background-color: #3d3d3d;
+            }
+        }
         #puzzleDiv {
             background-color: #1a1a1a;
             padding: 25px;
@@ -229,7 +239,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
             // Get chime button element
             const chimeButton = document.querySelector(`#${puzzleContainerId} .chime-button[data-index="${chimeIndex}"]`);
 
-            // Flash the chime button
+            // Flash the chime button, then pause entire script for flashDuration ms
             chimeButton.classList.add('flash');
             await new Promise(resolve => setTimeout(resolve, flashDuration)); // wait for flashDuration ms
             chimeButton.classList.remove('flash');
@@ -247,10 +257,10 @@ function echoing_chimes_puzzle(targetDiv, scene) {
 
         // Flash the chime button
         const chimeButton = document.querySelector(`#${puzzleContainerId} .chime-button[data-index="${index}"]`);
-        chimeButton.classList.add('flash');
+        chimeButton.style.animation = 'flash 0.3s ease-in-out';
         setTimeout(() => {
-            chimeButton.classList.remove('flash');
-        }, 300);
+            chimeButton.style.animation = 'none'; // Remove flash animation
+        }, flashDuration);
 
         // Add the chime index to the player sequence
         playerSequence.push(index);
@@ -324,11 +334,10 @@ function echoing_chimes_puzzle(targetDiv, scene) {
         messageDiv.textContent = 'En attente des échos anciens...';
         messageDiv.style.color = '#ccc';
         startButton.textContent = 'Débuter le rituel';
-        startButton.disabled = false;
         enableButtons();
         enableChimes(); // Reenable buttons to clear flash classes
         Array.from(document.querySelectorAll(`#${puzzleContainerId} .chime-button`)).forEach(chime => {
-            chime.classList.remove('flash'); // Remove all flash
+            chime.classList.remove('flash'); // Remove all flash class leftovers
         });
         disableChimes(); // Disable buttons
     }
@@ -372,7 +381,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
         resetButton.style.backgroundColor = '#4a4a4a';
         devSolveButton.disabled = false;
         devSolveButton.style.pointerEvents = 'auto';
-        devSolveButton.style.backgroundColor = '#007bff';
+        devSolveButton.style.backgroundColor = '#8b0000';
     }
 
     // Dev solve puzzle
