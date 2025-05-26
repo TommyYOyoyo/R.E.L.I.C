@@ -18,6 +18,8 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
+
+    scene.load.image("questKey", "/assets/img/interactKey.png");
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -113,6 +115,9 @@ class Level1 extends Phaser.Scene {
          this.enemySpawns = map.createFromObjects("interact", {
             type: "EnemySpawn",
         });
+        this.questSpawns = map.createFromObjects("Objects", {
+            type: "Quest",
+        });
 
         //object spawn
         this.spawnObjects(this.checkpoints);
@@ -121,6 +126,7 @@ class Level1 extends Phaser.Scene {
         this.spawnObjects(this.inout1);
         this.spawnObjects(this.inout2);
         this.spawnObjects(this.enemySpawns);
+        this.spawnObjects(this.questSpawns);
         
         //layer references
         this.outsideLayer = layers.outside;
@@ -140,6 +146,7 @@ class Level1 extends Phaser.Scene {
         this.checkpointGroup = this.physics.add.staticGroup();
         this.activateWallsGroup = this.physics.add.staticGroup();
         this.enemySpawnsGroup = this.physics.add.staticGroup();
+        this.questSpawnsGroup = this.physics.add.staticGroup();
         
         //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
@@ -148,6 +155,7 @@ class Level1 extends Phaser.Scene {
         this.addToGroup(this.inout1, this.inoutGroup);
         this.addToGroup(this.inout2, this.inout2Group);
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
+        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
         
         //preload walls
         this.walls1.setVisible(false);
