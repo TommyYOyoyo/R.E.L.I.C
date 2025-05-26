@@ -1,16 +1,9 @@
-
-//fix showGameOverScreen
-//fix createMenuButton
-
-
-
-
 export default class PlayerUI {
     constructor(scene) {
         this.scene = scene;
         this.currentHealth = 100;
         this.maxHealth = 100;
-        this.totalTime = 900;
+        this.totalTime = 30;
         this.timeUp = false;
         
         this.createTimerText();
@@ -22,14 +15,14 @@ export default class PlayerUI {
         const { width, height } = this.scene.cameras.main;
         this.healthBar = this.scene.add.graphics()
             .setScrollFactor(0)
-            .setDepth(Number.MAX_SAFE_INTEGER - 10);
+            .setDepth(30);
         
         this.drawHealthBar();
     }
 
     drawHealthBar() {
         const { width, height } = this.scene.cameras.main;
-        const barWidth = 300;
+        const barWidth = 400;
         const barHeight = 25;
         const x = 20;
         const y = height - 50;
@@ -42,9 +35,14 @@ export default class PlayerUI {
     }
 
     updateHealth(newHealth) {
-    this.currentHealth = Phaser.Math.Clamp(newHealth, 0, this.maxHealth);
-    this.drawHealthBar();
-}
+        this.currentHealth = Phaser.Math.Clamp(newHealth, 0, this.maxHealth);
+        this.drawHealthBar();
+        
+        // Show game over when health reaches zero
+        if (this.currentHealth <= 0) {
+            this.handleGameOver();
+        }
+    }
 
     getHealthColor() {
         if(this.currentHealth < 30) return 0xFF0000;
@@ -56,9 +54,9 @@ export default class PlayerUI {
         this.timerText = this.scene.add.text(
             this.scene.cameras.main.width/2, 
             30,
-            '05:00',
+            '00:30',
             {
-                font: '32px Arial',
+                font: '50px noita',
                 fill: '#ffffff',
                 stroke: '#000000',
                 strokeThickness: 4
@@ -66,7 +64,7 @@ export default class PlayerUI {
         )
         .setOrigin(0.5)
         .setScrollFactor(0)
-        .setDepth(Number.MAX_SAFE_INTEGER);
+        .setDepth(51);
     }
 
     startCountdown() {
@@ -82,109 +80,105 @@ export default class PlayerUI {
                 
                 if(this.totalTime <= 0) {
                     this.timeUp = true;
-                    this.handleTimeUp();
+                    this.handleGameOver();
                 }
             },
             loop: true
         });
     }
 
-    handleTimeUp() {
+    handleGameOver() {
         // Freeze game state
         this.scene.physics.pause();
         this.scene.sound.stopAll();
-        
-        // Update timer text
-        this.timerText.setText("L'heros a pris trop de temps...")
-            .setOrigin(0.5)
-            .setDepth(Number.MAX_SAFE_INTEGER);
 
-        // Create overlay
+        // Update timer text
+        this.timerText.setText("Game Over")
+            .setOrigin(0.5)
+            .setDepth(51);
+
+        // Create full-black overlay
         this.blackOverlay = this.scene.add.rectangle(
-            0, 0, 
-            this.scene.cameras.main.width * 2, 
-            this.scene.cameras.main.height * 2, 
+            0, 0,
+            this.scene.cameras.main.width,
+            this.scene.cameras.main.height,
             0x000000
         )
         .setOrigin(0)
-        .setDepth(Number.MAX_SAFE_INTEGER - 5)
+        .setScrollFactor(0)
+        .setDepth(50)
         .setAlpha(0);
 
-        // Start sequence
-        this.scene.tweens.add({
-            targets: this.scene.cameras.main,
-            zoom: 2,
-            duration: 3000,
-            ease: 'Quad.easeIn',
-            onComplete: () => {
-                this.scene.tweens.add({
-                    targets: this.blackOverlay,
-                    alpha: 0.9,
-                    duration: 2000,
-                    onComplete: () => this.showGameOverScreen()
-                });
+        // Slow zoom in on timer (3 seconds)
+        this.scene.cameras.main.zoomTo(2, 3000, 'Linear', true, (camera, progress) => {
+            if (progress === 1) {
+                this.showGameOverScreen();
             }
+        });
+
+        // Fade to black
+        this.scene.tweens.add({
+            targets: this.blackOverlay,
+            alpha: 0.8,
+            duration: 3000
         });
     }
 
     showGameOverScreen() {
         const { width, height } = this.scene.cameras.main;
-        
-        // Create centered game over panel
-        this.gameOverPanel = this.scene.rexUI.add.buttons({
-            x: width/2,
-            y: height/2,
-            orientation: 'vertical',
-            buttons: [
-                this.createMenuButton('RETOUR AU MENU', 'MainMenu'),
-                this.createMenuButton('REESSAYER', this.scene.scene.key)
-            ],
-            space: { item: 20 }
+
+        // Create panel background (fixed to screen)
+        const panelBackground = this.scene.add.graphics()
+            .fillStyle(0x000000, 0.9)
+            .fillRoundedRect(width/2 - 250, height/2 - 150, 500, 300, 20)
+            .setScrollFactor(0)
+            .setDepth(50);
+
+        // Create RETRY button (fixed to screen)
+        const retryButton = this.scene.add.text(width/2, height/2 - 40, 'REESSAYER', {
+            fontFamily: 'noita',
+            fontSize: '32px',
+            color: '#ffffff',
+            backgroundColor: '#444444',
+            padding: { left: 30, right: 30, top: 15, bottom: 15 }
         })
-        .setDepth(Number.MAX_SAFE_INTEGER)
-        .setAlpha(0)
-        .layout();
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => retryButton.setBackgroundColor('#555555'))
+        .on('pointerout', () => retryButton.setBackgroundColor('#444444'))
+        .on('pointerdown', () => {
+            this.scene.scene.restart();
+        })
+        .setDepth(51);
 
-        // Center the panel contents
-        this.gameOverPanel.children.each(child => {
-            child.setOrigin(0.5).setPosition(width/2, height/2);
-        });
+        // Create MENU button (fixed to screen)
+        const menuButton = this.scene.add.text(width/2, height/2 + 40, 'RETOUR AU MENU', {
+            fontFamily: 'noita',
+            fontSize: '32px',
+            color: '#ffffff',
+            backgroundColor: '#444444',
+            padding: { left: 30, right: 30, top: 15, bottom: 15 }
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => menuButton.setBackgroundColor('#555555'))
+        .on('pointerout', () => menuButton.setBackgroundColor('#444444'))
+        .on('pointerdown', () => {
+            this.scene.scene.start('MainMenu');
+        })
+        .setDepth(51);
 
-        // Fade in panel
+        // Fade in buttons
+        retryButton.setAlpha(0);
+        menuButton.setAlpha(0);
+        panelBackground.setAlpha(0);
+        
         this.scene.tweens.add({
-            targets: this.gameOverPanel,
+            targets: [retryButton, menuButton, panelBackground],
             alpha: 1,
             duration: 1000
-        });
-    }
-
-    createMenuButton(text, targetScene) {
-        return this.scene.rexUI.add.label({
-            width: 400,
-            height: 80,
-            background: this.scene.rexUI.add.roundRectangle(0,0,0,0, 20, 0x444444),
-            text: this.scene.add.text(0,0, text, {
-                fontSize: '32px',
-                fontFamily: 'minecraft',
-                color: '#FFFFFF'
-            }),
-            space: { left: 30, right: 30 },
-            align: 'center'
-        })
-        .setInteractive({ useHandCursor: true })
-        .on('pointerover', () => {
-            this.scene.sound.play('hover');
-            this.getElement('background').setFillStyle(0x666666);
-        })
-        .on('pointerout', () => {
-            this.getElement('background').setFillStyle(0x444444);
-        })
-        .on('pointerdown', () => {
-            this.scene.sound.play('click');
-            this.scene.cameras.main.fadeOut(1000, 0, 0, 0);
-            this.scene.cameras.main.once('camerafadeoutcomplete', () => {
-                this.scene.scene.start(targetScene);
-            });
         });
     }
 

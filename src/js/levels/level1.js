@@ -1,3 +1,8 @@
+/**
+ * Level 1 game file
+ * @author Ray Lam 
+ */
+
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 import PlayerUI from "../playerUI.js";
@@ -165,8 +170,8 @@ class Level1 extends Phaser.Scene {
         //load and scale player
         loadPlayer(this);
         this.player.setScale(scale).setDepth(11);
-        this.player.health = 5;
-        this.playerUI.updateHealth(5);
+        this.player.health = 100;
+        this.playerUI.updateHealth(100);
         
         //ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
@@ -295,7 +300,7 @@ class Level1 extends Phaser.Scene {
         }
     }
 
-    //
+    
     this.enemies.getChildren().forEach(enemy => {
         if (!enemy || enemy.isDead) return;
 
@@ -374,11 +379,11 @@ class Level1 extends Phaser.Scene {
             enemy.isAttacking = false;
         }
     });
-
+//update player
     updatePlayer(this);
     hitboxUpdater(this);
 }
-
+//spawn objects with the scale multiplier
     spawnObjects(objects) {
         objects.forEach(element => {
             element.setOrigin(0.5, 0.5);
@@ -387,7 +392,7 @@ class Level1 extends Phaser.Scene {
             element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
         });
     }
-
+//add objects to groups
     addToGroup(objects, group) {
         objects.forEach(element => {
             group.add(element);
