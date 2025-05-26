@@ -1,14 +1,9 @@
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 import PlayerUI from "../playerUI.js";
+import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    mapWidth: window.innerWidth * 5,
-    mapHeight: window.innerHeight * 3,
-};
-
+//Load all assets  
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset.png");
@@ -39,7 +34,7 @@ function loadAssets(scene) {
         frameHeight: 32
     });
 
-    // Sound assets
+    //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
     scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
@@ -50,7 +45,7 @@ function loadAssets(scene) {
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
 }
-
+//Game scene settings
 class Level1 extends Phaser.Scene {
     constructor() {
         super("Level1");
@@ -62,6 +57,7 @@ class Level1 extends Phaser.Scene {
         this.ground;
     }
 
+    //Preload player movement
     preload() {
         loadAssets(this);
         this.keys = this.input.keyboard.addKeys({
@@ -73,29 +69,30 @@ class Level1 extends Phaser.Scene {
             f: Phaser.Input.Keyboard.KeyCodes.F
         });
     }
-
+//Create everything  
     create() {
-        this.physics.world.createDebugGraphic();
-        this.playerUI = new PlayerUI(this);
+        this.physics.world.createDebugGraphic(); 
+        this.playerUI = new PlayerUI(this);  //Create player UI
     
-        const scale = this.scaleMultiplier;
-        this.bg2 = this.add.image(0, 0, "bgLayer2")
+        const scale = this.scaleMultiplier;  //Scale multiplier
+        this.bg2 = this.add.image(0, 0, "bgLayer2") //Create background
             .setOrigin(0)
-            .setScrollFactor(0.001)
-            .setDepth(-2)
-            .setScale(scale); 
+            .setScrollFactor(0.0000000001) //make background manually larger
+            .setDepth(-2) //background behind everything
+            .setScale(scale); //scale multiplier
 
+            //music
         const music = this.sound.add('wellDead', {
             loop: true,
             volume: 0.5,
         });
         music.play();
 
-        // Create map and tileset
+        //Create map and tileset
         const map = this.make.tilemap({ key: "map" });
         const tileset = map.addTilesetImage("Tileset", "dungeonTileset");
 
-        // Create all layers with proper depth ordering
+        //Create all layers with proper depth
         const layers = {
             skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(1).setScrollFactor(0.2),
             backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(3),
@@ -109,83 +106,77 @@ class Level1 extends Phaser.Scene {
             outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(14),
             layering: map.createLayer("layering", tileset, 0, 0).setDepth(15)
         }
-        this.ground = layers.collidables;
-
+        this.ground = layers.collidables; //makes layer collidables collidable
+        
+        //object pull
         this.checkpoints = map.createFromObjects("interact", {
-            type:"Checkpoint"
+            type:"Checkpoint" //checkpoint
         });
         this.ladders = map.createFromObjects("interact", {
-            type:"Ladder"
+            type:"Ladder" //ladder
         });
         this.activateWalls = map.createFromObjects("interact", {
-            type:"Activate"
+            type:"Activate" //activate walls
         });
-
+        this.inout1 = map.createFromObjects("interact", {
+            type:"INOUT" //inout
+        });
+        this.inout2 = map.createFromObjects("interact", {
+            type:"INOUT2" //inout2
+        });
+        //object spawn
         this.spawnObjects(this.checkpoints);
         this.spawnObjects(this.ladders);
         this.spawnObjects(this.activateWalls);
-
+        this.spawnObjects(this.inout1);
+        this.spawnObjects(this.inout2);
+        //layer references
         this.outsideLayer = layers.outside;
         this.outside2Layer = layers.outside2;
         this.walls1 = layers.backwalls2;
         this.walls2 = layers.arenaWalls;
 
-        // Scale all layers
+        //scale all layers
         Object.values(layers).forEach(layer => {
             if (layer) layer.setScale(scale).setOrigin(0);
         });
 
-        // Create object groups
+        //create object groups
         this.climbableGroup = this.physics.add.staticGroup();
         this.inoutGroup = this.physics.add.staticGroup();
         this.inout2Group = this.physics.add.staticGroup();
         this.checkpointGroup = this.physics.add.staticGroup();
         this.activateWallsGroup = this.physics.add.staticGroup();
-
+        
+        //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
         this.addToGroup(this.ladders, this.climbableGroup);
         this.addToGroup(this.activateWalls, this.activateWallsGroup);
-
+        this.addToGroup(this.inout1, this.inoutGroup);
+        this.addToGroup(this.inout2, this.inout2Group);
+        
+        //preload walls
         this.walls1.setVisible(false);
         this.walls2.setVisible(false);
         this.walls1.setCollisionByExclusion([-1], false);
         this.walls2.setCollisionByExclusion([-1], true);
 
-        // Process interactive objects
-        const interactObjects = map.getObjectLayer("interact")?.objects || [];
-        interactObjects.forEach(obj => {
-            const x = obj.x * scale;
-            const y = obj.y * scale;
-            const width = obj.width * scale;
-            const height = obj.height * scale;
-            
-            if (obj.type === "INOUT") {
-                const inout = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
-                this.physics.add.existing(inout, true);
-                this.inoutGroup.add(inout);
-            }
-            else if (obj.type === "INOUT2") {
-                const inout2 = this.add.rectangle(x + width/2, y + height/2, width, height, 0x000000, 0);
-                this.physics.add.existing(inout2, true);
-                this.inout2Group.add(inout2);
-            }
-        });
 
-        // Load and scale player
+        //load and scale player
         loadPlayer(this);
         this.player.setScale(scale).setDepth(11);
         this.player.health = 5;
         this.playerUI.updateHealth(5);
         
-        // Store ground collider reference
+        //ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
 
-        // Set world and camera bounds
+        //setup camera and bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
 
-        // Enemy setup
+        //enemy setup
         this.enemies = this.physics.add.group();
         this.createSkeletonAnimations();
         this.spawnSkeleton(800, 500);
@@ -246,11 +237,11 @@ class Level1 extends Phaser.Scene {
         skeleton.attackConnected = false;
         this.enemies.add(skeleton);
     }
-
+//check for updates
     update() {
     this.gameTick++;
 
-    // Level2-style climbing detection
+    //climb system
     if (this.physics.overlap(this.player, this.climbableGroup)) {
         this.player.canClimb = true;
     } else {
@@ -262,11 +253,11 @@ class Level1 extends Phaser.Scene {
         }
     }
 
-    // Check for INOUT interactions
+    //if touching
     const touchingInout = this.physics.overlap(this.player, this.inoutGroup);
     const touchingInout2 = this.physics.overlap(this.player, this.inout2Group);
 
-    // Toggle layer visibility
+    //toggling visibility
     if (touchingInout2) {
         this.outsideLayer.setVisible(true);
         this.outside2Layer.setVisible(false);
@@ -278,13 +269,13 @@ class Level1 extends Phaser.Scene {
         this.outside2Layer.setVisible(true);
     }
 
-    // Handle activate walls
+    //if touching obj activateWalls
     const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
     if (touchingActivateWalls) {
-        this.walls1.setVisible(true);
+        this.walls1.setVisible(true); //show walls
         this.walls2.setVisible(true);
-        this.walls1.setCollisionByExclusion([-1], false);
-        this.time.addEvent({
+        this.walls1.setCollisionByExclusion([-1], false); //walls collidable
+        this.time.addEvent({ //failsafe in case player gets stuck on walls
             delay: 50,
             callback: () => {
                 if (!this.scene) return;
@@ -295,7 +286,7 @@ class Level1 extends Phaser.Scene {
             }
         });
     } else {
-        this.walls1.setVisible(false);
+        this.walls1.setVisible(false); //hide walls if player not touching activateWalls
         this.walls2.setVisible(false);
         this.walls2.setCollisionByExclusion([-1], false);
         if (this.wallCollider) {
@@ -304,7 +295,7 @@ class Level1 extends Phaser.Scene {
         }
     }
 
-    // Update enemies
+    //
     this.enemies.getChildren().forEach(enemy => {
         if (!enemy || enemy.isDead) return;
 
