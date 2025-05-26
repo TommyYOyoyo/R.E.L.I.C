@@ -119,21 +119,21 @@ function devMode(scene, windowWidth, windowHeight) {
                     level: "Level1", 
                     checkpoint: 0
                 }));
-                scene.newScene("Level1");
+                newScene("Level1", scene);
             } else if (button.text == "Niveau 2") {
                 // Set last game checkpoint to default
                 localStorage.setItem('lastGame', JSON.stringify({
                     level: "Level2",
                     checkpoint: 0
                 }));
-                scene.newScene("Level2");
+                newScene("Level2", scene);
             } else if (button.text == "Niveau 3"){
                 // Set last game checkpoint to default
                 localStorage.setItem('lastGame', JSON.stringify({
                     level: "Level3",
                     checkpoint: 0
                 }));
-                scene.newScene("Level3");
+                newScene("Level3", scene);
             } else {
                 clearStorage();
             }
@@ -287,11 +287,11 @@ class MainMenu extends Phaser.Scene {
                     checkpoint: 0
                 }));
                 clearStorage();
-                this.newScene("Level1");
+                newScene("Level1", this);
             } else if (button.text == "CONTINUER") {
                 // Restart latest progress
                 const level = JSON.parse(localStorage.getItem('lastGame')).level;
-                this.newScene(`${level}`);
+                newScene(`${level}`, this);
             } else {
                 devMode(this, windowWidth, windowHeight);
             }
@@ -304,25 +304,27 @@ class MainMenu extends Phaser.Scene {
         });
         this.music.play();
     } 
-
-    // Start new scene with fade effect
-    newScene(scene) {
-        // Start a 1-second fade to black
-        this.cameras.main.fadeOut(2000, 0, 0, 0); // (duration, red, green, blue)
-
-        // Gradually decrease music volume
-        setInterval(() => {
-            if (this.music.volume > 0) this.music.volume -= 0.1;
-        }, 200);
-
-        // When fade completes, switch scenes
-        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-            this.scene.start(`${scene}`);
-            this.sound.stopAll(); // Stop all sounds
-            // Destroy current scene
-            // this.scene.stop();
-        });
-    }
 }
 
-export { MainMenu };
+// Start new scene with fade effect
+function newScene(target, scene, music = true) {
+    // Start a 1-second fade to black
+    scene.cameras.main.fadeOut(2000, 0, 0, 0); // (duration, red, green, blue)
+
+    // Gradually decrease music volume
+    if (music) {
+        setInterval(() => {
+            if (scene.music.volume > 0) scene.music.volume -= 0.1;
+        }, 200);
+    }
+
+    // When fade completes, switch scenes
+    scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        scene.scene.start(`${target}`);
+        scene.sound.stopAll(); // Stop all sounds
+        // Destroy current scene
+        // this.scene.stop();
+    });
+}
+
+export { MainMenu, newScene };

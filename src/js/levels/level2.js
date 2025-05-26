@@ -85,6 +85,7 @@ class Level2 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint;
         this.nextCheckpoint;
+        this.isPaused = false; // Variable to stop game update loop
         this.weirdos = [];
     }
 
@@ -226,6 +227,8 @@ class Level2 extends Phaser.Scene {
 
     // Game update loop
     update() {
+        if (this.isPaused) return;
+        
         // Update game tick
         this.gameTick++;
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
