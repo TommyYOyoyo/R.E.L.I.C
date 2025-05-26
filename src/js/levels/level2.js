@@ -66,6 +66,7 @@ function loadAssets(scene) {
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
+    scene.load.image("fragment", "/assets/img/Fragment.png");
     
     scene.load.image("chatBox", "/assets/img/chatBox.png");
 
