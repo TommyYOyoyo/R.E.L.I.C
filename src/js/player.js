@@ -50,6 +50,8 @@ function loadPlayer(scene) {
     scene.player.isNearQuest = false;
     scene.player.isQuestActive = false;
     scene.player.isQuestOpen = false;
+    scene.player.isHurting = false;
+    scene.player.canMove = true;
     scene.player.currentQuest;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
@@ -60,6 +62,7 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxHeight = 15;
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
+    scene.player.health = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
     // Set player collision detection
@@ -87,6 +90,16 @@ function loadPlayer(scene) {
     scene.player.on("animationstop", (anim) => {
         if (anim.key === "slide") {
             scene.player.isSliding = false; // Reset if sliding anims are interrupted by other anims
+        }
+    });
+    scene.player.on("animationcomplete", (anim) => {
+        if (anim.key === "hurt") {
+            scene.player.isHurting = false; // Reset if hurting anims finished naturally
+        }
+    });
+    scene.player.on("animationstop", (anim) => {
+        if (anim.key === "hurt") {
+            scene.player.isHurting = false; // Reset if hurting anims are interrupted by other anims
         }
     });
 
@@ -192,16 +205,17 @@ function createAnimation(scene) {
     scene.anims.create({
         key: "hurt",
         frames: scene.anims.generateFrameNumbers("playerSheet", {
-            frames: [50, 51]
+            frames: [105, 106, 107]
         }),
         frameRate: 10,
-        repeat: 0
+        repeat: 0,
+        interruptible: false
     });
     // Death animation
     scene.anims.create({
         key: "death",
         frames: scene.anims.generateFrameNumbers("playerSheet", {
-            frames: [94, 95, 96, 97]
+            frames: [91, 92, 93, 94, 95, 96, 97]
         }),
         frameRate: 10,
         repeat: 0
@@ -247,6 +261,16 @@ function createAnimation(scene) {
 // Player movement updator
 function updatePlayer(scene) {
 
+    //console.log(scene.player.x, scene.player.y);
+
+    // Player is dead
+    if (scene.player.isDead) {
+        setTimeout(() => {
+            gameOver(scene); 
+        }, 500);
+        return;
+    };
+
     // Checkpoint updater
     updateCheckpoint(scene);
 
@@ -282,7 +306,21 @@ function updatePlayer(scene) {
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
+    scene.player.questNotifContainer.setPosition(scene.player.x + 100, scene.player.y);
+
+    // Untrigger if player is not near quest
+    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup)) {
+        scene.player.isNearQuest = false;
+        scene.player.currentQuest = null;
+    }
+    // Unshow interact warning
+    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isQuestActive) {
+        scene.player.questNotifContainer.setVisible(false);
+    }
+
     // MOVEMENTS TRIGGERS BELOW ----------------------------------------------------------
+    if (!scene.player.canMove) return; // Player cannot move nor interact
+
     // Move left
     if (scene.keys.a.isDown) {
         moveLeft(scene);
@@ -299,12 +337,13 @@ function updatePlayer(scene) {
         scene.player.body.velocity.y > 0 &&
         !scene.player.isSliding &&
         !scene.player.isAttacking &&
-        !scene.player.isClimbing) {
+        !scene.player.isClimbing &&
+        !scene.player.isHurting) {
         fall(scene);
     }
 
     // Crouch
-    if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking) {
+    if (scene.keys.s.isDown && !scene.disableCrouch && !scene.player.isAttacking && !scene.player.isHurting) {
         crouch(scene);
     } else {
         scene.player.isCrouching = false; // Disable user isCrouching property for appropriate hitbox management
@@ -344,18 +383,6 @@ function updatePlayer(scene) {
             scene.player.isQuestActive = true;
             runQuest(scene);
         }
-    }
-
-    scene.player.questNotifContainer.setPosition(scene.player.x + 100, scene.player.y);
-
-    // Untrigger if player is not near quest
-    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup)) {
-        scene.player.isNearQuest = false;
-        scene.player.currentQuest = null;
-    }
-    // Unshow interact warning
-    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isQuestActive) {
-        scene.player.questNotifContainer.setVisible(false);
     }
     
 }
@@ -456,12 +483,13 @@ function attack(scene) {
             if (!enemy.isDead) {
                 enemy.health -= 1;
                 enemy.play('skeletonHit', true);
-                enemy.isAttacking = false; // Cancel current attack
                 
+                // Enemy has been killed
                 if (enemy.health <= 0) {
                     enemy.isDead = true;
                     enemy.play('skeletonDead', true);
                     enemy.body.enable = false;
+                    enemy.attackHitbox.destroy();
                     scene.time.delayedCall(1000, () => enemy.destroy());
                 }
             }
@@ -483,7 +511,7 @@ function attack(scene) {
 function moveLeft(scene) {
     updateDirection(scene, 0);
     scene.player.setVelocityX(-300); 
-    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
@@ -494,7 +522,7 @@ function moveLeft(scene) {
 function moveRight(scene) {
     updateDirection(scene, 1);
     scene.player.setVelocityX(300);
-    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
     }
@@ -503,7 +531,7 @@ function moveRight(scene) {
 // Player idle function
 function idle(scene) {
     scene.player.setVelocityX(0);
-    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking) {
+    if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("idle", true);
     }
 }
@@ -511,7 +539,7 @@ function idle(scene) {
 // Player jump function
 function jump(scene) {
     scene.player.isJumping = true;
-    if (scene.player.body.onFloor() && !scene.player.isAttacking) {
+    if (scene.player.body.onFloor() && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("jump", true);
         scene.sound.play("jump"); // Play jump sound effect
     }
@@ -659,6 +687,11 @@ function runQuest(scene) {
         default:
             break;
     }
+}
+
+// Function to trigger game over
+function gameOver(scene) {
+    scene.scene.pause();
 }
 
 // Function to trigger fragment find animation
