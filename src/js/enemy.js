@@ -104,7 +104,8 @@ function spawnSkeleton(x, y, scene) {
 
     // Set properties
     skeleton.health = 3;
-    skeleton.detectionRange = 400;
+    skeleton.detectionRangeX = 400;
+    skeleton.detectionRangeY = 200;
     skeleton.isAttacking = false;
     skeleton.isDead = false;
     skeleton.attacked = false;
@@ -191,7 +192,9 @@ function updateSkeleton(scene) {
         }
 
         const dx = scene.player.x - enemy.x; // Distance between enemy and player
-        const distance = Math.abs(dx);        // Absolute distance (no negative values)
+        const dy = scene.player.y - enemy.y; // Distance between enemy and player
+        const distanceX = Math.abs(dx);        // Absolute distanceX (no negative values)
+        const distanceY = Math.abs(dy);        // Absolute distanceY (no negative values)
         enemy.direction = dx > 0 ? 1 : -1;    // Direction of movement (1 for right, -1 for left)
 
         // Flip sprite if facing is 0
@@ -234,7 +237,7 @@ function updateSkeleton(scene) {
         }
 
         // Player within enemy detection range
-        if (distance < enemy.detectionRange) {
+        if (distanceX < enemy.detectionRangeX && distanceY < enemy.detectionRangeY) {
             // Player outside of attack range
             if (!scene.physics.overlap(scene.player, enemy.attackHitbox)) {
                 // Movement state
@@ -247,7 +250,7 @@ function updateSkeleton(scene) {
             // Player within attack range
             } else {
                 // Stop enemy after a certain extent
-                if (distance < Math.random() * 50 + 50) enemy.setVelocityX(0);
+                if (distanceX < Math.random() * 50 + 50) enemy.setVelocityX(0);
                 // If enemy is not yet attacking
                 if (!enemy.isAttacking) {
                     enemy.isAttacking = true;
