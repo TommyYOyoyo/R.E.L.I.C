@@ -462,6 +462,17 @@
                  "width":0,
                  "x":133.696780893043,
                  "y":164.20041536864
+                }, 
+                {
+                 "height":42.3237768932332,
+                 "id":38,
+                 "name":"enemy_2",
+                 "rotation":0,
+                 "type":"EnemySpawn",
+                 "visible":true,
+                 "width":105.305587746259,
+                 "x":595.052148939386,
+                 "y":83.6398448128181
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -470,7 +481,7 @@
          "y":0
         }],
  "nextlayerid":14,
- "nextobjectid":38,
+ "nextobjectid":39,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

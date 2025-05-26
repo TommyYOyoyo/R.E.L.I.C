@@ -654,7 +654,7 @@ function updateCheckpoint(scene) {
     }
 }
 
-// Function to detect and run quest
+// Function to detect and run quests or open fragment chests
 function runQuest(scene) {
 
     // If player spammed the F key and kept opening the quest, ignore
@@ -699,7 +699,8 @@ function gameOver(scene) {
 
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
-
+    
 }
+
 
 export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind };

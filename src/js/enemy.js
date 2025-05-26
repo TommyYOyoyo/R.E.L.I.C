@@ -30,9 +30,7 @@ function loadEnemyAssets(scene) {
 // Create skeletons and add them to the enemy group
 // density: number per unit
 function createSkeleton(scene, collidablesLayer, density, unit) {
-    let spaces = [];
-    let numSpaces;
-    let spaceX;
+    
     // Enemies physics group
     scene.enemies = scene.physics.add.group({
         collideWorldBounds: true,
@@ -42,20 +40,28 @@ function createSkeleton(scene, collidablesLayer, density, unit) {
 
     // Spawn enemies in groups according to density
     scene.enemySpawns.forEach(spawn => {
-        numSpaces = Math.floor(spawn.body.width / unit); // Number of spaces to spawn
-        spaceX = spawn.x - spawn.body.width / 2; // Current X position
+        let spaces = [];
+        let numSpaces = Math.floor(spawn.body.width / unit); // Number of spaces to spawn
+        let spaceX = spawn.x - spawn.body.width / 2; // Current X position
+
         for (let i = 0; i < numSpaces; i++) {
-            spaces.push({ start: spaceX, end: spaceX + unit }); // Start and end positions of each space
+            if (i == numSpaces - 1) { // Last space
+                spaces.push({ start: spaceX, end: spawn.x - spawn.body.width / 2 + spawn.body.width });
+            } else {
+                spaces.push({ start: spaceX, end: spaceX + unit }); // Start and end positions of each space
+            }
             spaceX += unit; // Update current X position
         }
+
         // Spawn enemies according to density per space
         for (let i = 0; i < spaces.length; i++) {
             for (let ii = 0; ii < density; ii++) {
                 // Random X position among the space
                 const randomX = Math.floor(Math.random() * (spaces[i].end - spaces[i].start)) + spaces[i].start;
-                spawnSkeleton(randomX, spawn.y - 205, scene);
+                spawnSkeleton(randomX, spawn.y - 100, scene);
             }
         }
+        
     });
     // Add collider
     scene.enemyCollider = scene.physics.add.collider(scene.enemies, collidablesLayer);
@@ -241,7 +247,7 @@ function updateSkeleton(scene) {
             // Player within attack range
             } else {
                 // Stop enemy after a certain extent
-                if (distance < 50) enemy.setVelocityX(0);
+                if (distance < Math.random() * 50 + 50) enemy.setVelocityX(0);
                 // If enemy is not yet attacking
                 if (!enemy.isAttacking) {
                     enemy.isAttacking = true;
