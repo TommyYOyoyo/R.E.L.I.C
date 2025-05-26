@@ -492,8 +492,8 @@
                  "type":"INOUT",
                  "visible":true,
                  "width":829.25,
-                 "x":616.5,
-                 "y":202.75
+                 "x":615.674158886612,
+                 "y":203.216679131081
                 }, 
                 {
                  "height":63.25,
@@ -615,6 +615,50 @@
                  "width":128,
                  "x":1243,
                  "y":96
+                }, 
+                {
+                 "height":31.1666666666667,
+                 "id":61,
+                 "name":"enemySpawns",
+                 "rotation":0,
+                 "type":"EnemySpawn",
+                 "visible":true,
+                 "width":385.5,
+                 "x":827.5,
+                 "y":150.5
+                }, 
+                {
+                 "height":28.3333333333333,
+                 "id":62,
+                 "name":"enemySpawns",
+                 "rotation":0,
+                 "type":"EnemySpawn",
+                 "visible":true,
+                 "width":352.5,
+                 "x":865,
+                 "y":48
+                }, 
+                {
+                 "height":37.5,
+                 "id":64,
+                 "name":"enemySpawns",
+                 "rotation":0,
+                 "type":"EnemySpawn",
+                 "visible":true,
+                 "width":94.5,
+                 "x":1922,
+                 "y":281
+                }, 
+                {
+                 "height":55,
+                 "id":65,
+                 "name":"enemySpawns",
+                 "rotation":0,
+                 "type":"EnemySpawnRoom",
+                 "visible":true,
+                 "width":405.5,
+                 "x":2888.5,
+                 "y":255
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -623,7 +667,7 @@
          "y":0
         }],
  "nextlayerid":18,
- "nextobjectid":60,
+ "nextobjectid":66,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

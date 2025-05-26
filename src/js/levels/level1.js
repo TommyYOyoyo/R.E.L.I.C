@@ -18,27 +18,6 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
-    scene.load.spritesheet("skeletonAttack", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Attack.png", {
-        frameWidth: 43,
-        frameHeight: 37
-    });
-    scene.load.spritesheet("skeletonWalk", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Walk.png", {
-        frameWidth: 22,
-        frameHeight: 33
-    });
-    scene.load.spritesheet("skeletonDead", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Dead.png", {
-        frameWidth: 33,
-        frameHeight: 32
-    });
-    scene.load.spritesheet("skeletonHit", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Hit.png", {
-        frameWidth: 30,
-        frameHeight: 32
-    });
-    scene.load.spritesheet("skeletonIdle", "assets/enemySheet/Skeleton/Sprite Sheets/Skeleton Idle.png", {
-        frameWidth: 24,
-        frameHeight: 32
-    });
-
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -49,6 +28,8 @@ function loadAssets(scene) {
     scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
+
+    loadEnemyAssets(scene);
 }
 //Game scene settings
 class Level1 extends Phaser.Scene {
@@ -129,12 +110,18 @@ class Level1 extends Phaser.Scene {
         this.inout2 = map.createFromObjects("interact", {
             type:"INOUT2" //inout2
         });
+         this.enemySpawns = map.createFromObjects("interact", {
+            type: "EnemySpawn",
+        });
+
         //object spawn
         this.spawnObjects(this.checkpoints);
         this.spawnObjects(this.ladders);
         this.spawnObjects(this.activateWalls);
         this.spawnObjects(this.inout1);
         this.spawnObjects(this.inout2);
+        this.spawnObjects(this.enemySpawns);
+        
         //layer references
         this.outsideLayer = layers.outside;
         this.outside2Layer = layers.outside2;
@@ -152,6 +139,7 @@ class Level1 extends Phaser.Scene {
         this.inout2Group = this.physics.add.staticGroup();
         this.checkpointGroup = this.physics.add.staticGroup();
         this.activateWallsGroup = this.physics.add.staticGroup();
+        this.enemySpawnsGroup = this.physics.add.staticGroup();
         
         //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
@@ -159,6 +147,7 @@ class Level1 extends Phaser.Scene {
         this.addToGroup(this.activateWalls, this.activateWallsGroup);
         this.addToGroup(this.inout1, this.inoutGroup);
         this.addToGroup(this.inout2, this.inout2Group);
+        this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         
         //preload walls
         this.walls1.setVisible(false);
@@ -180,68 +169,12 @@ class Level1 extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
-
-        //enemy setup
-        this.enemies = this.physics.add.group();
-        this.createSkeletonAnimations();
-        this.spawnSkeleton(800, 500);
-        this.physics.add.collider(this.enemies, layers.collidables);
+       
+        createSkeleton(this, this.ground, 1, 350);
 
         this.gameTick = 0;
     }
 
-    createSkeletonAnimations() {
-        this.anims.create({
-            key: 'skeletonIdle',
-            frames: this.anims.generateFrameNumbers('skeletonIdle', { start: 0, end: 10 }),
-            frameRate: 5,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'skeletonWalk',
-            frames: this.anims.generateFrameNumbers('skeletonWalk', { start: 0, end: 12 }),
-            frameRate: 8,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'skeletonAttack',
-            frames: this.anims.generateFrameNumbers('skeletonAttack', { start: 0, end: 17 }),
-            frameRate: 10,
-            repeat: 0
-        });
-
-        this.anims.create({
-            key: 'skeletonHit',
-            frames: this.anims.generateFrameNumbers('skeletonHit', { start: 0, end: 7 }),
-            frameRate: 5,
-            repeat: 0
-        });
-
-        this.anims.create({
-            key: 'skeletonDead',
-            frames: this.anims.generateFrameNumbers('skeletonDead', { start: 0, end: 14 }),
-            frameRate: 8,
-            repeat: 0
-        });
-    }
-
-    spawnSkeleton(x, y) {
-        const skeleton = this.physics.add.sprite(x, y, 'skeletonIdle')
-            .setScale(this.scaleMultiplier)
-            .setDepth(11)
-            .setSize(22, 30)
-            .setOffset(0, 3);
-        
-        skeleton.health = 3;
-        skeleton.attackRange = 50;
-        skeleton.detectionRange = 200;
-        skeleton.isAttacking = false;
-        skeleton.isDead = false;
-        skeleton.attackConnected = false;
-        this.enemies.add(skeleton);
-    }
 //check for updates
     update() {
     this.gameTick++;
@@ -299,89 +232,10 @@ class Level1 extends Phaser.Scene {
             this.wallCollider = null;
         }
     }
-
-    
-    this.enemies.getChildren().forEach(enemy => {
-        if (!enemy || enemy.isDead) return;
-
-        // Add null checks for animations
-        const currentAnim = enemy.anims?.currentAnim;
-        const currentFrame = enemy.anims?.currentFrame;
-
-        // Add hit reaction
-        if (currentAnim?.key === 'skeletonHit' && enemy.anims.isPlaying) {
-            enemy.setVelocityX(0);
-            return;
-        }
-
-        const dx = this.player.x - enemy.x;
-        const distance = Math.abs(dx);
-        const direction = dx > 0 ? 1 : -1;
-
-        enemy.flipX = direction < 0;
-
-        // Adjust hitbox based on current animation
-        if (currentAnim) {
-            if (currentAnim.key === 'skeletonAttack') {
-                // Attack hitbox (wider and properly aligned)
-                enemy.body.setSize(40, 28);
-                enemy.body.setOffset(enemy.flipX ? 3 : -15, 2);
-            }
-            
-            if (currentFrame && currentFrame.index >= 6 && currentFrame.index <= 12 && !enemy.attackConnected) {
-                if (distance <= enemy.attackRange) {
-                    this.player.health -= 1;
-                    this.playerUI.updateHealth(this.player.health);
-                    enemy.attackConnected = true;
-                    
-                    // Play hurt animation
-                    if (this.player.health > 0) {
-                        this.player.play('hurt', true);
-                    } else {
-                        this.player.play('death', true);
-                    }
-                }
-            } else {
-                // Default hitbox for idle/walk
-                enemy.body.setSize(22, 30);
-                enemy.body.setOffset(0, 3);
-                enemy.attackConnected = false;
-            }
-        }
-
-        if (distance < enemy.detectionRange) {
-            if (distance > enemy.attackRange) {
-                // Movement state
-                enemy.setVelocityX(100 * direction);
-                if (!enemy.anims.isPlaying || !currentAnim || currentAnim.key !== 'skeletonWalk') {
-                    enemy.anims.play('skeletonWalk', true);
-                }
-                enemy.isAttacking = false;
-            } else {
-                // Attack state
-                enemy.setVelocityX(0);
-                if (!enemy.isAttacking) {
-                    enemy.isAttacking = true;
-                    enemy.attackConnected = false;
-                    enemy.anims.play('skeletonAttack', true);
-                    enemy.once('animationcomplete', () => {
-                        enemy.isAttacking = false;
-                        enemy.anims.play('skeletonIdle', true);
-                    });
-                }
-            }
-        } else {
-            // Idle state
-            enemy.setVelocityX(0);
-            if (!enemy.anims.isPlaying || !currentAnim || currentAnim.key !== 'skeletonIdle') {
-                enemy.anims.play('skeletonIdle', true);
-            }
-            enemy.isAttacking = false;
-        }
-    });
 //update player
     updatePlayer(this);
     hitboxUpdater(this);
+    updateSkeleton(this)
 }
 //spawn objects with the scale multiplier
     spawnObjects(objects) {
