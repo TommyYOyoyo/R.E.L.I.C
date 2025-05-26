@@ -12,7 +12,7 @@ function clearStorage() {
     localStorage.setItem("3_fragments", 0);
     localStorage.setItem("threeWeirdos", "false");
     localStorage.setItem("sequencer", "false");
-    localStorage.setItem("numberGuesser", "false");
+    localStorage.setItem("nbGuesser", "false");
 }
 
 // devMode level selector
