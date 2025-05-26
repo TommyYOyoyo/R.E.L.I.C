@@ -196,7 +196,7 @@ function updateSkeleton(scene) {
         // Attack mechanism (attack animation is playing)
         if (currentAnim.key === 'skeletonAttack') {
             // Attack frames are playing
-            if (currentFrame && currentFrame.index >= 6 && currentFrame.index <= 9) {
+            if (currentFrame && currentFrame.index >= 6 && currentFrame.index <= 9 && !scene.player.isImmune) {
                 // If enemy has not hit yet
                 if (!enemy.attacked) {
                     enemy.attacked = true; // Prevent enemy from spamming attack
@@ -205,16 +205,23 @@ function updateSkeleton(scene) {
 
                     // UI element
                     
-                    // Player play hurt/death animation
+                    // Player gets hit
                     if (scene.player.health > 0) {
                         scene.player.isHurting = true;
-                        scene.player.play('hurt', true);
-                        scene.sound.play('hurt');
+                        scene.player.isImmune = true;
+                        if (!scene.isHurting) scene.player.play('hurt', true);
+                        scene.sound.play('hurt', {
+                            volume: 0.5
+                        });
+                    // Player is dead
                     } else {
                         scene.player.canMove = false;
                         scene.player.isDead = true;
+                        scene.player.isImmune = true;
                         scene.player.play('death', true);
-                        scene.sound.play('hurt');
+                        scene.sound.play('hurt', {
+                            volume: 0.5
+                        });
                     }
                 }
             }

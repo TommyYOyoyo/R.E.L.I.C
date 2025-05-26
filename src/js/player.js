@@ -52,6 +52,7 @@ function loadPlayer(scene) {
     scene.player.isQuestOpen = false;
     scene.player.isHurting = false;
     scene.player.canMove = true;
+    scene.player.isImmune = false;
     scene.player.currentQuest;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
@@ -95,11 +96,13 @@ function loadPlayer(scene) {
     scene.player.on("animationcomplete", (anim) => {
         if (anim.key === "hurt") {
             scene.player.isHurting = false; // Reset if hurting anims finished naturally
+            scene.player.isImmune = false; // Reset immunity frame
         }
     });
     scene.player.on("animationstop", (anim) => {
         if (anim.key === "hurt") {
             scene.player.isHurting = false; // Reset if hurting anims are interrupted by other anims
+            scene.player.isImmune = false; // Reset immunity frame
         }
     });
 
@@ -207,7 +210,7 @@ function createAnimation(scene) {
         frames: scene.anims.generateFrameNumbers("playerSheet", {
             frames: [105, 106, 107]
         }),
-        frameRate: 10,
+        frameRate: 5,
         repeat: 0,
         interruptible: false
     });
