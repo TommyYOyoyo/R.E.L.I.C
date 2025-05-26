@@ -220,7 +220,7 @@ class Level2 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
         camera.startFollow(this.player);
 
-        createSkeleton(this, this.ground, 1);
+        createSkeleton(this, this.ground, 1, 75);
     }
 
     // Game update loop
@@ -231,6 +231,7 @@ class Level2 extends Phaser.Scene {
 
         updatePlayer(this);
         hitboxUpdater(this);
+        updateSkeleton(this)
     }
 
     // Spawn all objects from tilemap, scale them and enable physics
