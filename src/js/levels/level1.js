@@ -83,6 +83,7 @@ class Level1 extends Phaser.Scene {
         //Create all layers with proper depth
         const layers = {
             skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(1).setScrollFactor(0.2),
+            floor: map.createLayer("floor", tileset, 0, 0).setDepth(16),
             backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(3),
             backwalls2: map.createLayer("backwalls2", tileset, 0, 0).setDepth(2),
             collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(7),
@@ -94,7 +95,8 @@ class Level1 extends Phaser.Scene {
             outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(14),
             layering: map.createLayer("layering", tileset, 0, 0).setDepth(15)
         }
-        this.ground = layers.collidables; //makes layer collidables collidable
+        
+        this.ground = layers.floor; //makes layer collidables collidable
         
         //object pull
         this.checkpoints = map.createFromObjects("interact", {
@@ -115,7 +117,7 @@ class Level1 extends Phaser.Scene {
          this.enemySpawns = map.createFromObjects("interact", {
             type: "EnemySpawn",
         });
-        this.questSpawns = map.createFromObjects("Objects", {
+        this.questSpawns = map.createFromObjects("interact", {
             type: "Quest",
         });
 
@@ -133,6 +135,7 @@ class Level1 extends Phaser.Scene {
         this.outside2Layer = layers.outside2;
         this.walls1 = layers.backwalls2;
         this.walls2 = layers.arenaWalls;
+        this.walls = layers.collidables
 
         //scale all layers
         Object.values(layers).forEach(layer => {
@@ -162,6 +165,7 @@ class Level1 extends Phaser.Scene {
         this.walls2.setVisible(false);
         this.walls1.setCollisionByExclusion([-1], false);
         this.walls2.setCollisionByExclusion([-1], true);
+        this.walls.setCollisionByExclusion([-1], true);
 
 
         //load and scale player
@@ -178,7 +182,7 @@ class Level1 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
        
-        createSkeleton(this, this.ground, 1, 350);
+        createSkeleton(this, this.walls, 1, 350);
 
         this.gameTick = 0;
     }
@@ -240,6 +244,7 @@ class Level1 extends Phaser.Scene {
             this.wallCollider = null;
         }
     }
+    
 //update player
     updatePlayer(this);
     hitboxUpdater(this);
