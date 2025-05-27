@@ -8,6 +8,7 @@ import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
 import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
+import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
 import PlayerUI from "./playerUI.js";
 
@@ -526,6 +527,7 @@ function attack(scene) {
                     enemy.play('skeletonDead', true);
                     enemy.body.enable = false;
                     enemy.attackHitbox.destroy();
+                    scene.events.emit('skeletonKilled');
                     scene.time.delayedCall(1000, () => enemy.destroy());
                 }
             }
@@ -729,6 +731,13 @@ function runQuest(scene) {
             }, 200);
             break;
             
+        case scene.player.currentQuest.name.startsWith("diary"):
+            div.style.display = 'block';
+            setTimeout(() => {
+                diary(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
         default:
             break;
     }
