@@ -731,7 +731,7 @@ function runQuest(scene) {
             }, 200);
             break;
             
-        case scene.player.currentQuest.name.startsWith("diary"):
+        case scene.player.currentInteractable.name.startsWith("diary"):
             div.style.display = 'block';
             setTimeout(() => {
                 diary(div, scene);

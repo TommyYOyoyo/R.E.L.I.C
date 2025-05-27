@@ -5,7 +5,6 @@
 
 import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
-import PlayerUI from "../playerUI.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
 //Load all assets  
@@ -20,6 +19,8 @@ function loadAssets(scene) {
     });
 
     scene.load.image("questKey", "/assets/img/interactKey.png");
+    scene.load.image("fragment", "/assets/img/fragment.png");
+    scene.load.image("heart", "/assets/img/heart.png");
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -61,8 +62,7 @@ class Level1 extends Phaser.Scene {
 //Create everything  
     create() {
         this.physics.world.createDebugGraphic(); 
-        this.playerUI = new PlayerUI(this);  //Create player UI
-    
+
         const scale = this.scaleMultiplier;  //Scale multiplier
         this.bg2 = this.add.image(0, 0, "bgLayer2") //Create background
             .setOrigin(0)
@@ -176,8 +176,6 @@ class Level1 extends Phaser.Scene {
         //load and scale player
         loadPlayer(this);
         this.player.setScale(scale).setDepth(11);
-        this.player.health = 100;
-        this.playerUI.updateHealth(100);
         
         //ground collider reference
         this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
