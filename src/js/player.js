@@ -7,6 +7,7 @@
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
+import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
 import { shutdown } from "./utils.js";
 import PlayerUI from "./playerUI.js";
 
@@ -716,6 +717,15 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
+
+        case scene.player.currentInteractable.name.startsWith("runeSequenceLock"):
+            div.style.display = 'block';
+            setTimeout(() => {
+                runeSequenceLock(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
+            
         default:
             break;
     }
