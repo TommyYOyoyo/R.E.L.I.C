@@ -64,6 +64,8 @@ function loadAssets(scene) {
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
+    scene.load.image("fragment", "/assets/img/fragment.png");
+    scene.load.image("heart", "/assets/img/heart.png");
     // scene.load.image("fragment", "/assets/img/Fragment.png");
 
     // Load enemy assets
@@ -140,27 +142,27 @@ class Level3 extends Phaser.Scene {
 
         // Create interactive objects from tilemap object layers
         this.checkpoints = map.createFromObjects("checkpoint_0", { type: "Checkpoint" });
-        this.puzzles = map.createFromObjects("puzzles", { type: "Quest" });
+        this.questSpawns = map.createFromObjects("puzzles", { type: "Quest" });
         this.ladders = map.createFromObjects("ladders", { type: "Ladder" });
         // this.enemySpawns = map.createFromObjects("Objects", { type: "EnemySpawn" }); // Commented in your original
         this.interactables = map.createFromObjects("interactables", { type: "interactables" });
 
         // Spawn and scale all objects from tilemap object layers
-        const objects = [this.checkpoints, this.puzzles, this.ladders, /*this.enemySpawns*/, this.interactables];
+        const objects = [this.checkpoints, this.questSpawns, this.ladders, /*this.enemySpawns*/, this.interactables];
         objects.forEach(element => {
             this.spawnObjects(element);
         });
 
         // Initialize physics groups for object collections
         this.climbableGroup = this.physics.add.staticGroup();
-        this.puzzlesGroup = this.physics.add.staticGroup();
+        this.questSpawnsGroup = this.physics.add.staticGroup();
         this.interactablesGroup = this.physics.add.staticGroup()
         // this.enemySpawnsGroup = this.physics.add.staticGroup() // Commented in your original
         this.checkpointsGroup = this.physics.add.staticGroup();
 
         // Add object collections to their respective physics groups
         this.addToGroup(this.ladders, this.climbableGroup);
-        this.addToGroup(this.puzzles, this.puzzlesGroup);
+        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
         this.addToGroup(this.interactables, this.interactablesGroup);
         // this.addToGroup(this.enemySpawns, this.enemySpawnsGroup); // Commented in your original
         this.addToGroup(this.checkpoints, this.checkpointsGroup);

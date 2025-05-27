@@ -8,6 +8,7 @@ import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
 import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
+import { sudoku } from "./puzzles/sudoku.js";
 import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
 import PlayerUI from "./playerUI.js";
@@ -736,13 +737,25 @@ function runQuest(scene) {
             }, 200);
             break;
             
-        case scene.player.currentInteractable.name.startsWith("diary"):
+        case 
+
+            scene.player.currentInteractable.name.startsWith("sudoku"):
+                div.style.display = 'block';
+                setTimeout(() => {
+                    sudoku(div, scene);
+                    scene.children.bringToTop(div);
+                }, 200);
+                break;
+
+            case 
+            scene.player.currentInteractable.name.startsWith("diary"):
             div.style.display = 'block';
             setTimeout(() => {
                 diary(div, scene);
                 scene.children.bringToTop(div);
             }, 200);
             break;
+            
         default:
             break;
     }
