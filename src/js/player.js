@@ -334,7 +334,7 @@ function updatePlayer(scene) {
             }
         } else {
             scene.player.isNearInteract = false;
-        scene.player.currentInteractable = null;
+            scene.player.currentInteractable = null;
         }
     }
     // Unshow interact warning
