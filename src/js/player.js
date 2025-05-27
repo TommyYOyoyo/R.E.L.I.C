@@ -794,10 +794,13 @@ function showGameOverScreen(scene) {
     .on('pointerover', () => retryButton.setColor('#916100'))
     .on('pointerout', () => retryButton.setColor('#ffffff'))
     .on('pointerdown', () => {
-        shutdown(scene);
-        scene.playerUI = undefined;
-        scene.isPaused = false;
-        scene.scene.restart();
+        scene.sound.play("click");
+        setTimeout(() => {
+            shutdown(scene);
+            scene.playerUI = undefined;
+            scene.isPaused = false;
+            scene.scene.restart();
+        }, 300);
     })
     .setDepth(1001);
 
@@ -815,7 +818,10 @@ function showGameOverScreen(scene) {
     .on('pointerover', () => menuButton.setColor('#916100'))
     .on('pointerout', () => menuButton.setColor('#ffffff'))
     .on('pointerdown', () => {
-        scene.scene.start('MainMenu');
+        scene.sound.play("click");
+        setTimeout(() => {
+            scene.scene.start('MainMenu');
+        }, 300);
     })
     .setDepth(1001);
 
@@ -829,6 +835,7 @@ function showGameOverScreen(scene) {
         duration: 1000
     });
 }
+
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
     
