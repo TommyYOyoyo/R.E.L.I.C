@@ -43,6 +43,7 @@ class Level1 extends Phaser.Scene {
         this.nextCheckpoint;
         this.groundCollider;
         this.ground;
+        this.skeletonsKilled = 0;
     }
 
     //Preload player movement
@@ -84,12 +85,13 @@ class Level1 extends Phaser.Scene {
         const layers = {
             skyline: map.createLayer("skyline", tileset, 0, 0).setDepth(1).setScrollFactor(0.2),
             floor: map.createLayer("floor", tileset, 0, 0).setDepth(16),
-            backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(3),
-            backwalls2: map.createLayer("backwalls2", tileset, 0, 0).setDepth(2),
+            backwalls: map.createLayer("backwalls", tileset, 0, 0).setDepth(4),
+            backwalls2: map.createLayer("backwalls2", tileset, 0, 0).setDepth(3),
+            backwalls3: map.createLayer("backwalls3", tileset, 0, 0).setDepth(2),
             collidables: map.createLayer("collidables", tileset, 0, 0).setDepth(7),
             arenaWalls: map.createLayer("arenaWalls", tileset, 0, 0).setDepth(6),
             walls: map.createLayer("walls", tileset, 0, 0).setDepth(8),
-            deco: map.createLayer("deco", tileset, 0, 0).setDepth(4),
+            deco: map.createLayer("deco", tileset, 0, 0).setDepth(5),
             door: map.createLayer("door", tileset, 0, 0).setDepth(10),
             outside: map.createLayer("outside", tileset, 0, 0).setDepth(13),
             outside2: map.createLayer("outside2", tileset, 0, 0).setDepth(14),
@@ -134,6 +136,7 @@ class Level1 extends Phaser.Scene {
         this.outsideLayer = layers.outside;
         this.outside2Layer = layers.outside2;
         this.walls1 = layers.backwalls2;
+        this.walls3 = layers.backwalls3;
         this.walls2 = layers.arenaWalls;
         this.walls = layers.collidables
 
@@ -162,8 +165,10 @@ class Level1 extends Phaser.Scene {
         
         //preload walls
         this.walls1.setVisible(false);
+        this.walls3.setVisible(false);
         this.walls2.setVisible(false);
         this.walls1.setCollisionByExclusion([-1], false);
+        this.walls3.setCollisionByExclusion([-1], false);
         this.walls2.setCollisionByExclusion([-1], true);
         this.walls.setCollisionByExclusion([-1], true);
 
@@ -182,13 +187,17 @@ class Level1 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
        
+        this.events.on('skeletonKilled', () => {
+            this.skeletonsKilled++;
+            console.log(`Skeletons killed: ${this.skeletonsKilled}`);
+        });
         createSkeleton(this, this.walls, 1, 350);
 
-        this.gameTick = 0;
     }
 
 //check for updates
     update() {
+    updateSkeleton(this);
     this.gameTick++;
 
     //climb system
@@ -220,30 +229,46 @@ class Level1 extends Phaser.Scene {
     }
 
     //if touching obj activateWalls
-    const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
-    if (touchingActivateWalls) {
-        this.walls1.setVisible(true); //show walls
-        this.walls2.setVisible(true);
-        this.walls1.setCollisionByExclusion([-1], false); //walls collidable
-        this.time.addEvent({ //failsafe in case player gets stuck on walls
-            delay: 50,
-            callback: () => {
-                if (!this.scene) return;
-                this.walls2.setCollisionByExclusion([-1], true);
-                if (!this.wallCollider) {
-                    this.wallCollider = this.physics.add.collider(this.player, this.walls2);
-                }
-            }
-        });
-    } else {
-        this.walls1.setVisible(false); //hide walls if player not touching activateWalls
-        this.walls2.setVisible(false);
-        this.walls2.setCollisionByExclusion([-1], false);
-        if (this.wallCollider) {
-            this.wallCollider.destroy();
-            this.wallCollider = null;
-        }
+const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
+
+// Handle wall visibility and collisions
+if (touchingActivateWalls && this.skeletonsKilled < 10) {
+    // Show walls
+    [this.walls1, this.walls2, this.walls3].forEach(wall => {
+        wall.setVisible(true);
+    });
+    
+    // Enable collisions
+    this.walls1.setCollisionByExclusion([-1], true);
+    this.walls2.setCollisionByExclusion([-1], true);
+    
+    // Create collider if it doesn't exist
+    if (!this.wallCollider) {
+        this.wallCollider = this.physics.add.collider(this.player, this.walls2);
     }
+    
+    // Failsafe
+    this.time.addEvent({
+        delay: 50,
+        callback: () => {
+            if (this.scene) {
+                this.walls2.setCollisionByExclusion([-1], true);
+            }
+        }
+    });
+} else {
+    // Hide walls and disable collisions
+    [this.walls1, this.walls2, this.walls3].forEach(wall => {
+        wall.setVisible(false);
+        wall.setCollisionByExclusion([-1], false);
+    });
+    
+    // Clean up collider
+    if (this.wallCollider) {
+        this.wallCollider.destroy();
+        this.wallCollider = null;
+    }
+}
     
 //update player
     updatePlayer(this);

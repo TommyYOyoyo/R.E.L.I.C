@@ -7,6 +7,7 @@
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
+import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
 
 function loadPlayer(scene) {
@@ -494,6 +495,7 @@ function attack(scene) {
                     enemy.play('skeletonDead', true);
                     enemy.body.enable = false;
                     enemy.attackHitbox.destroy();
+                    scene.events.emit('skeletonKilled');
                     scene.time.delayedCall(1000, () => enemy.destroy());
                 }
             }
@@ -685,6 +687,13 @@ function runQuest(scene) {
             // Timeout to prevent ghost key hold glitch
             setTimeout(() => {
                 numberGuesser(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
+        case scene.player.currentQuest.name.startsWith("diary"):
+            div.style.display = 'block';
+            setTimeout(() => {
+                diary(div, scene);
                 scene.children.bringToTop(div);
             }, 200);
             break;
