@@ -10,8 +10,8 @@ function runeSequenceLock(targetDiv, scene) {
     const puzzleContainerId = "rune-lock-puzzle-container";
     const gameTitle = "DEVINEZ LA COMBINAISON";
 
-    const numRunes = 6; // Number of distinct runes to display
-    const solutionSequence = [1, 3, 0, 4]; // The correct sequence of rune indexes
+    const numRunes = 16; // Number of distinct runes to display
+    const solutionSequence = [1, 3, 0, 4, 15, 8]; // The correct sequence of rune indexes
     // Rune symbols from the Elder Futhark runic alphabet
     const runeSymbols = [
         "ᚠ",
