@@ -63,11 +63,14 @@ function loadAssets(scene) {
     scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
+    scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
     scene.load.image("fragment", "/assets/img/fragment.png");
     scene.load.image("heart", "/assets/img/heart.png");
+    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
+    scene.load.image("charm_2", "/assets/img/timecharm_2.png");
     
     scene.load.image("chatBox", "/assets/img/chatBox.png");
 

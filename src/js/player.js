@@ -14,6 +14,7 @@ import PlayerUI from "./playerUI.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
+    scene.level = JSON.parse(localStorage.getItem('lastGame')).level;
     scene.nextCheckpoint;
     const fetchedCheckpoint = JSON.parse(localStorage.getItem('lastGame')).checkpoint;
     // Set fetched checkpoints
@@ -67,6 +68,9 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxHeight = 15;
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
+    scene.player.fragmentsCount = 0;
+    localStorage.getItem(`${scene.level}.fragments`) == null ? scene.player.fragmentsCount = 0 :
+        scene.player.fragmentsCount = localStorage.getItem(`${scene.level}.fragments`);
     scene.player.health = 10;
     scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
@@ -141,6 +145,7 @@ function loadPlayer(scene) {
         scene.player.isNearInteract = true;
         if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
         scene.player.currentInteractable = quest;
+        scene.player.currentInteractable.class = "quest";
     });
 
     // Add interactables detection
@@ -149,6 +154,7 @@ function loadPlayer(scene) {
             scene.player.isNearInteract = true;
             if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
             scene.player.currentInteractable = interactable;
+            scene.player.currentInteractable.class = "interactable";
         });
     }
 
@@ -417,8 +423,7 @@ function updatePlayer(scene) {
     if (scene.keys.f.isDown) {
         if (scene.player.isNearInteract && !scene.player.isInteractActive) {
             scene.player.isInteractActive = true;
-            runQuest(scene);
-            runInteractable(scene);
+            scene.player.currentInteractable.class == "quest" ? runQuest(scene) : runInteractable(scene); // Run quest or interactable accordingly
         }
     }
     
@@ -746,6 +751,12 @@ function runQuest(scene) {
 // Function to trigger interactable
 function runInteractable(scene) {
 
+    switch(true) {
+        case scene.player.currentInteractable.name.startsWith("fragment"):
+            fragmentFind(scene);
+            break;
+    }
+
 }
 
 // Function to trigger game over
@@ -847,7 +858,37 @@ function showGameOverScreen(scene) {
 
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
+    scene.player.currentInteractable.destroy();
     
+    scene.player.fragmentsCount++;
+    scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
+    scene.sound.play("pickup");
+   // highlightFragmentSlot(scene);
+
+    scene.player.currentInteractable = null;
+    scene.player.isInteractActive = false;
+    scene.player.isInteractOpen = false;
+}
+
+// Highlight that player's inventory has been updated
+function highlightFragmentSlot(scene) {
+    // Create highlight effect
+    const slotPos = scene.playerUI.fragmentSlot.getBounds();
+    const highlight = scene.add.graphics()
+        .setPosition(slotPos.x, slotPos.y)
+        .setDepth(1001);
+    
+    // Draw glowing outline
+    highlight.lineStyle(4, 0xEDC602, 1)
+        .strokeRoundedRect(0, 0, slotPos.width, slotPos.height, 5);
+    
+    // Fade out effect
+    scene.tweens.add({
+        targets: highlight,
+        alpha: 0,
+        duration: 1000,
+        onComplete: () => highlight.destroy()
+    });
 }
 
 

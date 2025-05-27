@@ -1,14 +1,20 @@
-
+/**
+ * @author Ray Lam, Honglue Zheng
+ */
 export default class PlayerUI {
     constructor(scene) {
         this.scene = scene;
         this.totalTime;
-        this.level = JSON.parse(localStorage.getItem('lastGame')).level;
+        this.timeCharms = [];
+        this.level = this.scene.level;
         if (this.level == "Level1") {
             this.totalTime = 180;
         } else if (this.level == "Level2") {
+            this.addTimeCharm("1"); // Add first time charm
             this.totalTime = 420;
         } else if (this.level == "Level3") {
+            this.addTimeCharm("1"); // Add first time charm
+            this.addTimeCharm("2");  // Add second time charm
             this.totalTime = 560;
         }
         this.createTimerText();
@@ -220,13 +226,14 @@ export default class PlayerUI {
         }
     }
 
-    // Add this method to update the fragment counter
+    // Update the fragment counter
     updateFragmentCount(count) {
-        this.temporalFragments = count;
+        this.scene.player.fragmentsCount = count;
         this.fragmentText.setText(`x${count}`);
+        localStorage.setItem(`${this.scene.level}.fragments`, count);
     }
 
-    // Add this method to add a time charm to the inventory
+    // Add timecharm to the inventory
     addTimeCharm(charmType) {
         if (this.timeCharms.length < 3) {
             this.timeCharms.push(charmType);
@@ -243,16 +250,28 @@ export default class PlayerUI {
         
         this.timeCharmIcons = [];
         
-        // Add new charm icons
+        // Calculate positions based on inventory box
+        const { width, height } = this.scene.cameras.main;
+        const slotSize = 50;
+        const boxWidth = 190;
+        const healthBarX = 60;
+        const boxX = healthBarX - 45;
+        const startX = boxX + (boxWidth - (3 * slotSize + 2 * 10)) / 2;
+        const slotY = height - 240 + 90;
+        
+        // Add new charm icons in correct slots
         this.timeCharms.forEach((charm, index) => {
-            const x = 60 + 35 + (index * 55);
-            const y = this.scene.cameras.main.height - 160 + 70;
+            const slotX = startX + index * (slotSize + 10);
             
-            const icon = this.scene.add.image(x, y, `charm_${charm}`)
+            const icon = this.scene.add.image(
+                slotX + slotSize/2, // Center in slot
+                slotY + slotSize/2, // Center in slot
+                `charm_${charm}`
+            )
                 .setScrollFactor(0)
                 .setDepth(1002)
-                .setScale(0.8);
-                
+                .setScale(2); // Adjusted scale
+            
             this.timeCharmIcons.push(icon);
         });
     }
