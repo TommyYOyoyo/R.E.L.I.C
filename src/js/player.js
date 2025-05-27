@@ -66,6 +66,7 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
     scene.player.health = 10;
+    scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
     // Set player collision detection
@@ -149,7 +150,7 @@ function loadPlayer(scene) {
         });
     }
 
-    //scene.playerUI = new PlayerUI(this);  // Create player UI
+    scene.playerUI = new PlayerUI(scene);  // Create player UI
 }
 
 // Function to create animations for the player
@@ -279,8 +280,10 @@ function updatePlayer(scene) {
 
     //console.log(scene.player.x, scene.player.y);
 
+    scene.playerUI.drawHealthBar();
+
     // Player is dead
-    if (scene.player.isDead) {
+    if (scene.player.isDead && !scene.isPaused) {
         setTimeout(() => {
             gameOver(scene); 
         }, 500);
@@ -329,11 +332,11 @@ function updatePlayer(scene) {
         // Optional interactables
         if (typeof scene.interactablesGroup !== 'undefined') {
             if (!scene.physics.overlap(scene.player, scene.interactablesGroup)) {
-                scene.player.isNearInteract = false;
+                scene.player.isNearInteract = false; // Untrigger if player is not near interactable
                 scene.player.currentInteractable = null;
             }
         } else {
-            scene.player.isNearInteract = false;
+            scene.player.isNearInteract = false; // Untrigger if player is not near interactable
             scene.player.currentInteractable = null;
         }
     }
@@ -341,11 +344,11 @@ function updatePlayer(scene) {
     if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isInteractActive) {
         // Optional interactables
         if (typeof scene.interactablesGroup !== 'undefined') {
-            if (!scene.physics.overlap(scene.player, scene.interactablesGroup) || scene.player.isInteractActive) {
-                scene.player.interactNotifContainer.setVisible(false);
+            if (!scene.physics.overlap(scene.player, scene.interactablesGroup)) {
+                scene.player.interactNotifContainer.setVisible(false); // Unshow interact warning
             }
         } else {
-            scene.player.interactNotifContainer.setVisible(false);
+            scene.player.interactNotifContainer.setVisible(false); // Unshow interact warning
         }
     }
 
@@ -729,10 +732,10 @@ function runInteractable(scene) {
 // Function to trigger game over
 function gameOver(scene) {
     /**
-     * @author Ray Lam
+     * @author Ray Lam, Honglue Zheng
      */
 
-    scene.isPaused = true;
+    scene.sound.stopAll();
 
     // Create full-black overlay
     scene.blackOverlay = scene.add.rectangle(
@@ -747,29 +750,75 @@ function gameOver(scene) {
     .setAlpha(0);
 
     // Slow zoom in on timer (3 seconds)
-    scene.tweens.add({
-        targets: scene.cameras.main,
-        zoom: 2.5,
-        duration: 3000,
-        ease: 'Sine.InOut'
+    scene.cameras.main.zoomTo(2, 3000, 'Linear', true, (camera, progress) => {
+        if (progress === 1) {
+            showGameOverScreen(scene);
+        }
     });
 
     // Fade to black
     scene.tweens.add({
         targets: scene.blackOverlay,
         alpha: 0.5,
-        duration: 5000
+        duration: 10000
     });
 
-    // Restart level from checkpoint
-    setTimeout(() => {
-        // Restart latest progress
-        shutdown(scene);
-        scene.scene.restart();
-        return;
-    }, 5000);
+    scene.isPaused = true;
+    return;
 }
 
+function showGameOverScreen(scene) {
+    const { width, height } = scene.cameras.main;
+
+    // Create RETRY button
+    const retryButton = scene.add.text(width/2, height/2 - 40, 'RÉESSAYER', {
+        fontFamily: 'noita',
+        fontSize: '32px',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerover', () => retryButton.setColor('#916100'))
+    .on('pointerout', () => retryButton.setColor('#ffffff'))
+    .on('pointerdown', () => {
+        shutdown(scene);
+        scene.playerUI = undefined;
+        scene.isPaused = false;
+        scene.scene.restart();
+    })
+    .setDepth(1001);
+
+    // Create RETURN TO MAIN MENU button
+    const menuButton = scene.add.text(width/2, height/2 + 40, 'RETOUR AU MENU', {
+        fontFamily: 'noita',
+        fontSize: '32px',
+        color: '#ffffff',
+        backgroundColor: '#rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerover', () => menuButton.setColor('#916100'))
+    .on('pointerout', () => menuButton.setColor('#ffffff'))
+    .on('pointerdown', () => {
+        scene.scene.start('MainMenu');
+    })
+    .setDepth(1001);
+
+    // Fade in buttons
+    retryButton.setAlpha(0);
+    menuButton.setAlpha(0);
+    
+    scene.tweens.add({
+        targets: [retryButton, menuButton],
+        alpha: 1,
+        duration: 1000
+    });
+}
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
     
