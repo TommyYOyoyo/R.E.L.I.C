@@ -158,12 +158,6 @@ class Level2 extends Phaser.Scene {
         const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
         this.ground = ground;
 
-        // Set layer depth
-        //sky.setDepth(-5);
-        //clouds.setDepth(-4);
-        //bgenv1.setDepth(-3);
-        //bgenv2.setDepth(-2);
-        //bgenv3.setDepth(-1);
         walls.setDepth(0);
         decorations.setDepth(1);
         

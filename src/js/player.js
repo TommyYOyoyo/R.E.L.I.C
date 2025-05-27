@@ -875,7 +875,7 @@ function showGameOverScreen(scene) {
     .on('pointerdown', () => {
         scene.sound.play("click");
         setTimeout(() => {
-            scene.scene.start('MainMenu');
+            window.location.reload();
         }, 300);
     })
     .setDepth(1001);
