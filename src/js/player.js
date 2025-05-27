@@ -7,6 +7,7 @@
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
+import { shutdown } from "./utils.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
@@ -694,7 +695,46 @@ function runQuest(scene) {
 
 // Function to trigger game over
 function gameOver(scene) {
-    scene.scene.pause();
+    /**
+     * @author Ray Lam
+     */
+
+    scene.isPaused = true;
+
+    // Create full-black overlay
+    scene.blackOverlay = scene.add.rectangle(
+        0, 0,
+        scene.cameras.main.width,
+        scene.cameras.main.height,
+        0x000000
+    )
+    .setOrigin(0)
+    .setScrollFactor(0)
+    .setDepth(50)
+    .setAlpha(0);
+
+    // Slow zoom in on timer (3 seconds)
+    scene.tweens.add({
+        targets: scene.cameras.main,
+        zoom: 2.5,
+        duration: 3000,
+        ease: 'Sine.InOut'
+    });
+
+    // Fade to black
+    scene.tweens.add({
+        targets: scene.blackOverlay,
+        alpha: 0.5,
+        duration: 5000
+    });
+
+    // Restart level from checkpoint
+    setTimeout(() => {
+        // Restart latest progress
+        shutdown(scene);
+        scene.scene.restart();
+        return;
+    }, 5000);
 }
 
 // Function to trigger fragment find animation

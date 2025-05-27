@@ -1,9 +1,7 @@
 export default class PlayerUI {
     constructor(scene) {
         this.scene = scene;
-        this.currentHealth = 100;
-        this.maxHealth = 100;
-        this.totalTime = 300;
+        this.totalTime = 30;
         this.timeUp = false;
         
         this.createTimerText();
