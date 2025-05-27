@@ -3,7 +3,7 @@ export default class PlayerUI {
         this.scene = scene;
         this.currentHealth = 100;
         this.maxHealth = 100;
-        this.totalTime = 30;
+        this.totalTime = 300;
         this.timeUp = false;
         
         this.createTimerText();
