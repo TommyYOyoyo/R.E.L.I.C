@@ -149,15 +149,15 @@ function interactWithWeirdos(scene) {
 
                         // Choice buttons
                         const buttons = scene.rexUI.add.buttons({
-                            x : scene.player.currentQuest.x,
-                            y : scene.player.currentQuest.y + 30,
+                            x : scene.player.currentInteractable.x,
+                            y : scene.player.currentInteractable.y + 30,
                             orientation: "horizontal",
                             buttons: [
                                 // Button index 1 properties
                                 scene.rexUI.add.label({
                                     width: 100,
                                     height: 25,
-                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 0, 0x000000, 0.75),
+                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 3, 0x000000, 0.75),
                                     text: scene.add.text(0, 0, "1e choix", {
                                         fontSize: "16px",
                                         fontFamily: 'minecraft',
@@ -168,7 +168,7 @@ function interactWithWeirdos(scene) {
                                 scene.rexUI.add.label({
                                     width: 100,
                                     height: 25,
-                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 0, 0x000000, 0.75),
+                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 3, 0x000000, 0.75),
                                     text: scene.add.text(0, 0, "2e choix", {
                                         fontSize: "16px",
                                         fontFamily: 'minecraft',
@@ -179,7 +179,7 @@ function interactWithWeirdos(scene) {
                                 scene.rexUI.add.label({
                                     width: 100,
                                     height: 25,
-                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 0, 0x000000, 0.75),
+                                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 3, 0x000000, 0.75),
                                     text: scene.add.text(0, 0, "3e choix", {
                                         fontSize: "16px",
                                         fontFamily: 'minecraft',
@@ -276,8 +276,8 @@ function revert(scene) {
         duration: 2000,
         ease: 'Sine.InOut'
     });
-    scene.player.isQuestActive = false;
-    scene.player.isQuestOpen = false;
+    scene.player.isInteractActive = false;
+    scene.player.isInteractOpen = false;
 }
 
 export { spawnWeirdos, interactWithWeirdos };

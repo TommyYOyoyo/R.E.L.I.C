@@ -7,8 +7,10 @@
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
+import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
 import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
+import PlayerUI from "./playerUI.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
@@ -49,13 +51,13 @@ function loadPlayer(scene) {
     scene.player.wasFalling = false;
     scene.player.isCrouching = false;
     scene.player.isJumping = false;
-    scene.player.isNearQuest = false;
-    scene.player.isQuestActive = false;
-    scene.player.isQuestOpen = false;
+    scene.player.isNearInteract = false;
+    scene.player.isInteractActive = false;
+    scene.player.isInteractOpen = false;
     scene.player.isHurting = false;
     scene.player.canMove = true;
     scene.player.isImmune = false;
-    scene.player.currentQuest;
+    scene.player.currentInteractable;
     scene.player.attackCooldown = 0;
     scene.player.hitboxWidth = 15;
     scene.player.hitboxHeight = 32;
@@ -66,6 +68,7 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
     scene.player.health = 10;
+    scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
                             .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
     // Set player collision detection
@@ -108,9 +111,9 @@ function loadPlayer(scene) {
         }
     });
 
-    // Create quest notification text
+    // Create interact notification text
     // Resizable div
-    scene.player.questNotifContainer = scene.rexUI.add.sizer({
+    scene.player.interactNotifContainer = scene.rexUI.add.sizer({
         orientation: 0,
         space: { item: 10 },
         anchor: { centerX: '50%', centerY: '50%' },
@@ -130,15 +133,26 @@ function loadPlayer(scene) {
     keyPopup.setDepth(100);
     notif.setDepth(100);
 
-    // Add texts to quest notification container
-    scene.player.questNotifContainer.add(keyPopup).add(notif).layout();
+    // Add texts to interact notification container
+    scene.player.interactNotifContainer.add(keyPopup).add(notif).layout();
 
     // Add quest detection
     scene.physics.add.overlap(scene.player, scene.questSpawnsGroup, (player, quest) => {
-        scene.player.isNearQuest = true;
-        if (!scene.player.isQuestActive) scene.player.questNotifContainer.setVisible(true);
-        scene.player.currentQuest = quest;
+        scene.player.isNearInteract = true;
+        if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
+        scene.player.currentInteractable = quest;
     });
+
+    // Add interactables detection
+    if (typeof scene.interactablesGroup !== 'undefined') {
+        scene.physics.add.overlap(scene.player, scene.interactablesGroup, (player, interactable) => {
+            scene.player.isNearInteract = true;
+            if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
+            scene.player.currentInteractable = interactable;
+        });
+    }
+
+    scene.playerUI = new PlayerUI(scene);  // Create player UI
 }
 
 // Function to create animations for the player
@@ -268,8 +282,10 @@ function updatePlayer(scene) {
 
     //console.log(scene.player.x, scene.player.y);
 
+    scene.playerUI.drawHealthBar();
+
     // Player is dead
-    if (scene.player.isDead) {
+    if (scene.player.isDead && !scene.isPaused) {
         setTimeout(() => {
             gameOver(scene); 
         }, 500);
@@ -311,16 +327,31 @@ function updatePlayer(scene) {
     // Reenable crouch
     if (scene.keys.s.isUp) scene.disableCrouch = false;
 
-    scene.player.questNotifContainer.setPosition(scene.player.x + 100, scene.player.y);
+    scene.player.interactNotifContainer.setPosition(scene.player.x + 100, scene.player.y);
 
-    // Untrigger if player is not near quest
+    // Untrigger if player is not near interactable
     if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup)) {
-        scene.player.isNearQuest = false;
-        scene.player.currentQuest = null;
+        // Optional interactables
+        if (typeof scene.interactablesGroup !== 'undefined') {
+            if (!scene.physics.overlap(scene.player, scene.interactablesGroup)) {
+                scene.player.isNearInteract = false; // Untrigger if player is not near interactable
+                scene.player.currentInteractable = null;
+            }
+        } else {
+            scene.player.isNearInteract = false; // Untrigger if player is not near interactable
+            scene.player.currentInteractable = null;
+        }
     }
     // Unshow interact warning
-    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isQuestActive) {
-        scene.player.questNotifContainer.setVisible(false);
+    if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isInteractActive) {
+        // Optional interactables
+        if (typeof scene.interactablesGroup !== 'undefined') {
+            if (!scene.physics.overlap(scene.player, scene.interactablesGroup)) {
+                scene.player.interactNotifContainer.setVisible(false); // Unshow interact warning
+            }
+        } else {
+            scene.player.interactNotifContainer.setVisible(false); // Unshow interact warning
+        }
     }
 
     // MOVEMENTS TRIGGERS BELOW ----------------------------------------------------------
@@ -384,9 +415,10 @@ function updatePlayer(scene) {
     }
 
     if (scene.keys.f.isDown) {
-        if (scene.player.isNearQuest && !scene.player.isQuestActive) {
-            scene.player.isQuestActive = true;
+        if (scene.player.isNearInteract && !scene.player.isInteractActive) {
+            scene.player.isInteractActive = true;
             runQuest(scene);
+            runInteractable(scene);
         }
     }
     
@@ -661,8 +693,8 @@ function updateCheckpoint(scene) {
 function runQuest(scene) {
 
     // If player spammed the F key and kept opening the quest, ignore
-    if (scene.player.isQuestOpen) return;
-    scene.player.isQuestOpen = true;
+    if (scene.player.isInteractOpen) return;
+    scene.player.isInteractOpen = true;
 
     const div = document.getElementById('puzzleDiv');
 
@@ -671,10 +703,10 @@ function runQuest(scene) {
     }, 200);
     
     switch(true) {
-        case scene.player.currentQuest.name.startsWith("threeweirdos"):
+        case scene.player.currentInteractable.name.startsWith("threeweirdos"):
             interactWithWeirdos(scene);
             break;
-        case scene.player.currentQuest.name.startsWith("sequencer"):
+        case scene.player.currentInteractable.name.startsWith("sequencer"):
             div.style.display = 'block';
             // Timeout to prevent ghost key hold glitch
             setTimeout(() => {
@@ -682,7 +714,7 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
-        case scene.player.currentQuest.name.startsWith("numberGuesser"):
+        case scene.player.currentInteractable.name.startsWith("numberGuesser"):
             div.style.display = 'block';
             // Timeout to prevent ghost key hold glitch
             setTimeout(() => {
@@ -690,6 +722,15 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
+
+        case scene.player.currentInteractable.name.startsWith("runeSequenceLock"):
+            div.style.display = 'block';
+            setTimeout(() => {
+                runeSequenceLock(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
+            
         case scene.player.currentQuest.name.startsWith("diary"):
             div.style.display = 'block';
             setTimeout(() => {
@@ -702,13 +743,18 @@ function runQuest(scene) {
     }
 }
 
+// Function to trigger interactable
+function runInteractable(scene) {
+
+}
+
 // Function to trigger game over
 function gameOver(scene) {
     /**
-     * @author Ray Lam
+     * @author Ray Lam, Honglue Zheng
      */
 
-    scene.isPaused = true;
+    scene.sound.stopAll();
 
     // Create full-black overlay
     scene.blackOverlay = scene.add.rectangle(
@@ -723,29 +769,75 @@ function gameOver(scene) {
     .setAlpha(0);
 
     // Slow zoom in on timer (3 seconds)
-    scene.tweens.add({
-        targets: scene.cameras.main,
-        zoom: 2.5,
-        duration: 3000,
-        ease: 'Sine.InOut'
+    scene.cameras.main.zoomTo(2, 3000, 'Linear', true, (camera, progress) => {
+        if (progress === 1) {
+            showGameOverScreen(scene);
+        }
     });
 
     // Fade to black
     scene.tweens.add({
         targets: scene.blackOverlay,
         alpha: 0.5,
-        duration: 5000
+        duration: 10000
     });
 
-    // Restart level from checkpoint
-    setTimeout(() => {
-        // Restart latest progress
-        shutdown(scene);
-        scene.scene.restart();
-        return;
-    }, 5000);
+    scene.isPaused = true;
+    return;
 }
 
+function showGameOverScreen(scene) {
+    const { width, height } = scene.cameras.main;
+
+    // Create RETRY button
+    const retryButton = scene.add.text(width/2, height/2 - 40, 'RÉESSAYER', {
+        fontFamily: 'noita',
+        fontSize: '32px',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerover', () => retryButton.setColor('#916100'))
+    .on('pointerout', () => retryButton.setColor('#ffffff'))
+    .on('pointerdown', () => {
+        shutdown(scene);
+        scene.playerUI = undefined;
+        scene.isPaused = false;
+        scene.scene.restart();
+    })
+    .setDepth(1001);
+
+    // Create RETURN TO MAIN MENU button
+    const menuButton = scene.add.text(width/2, height/2 + 40, 'RETOUR AU MENU', {
+        fontFamily: 'noita',
+        fontSize: '32px',
+        color: '#ffffff',
+        backgroundColor: '#rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerover', () => menuButton.setColor('#916100'))
+    .on('pointerout', () => menuButton.setColor('#ffffff'))
+    .on('pointerdown', () => {
+        scene.scene.start('MainMenu');
+    })
+    .setDepth(1001);
+
+    // Fade in buttons
+    retryButton.setAlpha(0);
+    menuButton.setAlpha(0);
+    
+    scene.tweens.add({
+        targets: [retryButton, menuButton],
+        alpha: 1,
+        duration: 1000
+    });
+}
 // Function to trigger fragment find animation
 function fragmentFind(scene) {
     

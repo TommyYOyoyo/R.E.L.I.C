@@ -66,7 +66,8 @@ function loadAssets(scene) {
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
-    scene.load.image("fragment", "/assets/img/Fragment.png");
+    scene.load.image("fragment", "/assets/img/fragment.png");
+    scene.load.image("heart", "/assets/img/heart.png");
     
     scene.load.image("chatBox", "/assets/img/chatBox.png");
 
@@ -190,7 +191,7 @@ class Level2 extends Phaser.Scene {
 
         // Object groups
         this.checkpointsGroup = this.physics.add.staticGroup();
-        this.fragmentsGroup = this.physics.add.staticGroup();
+        this.interactablesGroup = this.physics.add.staticGroup();
         this.enemySpawnsGroup = this.physics.add.staticGroup();
         this.leversGroup = this.physics.add.staticGroup();
         this.questSpawnsGroup = this.physics.add.staticGroup();
@@ -199,7 +200,7 @@ class Level2 extends Phaser.Scene {
         // Add object collections to physics groups
         this.addToGroup(this.vines, this.climbableGroup);
         this.addToGroup(this.checkpoints, this.checkpointsGroup);
-        this.addToGroup(this.fragments, this.fragmentsGroup);
+        this.addToGroup(this.fragments, this.interactablesGroup);
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         this.addToGroup(this.levers, this.leversGroup);
         this.addToGroup(this.questSpawns, this.questSpawnsGroup);
@@ -228,7 +229,7 @@ class Level2 extends Phaser.Scene {
     // Game update loop
     update() {
         if (this.isPaused) return;
-        
+
         // Update game tick
         this.gameTick++;
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow

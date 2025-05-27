@@ -167,11 +167,12 @@ function numberGuesser(targetDiv, scene) {
 
     // Function to leave the puzzle
     function leaveGame() {
-        scene.player.isQuestActive = false;
-        scene.player.isQuestOpen = false;
+        scene.player.isInteractActive = false;
+        scene.player.isInteractOpen = false;
         scene.input.keyboard.enabled = true;
         // Destroy all items
         document.getElementById('puzzleDiv').style.display = 'none';
+        document.head.removeChild(style);
         DOMelements.forEach(element => {
             element.remove();
         });

@@ -36,7 +36,7 @@ function shutdown(scene) {
         gameTick : 0,
         ground : undefined,
         climbableGroup : undefined,
-        enemies: undefined
+        enemies: undefined,
     };
 
     // If object has properties, reset them to defaults
