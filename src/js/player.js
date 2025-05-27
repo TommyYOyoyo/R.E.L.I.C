@@ -141,15 +141,15 @@ function loadPlayer(scene) {
     });
 
     // Add interactables detection
-    if (typeof scene.interactableSpawnsGroup !== 'undefined') {
-        scene.physics.add.overlap(scene.player, scene.interactableSpawnsGroup, (player, interactable) => {
+    if (typeof scene.interactablesGroup !== 'undefined') {
+        scene.physics.add.overlap(scene.player, scene.interactablesGroup, (player, interactable) => {
             scene.player.isNearInteract = true;
             if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
             scene.player.currentInteractable = interactable;
         });
     }
 
-    //this.playerUI = new PlayerUI(this);  // Create player UI
+    //scene.playerUI = new PlayerUI(this);  // Create player UI
 }
 
 // Function to create animations for the player
@@ -326,20 +326,25 @@ function updatePlayer(scene) {
 
     // Untrigger if player is not near interactable
     if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup)) {
-        scene.player.isNearInteract = false;
-        scene.player.currentInteractable = null;
-    // Optional interactables
-    } else if (typeof scene.interactableSpawnsGroup !== 'undefined') {
-        if (!scene.physics.overlap(scene.player, scene.interactableSpawnsGroup)) {
+        // Optional interactables
+        if (typeof scene.interactablesGroup !== 'undefined') {
+            if (!scene.physics.overlap(scene.player, scene.interactablesGroup)) {
+                scene.player.isNearInteract = false;
+                scene.player.currentInteractable = null;
+            }
+        } else {
             scene.player.isNearInteract = false;
-            scene.player.currentInteractable = null;
+        scene.player.currentInteractable = null;
         }
     }
     // Unshow interact warning
     if (!scene.physics.overlap(scene.player, scene.questSpawnsGroup) || scene.player.isInteractActive) {
-        scene.player.interactNotifContainer.setVisible(false);
-    } else if (typeof scene.interactableSpawnsGroup !== 'undefined') {
-        if (!scene.physics.overlap(scene.player, scene.interactableSpawnsGroup) || scene.player.isInteractActive) {
+        // Optional interactables
+        if (typeof scene.interactablesGroup !== 'undefined') {
+            if (!scene.physics.overlap(scene.player, scene.interactablesGroup) || scene.player.isInteractActive) {
+                scene.player.interactNotifContainer.setVisible(false);
+            }
+        } else {
             scene.player.interactNotifContainer.setVisible(false);
         }
     }
