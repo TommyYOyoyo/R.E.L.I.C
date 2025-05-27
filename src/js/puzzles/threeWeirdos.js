@@ -243,7 +243,7 @@ function interactWithWeirdos(scene) {
                             setTimeout(() => {
                                 // If succeed, trigger fragment find animation
                                 if (succeed) {
-                                    fragmentFind(scene);
+                                    fragmentFind(scene, true);
                                     localStorage.setItem('threeWeirdos', "true");
                                 }
                                 // Destroy all dialogues and chatboxes

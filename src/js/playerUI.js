@@ -7,15 +7,18 @@ export default class PlayerUI {
         this.totalTime;
         this.timeCharms = [];
         this.level = this.scene.level;
+        this.fragmentSlot;
+        this.fragmentSlotPosition;
+        this.inventoryBoxPosition;
         if (this.level == "Level1") {
-            this.totalTime = 180;
+            this.totalTime = 360;
         } else if (this.level == "Level2") {
             this.addTimeCharm("1"); // Add first time charm
-            this.totalTime = 420;
+            this.totalTime = 480;
         } else if (this.level == "Level3") {
             this.addTimeCharm("1"); // Add first time charm
             this.addTimeCharm("2");  // Add second time charm
-            this.totalTime = 560;
+            this.totalTime = 620;
         }
         this.createTimerText();
         this.createHealthBar();
@@ -200,7 +203,7 @@ export default class PlayerUI {
             y + 15 + slotSize/2, // Vertically centered
             'x0', 
             {
-                font: '20px noita',
+                font: '35px noita',
                 fill: '#EDC602'
             }
         )
@@ -224,11 +227,23 @@ export default class PlayerUI {
 
             this.timeCharmSlots.push(slot);
         }
+
+        // Store positions for later reference
+        this.fragmentSlotPosition = {
+            x: startX + slotSize/2,
+            y: y + 15 + slotSize/2
+        };
+        
+        this.inventoryBoxPosition = {
+            x: x,
+            y: y,
+            width: boxWidth,
+            height: boxHeight
+        };
     }
 
     // Update the fragment counter
     updateFragmentCount(count) {
-        this.scene.player.fragmentsCount = count;
         this.fragmentText.setText(`x${count}`);
         localStorage.setItem(`${this.scene.level}.fragments`, count);
     }
@@ -275,4 +290,64 @@ export default class PlayerUI {
             this.timeCharmIcons.push(icon);
         });
     }
+
+    // Function to flash player's inventory border
+    flashInventoryBorder(times = 3, flashColor = 0xFFFFFF, duration = 100) {
+        if (!this.inventoryBox) return;
+
+        const originalColor = 0xEDC602; // Original border color
+        let flashCount = 0;
+
+        // Flash for 3 times (default)
+        const flash = () => {
+            if (flashCount >= times) return;
+
+            // Flash to color
+            this.inventoryBox.clear()
+                .fillStyle(0x222222, 0.8)
+                .fillRoundedRect(
+                    this.inventoryBoxPosition.x,
+                    this.inventoryBoxPosition.y,
+                    this.inventoryBoxPosition.width,
+                    this.inventoryBoxPosition.height,
+                    10
+                )
+                .lineStyle(2, flashColor, 1)
+                .strokeRoundedRect(
+                    this.inventoryBoxPosition.x,
+                    this.inventoryBoxPosition.y,
+                    this.inventoryBoxPosition.width,
+                    this.inventoryBoxPosition.height,
+                    10
+                );
+
+            // Use recursion to flash again after a certain duration
+            this.scene.time.delayedCall(duration, () => {
+                // Revert to original color
+                this.inventoryBox.clear()
+                    .fillStyle(0x222222, 0.8)
+                    .fillRoundedRect(
+                        this.inventoryBoxPosition.x,
+                        this.inventoryBoxPosition.y,
+                        this.inventoryBoxPosition.width,
+                        this.inventoryBoxPosition.height,
+                        10
+                    )
+                    .lineStyle(2, originalColor, 1)
+                    .strokeRoundedRect(
+                        this.inventoryBoxPosition.x,
+                        this.inventoryBoxPosition.y,
+                        this.inventoryBoxPosition.width,
+                        this.inventoryBoxPosition.height,
+                        10
+                    );
+
+                flashCount++;
+                this.scene.time.delayedCall(duration, flash);
+            });
+        };
+
+        flash();
+    }
+
 }

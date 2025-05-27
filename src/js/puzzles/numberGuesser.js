@@ -3,6 +3,8 @@
  * @note echoing chimes sequencer puzzle
  */
 
+import { fragmentFind } from "../player.js";
+
 function numberGuesser(targetDiv, scene) {
     // Initiate variables
     const isSolved = localStorage.getItem("nbGuesser");
@@ -201,6 +203,7 @@ function numberGuesser(targetDiv, scene) {
             messageDiv.textContent = 'Bravo! Vous avez trouvé le code!';
             messageDiv.style.color = `#28a745`; // green
             disableButton(confirmButton);
+            fragmentFind(scene, true); // Trigger fragment find animation
             // Reenable keyboard input
             scene.input.keyboard.enabled = true;
             // Player fixed puzzle

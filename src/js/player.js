@@ -70,8 +70,6 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
     scene.player.fragmentsCount = 0;
-    localStorage.getItem(`${scene.level}.fragments`) == null ? scene.player.fragmentsCount = 0 :
-        scene.player.fragmentsCount = localStorage.getItem(`${scene.level}.fragments`);
     scene.player.health = 10;
     scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
@@ -86,6 +84,29 @@ function loadPlayer(scene) {
     // Create player attack hitbox
     createAttackHitbox(scene);
     scene.player.body.setMaxSpeed(950); // Cap velocity to prevent going through blocks
+    // Fragments count
+    localStorage.getItem(`${scene.level}.fragments`) == null ? scene.player.fragmentsCount = 0 :
+        scene.player.fragmentsCount = localStorage.getItem(`${scene.level}.fragments`);
+
+    // Claimed fragments
+    scene.player.claimedFragments = [];
+    const fetchedFragments = JSON.parse(localStorage.getItem(`${scene.level}.claimedFragments`));
+
+    if (fetchedFragments == null) {
+        scene.player.claimedFragments = []; // New game
+    } else {
+        scene.player.claimedFragments = fetchedFragments;
+
+        fetchedFragments.forEach((fragment) => {
+            if (fragment == 0) return;
+            // Destroy any existing claimed fragments
+            scene.fragments.forEach(existingFragment => {
+                if (fragment.name == existingFragment.name) {
+                    existingFragment.destroy();
+                }
+            });
+        });
+    }
 
     // Reset player isAttacking property when attack animations finish or get interrupted
     scene.player.on("animationcomplete", (anim) => {
@@ -160,6 +181,7 @@ function loadPlayer(scene) {
     }
 
     scene.playerUI = new PlayerUI(scene);  // Create player UI
+    scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
 }
 
 // Function to create animations for the player
@@ -870,38 +892,23 @@ function showGameOverScreen(scene) {
 }
 
 // Function to trigger fragment find animation
-function fragmentFind(scene) {
-    scene.player.currentInteractable.destroy();
+function fragmentFind(scene, isQuest = false) {
+    // Remove chest if not quest
+    if (!isQuest) {
+        // Update storage
+        scene.player.claimedFragments.push(scene.player.currentInteractable);
+        localStorage.setItem(`${scene.level}.claimedFragments`, JSON.stringify(scene.player.claimedFragments));
+        scene.player.currentInteractable.destroy();
+    }
     
     scene.player.fragmentsCount++;
     scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
     scene.sound.play("pickup");
-   // highlightFragmentSlot(scene);
+    scene.playerUI.flashInventoryBorder();
 
     scene.player.currentInteractable = null;
     scene.player.isInteractActive = false;
     scene.player.isInteractOpen = false;
-}
-
-// Highlight that player's inventory has been updated
-function highlightFragmentSlot(scene) {
-    // Create highlight effect
-    const slotPos = scene.playerUI.fragmentSlot.getBounds();
-    const highlight = scene.add.graphics()
-        .setPosition(slotPos.x, slotPos.y)
-        .setDepth(1001);
-    
-    // Draw glowing outline
-    highlight.lineStyle(4, 0xEDC602, 1)
-        .strokeRoundedRect(0, 0, slotPos.width, slotPos.height, 5);
-    
-    // Fade out effect
-    scene.tweens.add({
-        targets: highlight,
-        alpha: 0,
-        duration: 1000,
-        onComplete: () => highlight.destroy()
-    });
 }
 
 
