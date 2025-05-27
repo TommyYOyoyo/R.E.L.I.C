@@ -10,7 +10,6 @@ export default class PlayerUI {
     }
 
     createHealthBar() {
-        const { width, height } = this.scene.cameras.main;
         this.healthBar = this.scene.add.graphics()
             .setScrollFactor(0)
             .setDepth(30);

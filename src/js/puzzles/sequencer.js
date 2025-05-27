@@ -409,10 +409,11 @@ function echoing_chimes_puzzle(targetDiv, scene) {
     }
     
     function leaveGame() {
-        scene.player.isQuestActive = false;
-        scene.player.isQuestOpen = false;
+        scene.player.isInteractActive = false;
+        scene.player.isInteractOpen = false;
         // Destroy all items
         document.getElementById('puzzleDiv').style.display = 'none';
+        document.head.removeChild(style);
         DOMelements.forEach(element => {
             element.remove();
         });
