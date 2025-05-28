@@ -3,7 +3,7 @@
  * @author Ray Lam 
  */
 
-import Phaser, { Display } from "phaser";
+import Phaser from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
@@ -17,10 +17,11 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
-
+    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
     scene.load.image("questKey", "/assets/img/interactKey.png");
     scene.load.image("fragment", "/assets/img/fragment.png");
     scene.load.image("heart", "/assets/img/heart.png");
+
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -122,8 +123,11 @@ class Level1 extends Phaser.Scene {
         this.questSpawns = map.createFromObjects("interact", {
             type: "Quest",
         });
-        this.chest = map.createFromObjects("interact", {
-            type: "Chest",
+        this.chestSpawns = map.createFromObjects("interact", {
+            type: "TCChest",
+        });
+        this.level2 = map.createFromObjects("interact", {
+            type: "Portal",
         });
 
         //object spawn
@@ -134,7 +138,8 @@ class Level1 extends Phaser.Scene {
         this.spawnObjects(this.inout2);
         this.spawnObjects(this.enemySpawns);
         this.spawnObjects(this.questSpawns);
-        this.spawnObjects(this.chest);
+        this.spawnObjects(this.chestSpawns);
+        this.spawnObjects(this.level2);
         
         //layer references
         this.outsideLayer = layers.outside;
@@ -157,8 +162,8 @@ class Level1 extends Phaser.Scene {
         this.activateWallsGroup = this.physics.add.staticGroup();
         this.enemySpawnsGroup = this.physics.add.staticGroup();
         this.questSpawnsGroup = this.physics.add.staticGroup();
-        this.chest = this.physics.add.staticGroup();
-        
+        this.interactablesGroup = this.physics.add.staticGroup();
+
         //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
         this.addToGroup(this.ladders, this.climbableGroup);
@@ -167,6 +172,9 @@ class Level1 extends Phaser.Scene {
         this.addToGroup(this.inout2, this.inout2Group);
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         this.addToGroup(this.questSpawns, this.questSpawnsGroup);
+        this.addToGroup(this.chestSpawns, this.interactablesGroup);
+        this.addToGroup(this.level2, this.interactablesGroup);
+
         
         //preload walls
         this.walls1.setVisible(false);
@@ -326,5 +334,6 @@ if (this.skeletonsKilled > 14 && !this.hasShownText) {
         group.setVisible(false);
     }
 }
+
 
 export { Level1 };

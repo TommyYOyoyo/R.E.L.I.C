@@ -19,11 +19,11 @@ function diary(targetDiv, scene) {
         "Jour 7: La barrière est en train de nous tuer",
         "Jour 8: Mon groupe de scientifiques commence a faire une recherche sur la météorite pour trouver une solution.",
         "Jour 9: Je ne peut plus sortir de mon lit, les jeunes scienfiques qui avait à peine 20 ans, doivent continuer la recherche sans moi",
-        "Jour 10: Bonne nouvelle, on peut désactiver la barrière en reforgeant l'étrange minerai dans la météorite",
+        "Jour 10: Bonne nouvelle, on peut désactiver la barrière en reforgeant l'étrange minerai dans la météorite. Fragments ---> Pierre",
         "Jour 11: Il y a 10 jours, j'avais 40 ans, maintenant je suis 80.",
         "Jour 12: Mon équipe trouvé assez de fragments pour forger une pierre, mais il nous en reste 2 pour désactiver la barrière.", 
-        "Jour 13: L'ainé du village avait une des pierres, mais il fut transformé en quelque chose d'autre suite à son décès.",
-        "Jour 14: Il est trop dangereux pour aller récupérer les pierres, nous sommes tous trop vieux", 
+        "Jour 13: L'ainé du village avait des fragments, mais il fut transformé en quelque chose d'autre suite à son décès.",
+        "Jour 14: Il est trop dangereux pour aller récupérer les fragments, nous sommes tous trop vieux", 
         "Jour 15: C'est la fin pour moi, pour nous", 
     ];
     
