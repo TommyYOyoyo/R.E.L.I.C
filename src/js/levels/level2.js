@@ -156,10 +156,15 @@ class Level2 extends Phaser.Scene {
         const walls = map.createLayer("Walls", [ruinSet, dungeonSet], 0, 0);
         const ground = map.createLayer("Ground", [dungeonSet, ruinSet], 0, 0);
         const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
+        const decorations2 = map.createLayer("Decorations2", [ruinSet, dungeonSet], 0, 0);
+        const vines = map.createLayer("Vines", [ruinSet, dungeonSet], 0, 0);
         this.ground = ground;
 
         walls.setDepth(0);
+        vines.setDepth(3);
+        ground.setDepth(1);
         decorations.setDepth(1);
+        decorations2.setDepth(0);
         
         // Create interactive objects from tilemap
         this.vines = map.createFromObjects("Objects", {
@@ -186,8 +191,12 @@ class Level2 extends Phaser.Scene {
             type: "Quest",
         });
 
+        this.end = map.createFromObjects("Objects", {
+            type: "End",
+        });
+
         // Spawn all objects
-        const objects = [this.vines, this.checkpoints, this.fragments, this.enemySpawns, this.levers, this.questSpawns];
+        const objects = [this.vines, this.checkpoints, this.fragments, this.enemySpawns, this.levers, this.questSpawns, this.end];
         objects.forEach(element => {
             this.spawnObjects(element);
         });
@@ -207,9 +216,10 @@ class Level2 extends Phaser.Scene {
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         this.addToGroup(this.levers, this.leversGroup);
         this.addToGroup(this.questSpawns, this.questSpawnsGroup);
+        this.addToGroup(this.end, this.interactablesGroup);
 
         // Scale layers
-        const layers = [walls, ground, decorations];
+        const layers = [walls, ground, decorations, decorations2, vines];
         layers.forEach(layer => layer.setScale(this.scaleMultiplier).setOrigin(0, 0));
 
         // Get main camera

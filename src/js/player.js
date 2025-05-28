@@ -701,6 +701,31 @@ function updateCheckpoint(scene) {
 
     if (isNearX && isNearY) {
         console.log("New checkpoint");
+        // Create checkpoint warning
+        const checkpointText = scene.add.text(
+            scene.cameras.main.centerX, // X: Center of screen
+            scene.cameras.main.centerY - 50, // Y: Slightly above center
+            'CHECKPOINT ENREGISTRÉ', 
+            {
+                fontFamily: 'noita',
+                fontSize: '100px',
+                color: '#ffffff',
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                padding: { left: 30, right: 30, top: 15, bottom: 15 }
+            }
+        )
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(101);
+        scene.tweens.add({
+            targets: checkpointText, 
+            alpha: 0,           
+            duration: 1000,
+            delay: 2000,       
+            onComplete: () => {
+               checkpointText.destroy(); // Remove text after fade
+            }
+        });
         const nextCheckpointIndex = scene.checkpoints.indexOf(scene.nextCheckpoint) + 1;
         scene.latestCheckpoint = scene.nextCheckpoint;
         // Set new latest checkpoint in localStorage
@@ -782,10 +807,12 @@ function runQuest(scene) {
 
 // Function to trigger interactable
 function runInteractable(scene) {
-
     switch(true) {
         case scene.player.currentInteractable.name.startsWith("fragment"):
             fragmentFind(scene);
+            break;
+        case scene.player.currentInteractable.name.startsWith("end"):
+            scene.playerUI.createTimeCharm(scene, scene.end.fragmentReq);
             break;
         case scene.player.currentInteractable.name.startsWith("TCchest"):
             TCchestFind(scene);

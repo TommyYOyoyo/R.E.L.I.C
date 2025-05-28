@@ -350,4 +350,80 @@ export default class PlayerUI {
         flash();
     }
 
+    createTimeCharm(scene, fragmentCount) {
+        // Configuration
+        const centerX = scene.cameras.main.centerX;
+        const centerY = scene.cameras.main.centerY;
+        const fragmentSpread = 200; // How far fragments spread from center
+        const mergeDuration = 1000; // Animation duration in ms
+        const fragmentScale = 0.5;
+        const charmScale = 1.5;
+
+        // Create container for fragments
+        const fragments = scene.add.group();
+
+        // Create fragments in a circle pattern
+        for (let i = 0; i < fragmentCount; i++) {
+            const angle = (i / fragmentCount) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * fragmentSpread;
+            const y = centerY + Math.sin(angle) * fragmentSpread;
+
+            const fragment = scene.add.image(x, y, 'fragment')
+                .setScale(fragmentScale)
+                .setAlpha(0)
+                .setDepth(10);
+
+            // Fade in each fragment with slight delay
+            scene.tweens.add({
+                targets: fragment,
+                alpha: 1,
+                duration: 500,
+                delay: i * 100,
+                ease: 'Sine.easeOut'
+            });
+
+            fragments.add(fragment);
+        }
+
+        // After fragments appear, merge them
+        scene.time.delayedCall(500 + (fragmentCount * 100), () => {
+            // Create the final charm (hidden at first)
+            const charm = scene.add.image(centerX, centerY, 'charm_1')
+                .setScale(0)
+                .setAlpha(0)
+                .setDepth(20);
+
+            // Animate fragments moving to center
+            fragments.getChildren().forEach((fragment, index) => {
+                scene.tweens.add({
+                    targets: fragment,
+                    x: centerX,
+                    y: centerY,
+                    scale: 0.1,
+                    alpha: 0,
+                    duration: mergeDuration,
+                    delay: index * 50,
+                    ease: 'Back.easeIn',
+                    onComplete: () => fragment.destroy()
+                });
+            });
+
+            // Animate charm appearing
+            scene.tweens.add({
+                targets: charm,
+                scale: charmScale,
+                alpha: 1,
+                duration: 800,
+                delay: mergeDuration - 200,
+                ease: 'Elastic.out',
+                onComplete: () => {
+                    // Optional: Add sparkle effect or sound here
+                    scene.sound.play('pickup');
+                }
+            });
+        });
+
+        return fragments;
+    }
+
 }
