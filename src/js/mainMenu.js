@@ -18,6 +18,9 @@ function clearStorage() {
     localStorage.setItem("threeWeirdos", "false");
     localStorage.setItem("sequencer", "false");
     localStorage.setItem("nbGuesser", "false");
+
+    localStorage.setItem("runeSequenceLock", "false");
+    localStorage.setItem("sudoku", "false");
 }
 
 // devMode level selector

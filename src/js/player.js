@@ -751,7 +751,7 @@ function runQuest(scene) {
             }, 200);
             break;
 
-        case scene.player.currentInteractable.name.startsWith("runeSequenceLock"):
+        case scene.player.currentInteractable.name.startsWith("RuneSequenceLock"):
             div.style.display = 'block';
             setTimeout(() => {
                 runeSequenceLock(div, scene);
@@ -759,9 +759,7 @@ function runQuest(scene) {
             }, 200);
             break;
             
-        case 
-
-            scene.player.currentInteractable.name.startsWith("sudoku"):
+        case scene.player.currentInteractable.name.startsWith("Sudoku"):
                 div.style.display = 'block';
                 setTimeout(() => {
                     sudoku(div, scene);
@@ -769,8 +767,7 @@ function runQuest(scene) {
                 }, 200);
                 break;
 
-            case 
-            scene.player.currentInteractable.name.startsWith("diary"):
+        case scene.player.currentInteractable.name.startsWith("diary"):
             div.style.display = 'block';
             setTimeout(() => {
                 diary(div, scene);
