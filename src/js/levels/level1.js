@@ -122,6 +122,9 @@ class Level1 extends Phaser.Scene {
         this.questSpawns = map.createFromObjects("interact", {
             type: "Quest",
         });
+        this.chest = map.createFromObjects("interact", {
+            type: "Chest",
+        });
 
         //object spawn
         this.spawnObjects(this.checkpoints);
@@ -131,6 +134,7 @@ class Level1 extends Phaser.Scene {
         this.spawnObjects(this.inout2);
         this.spawnObjects(this.enemySpawns);
         this.spawnObjects(this.questSpawns);
+        this.spawnObjects(this.chest);
         
         //layer references
         this.outsideLayer = layers.outside;
@@ -153,6 +157,7 @@ class Level1 extends Phaser.Scene {
         this.activateWallsGroup = this.physics.add.staticGroup();
         this.enemySpawnsGroup = this.physics.add.staticGroup();
         this.questSpawnsGroup = this.physics.add.staticGroup();
+        this.chest = this.physics.add.staticGroup();
         
         //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
@@ -264,15 +269,12 @@ if (touchingActivateWalls && this.skeletonsKilled < 15) {
     }
 }
 
-// Debug check - add this right before your text creation
-console.log("Text check - Skeletons:", this.skeletonsKilled, "Has shown:", this.hasShownText);
-
 if (this.skeletonsKilled > 14 && !this.hasShownText) {
-    // Get screen center coordinates
+    //screen size
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
     
-    // Create the text (styled like your game over screen)
+    //create the text
     this.territoireText = this.add.text(centerX, centerY - 40, 'TERRITOIRE PURIFIÉ', {
         fontFamily: 'noita',
         fontSize: '100px',
@@ -282,9 +284,9 @@ if (this.skeletonsKilled > 14 && !this.hasShownText) {
     })
     .setOrigin(0.5)
     .setScrollFactor(0)
-    .setDepth(1001); // High depth like your UI elements
+    .setDepth(100); 
     
-    // Remove after 3 seconds
+    //remove after 3 seconds
     this.time.delayedCall(2000, () => {
         if (this.territoireText) {
             this.tweens.add({
