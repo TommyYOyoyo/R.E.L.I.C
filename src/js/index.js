@@ -28,6 +28,7 @@ const config = {
     height: sizes.height,
     canvas: gameCanvas,
     pixelArt: true, // Improve texture quality
+    roundPixels: true,
     // Physics configurations
     physics: {
         default: "arcade",

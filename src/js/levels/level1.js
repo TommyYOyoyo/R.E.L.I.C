@@ -10,7 +10,7 @@ import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "
 //Load all assets  
 function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
-    scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset.png");
+    scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset-extruded.png");
     scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
     scene.load.tilemapTiledJSON("map", "assets/img/maps/l1_map.tmj");
     scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {

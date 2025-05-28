@@ -22,9 +22,9 @@ function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
     // Load ruins tileset
-    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
+    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
     // Load dungeon tileset
-    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
+    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
 
     // Background image collection (commented out in your original code, so keeping it commented)
     /*
@@ -61,10 +61,14 @@ function loadAssets(scene) {
     scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
+    scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
-    // scene.load.image("fragment", "/assets/img/Fragment.png");
+    scene.load.image("fragment", "/assets/img/fragment.png");
+    scene.load.image("heart", "/assets/img/heart.png");
+    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
+    scene.load.image("charm_2", "/assets/img/timecharm_2.png");
 
     // Load enemy assets
     // loadEnemyAssets(scene);
@@ -81,7 +85,7 @@ class Level3 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint; // Not currently used in the provided code
         this.nextCheckpoint;   // Not currently used in the provided code
-        this.runeSequenceLock = [];
+        // this.runeSequenceLock = [];
     }
 
     // Preload all assets (init)
@@ -140,27 +144,27 @@ class Level3 extends Phaser.Scene {
 
         // Create interactive objects from tilemap object layers
         this.checkpoints = map.createFromObjects("checkpoint_0", { type: "Checkpoint" });
-        this.puzzles = map.createFromObjects("puzzles", { type: "Quest" });
+        this.questSpawns = map.createFromObjects("puzzles", { type: "Quest" });
         this.ladders = map.createFromObjects("ladders", { type: "Ladder" });
         // this.enemySpawns = map.createFromObjects("Objects", { type: "EnemySpawn" }); // Commented in your original
         this.interactables = map.createFromObjects("interactables", { type: "interactables" });
 
         // Spawn and scale all objects from tilemap object layers
-        const objects = [this.checkpoints, this.puzzles, this.ladders, /*this.enemySpawns*/, this.interactables];
+        const objects = [this.checkpoints, this.questSpawns, this.ladders, /*this.enemySpawns*/, this.interactables];
         objects.forEach(element => {
             this.spawnObjects(element);
         });
 
         // Initialize physics groups for object collections
         this.climbableGroup = this.physics.add.staticGroup();
-        this.puzzlesGroup = this.physics.add.staticGroup();
+        this.questSpawnsGroup = this.physics.add.staticGroup();
         this.interactablesGroup = this.physics.add.staticGroup()
         // this.enemySpawnsGroup = this.physics.add.staticGroup() // Commented in your original
         this.checkpointsGroup = this.physics.add.staticGroup();
 
         // Add object collections to their respective physics groups
         this.addToGroup(this.ladders, this.climbableGroup);
-        this.addToGroup(this.puzzles, this.puzzlesGroup);
+        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
         this.addToGroup(this.interactables, this.interactablesGroup);
         // this.addToGroup(this.enemySpawns, this.enemySpawnsGroup); // Commented in your original
         this.addToGroup(this.checkpoints, this.checkpointsGroup);

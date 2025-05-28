@@ -6,13 +6,21 @@
 
 import Phaser from 'phaser';
 
+// Reset all game storage
 function clearStorage() {
-    localStorage.setItem("1_fragments", 0);
-    localStorage.setItem("2_fragments", 0);
-    localStorage.setItem("3_fragments", 0);
+    localStorage.setItem("Level1.fragments", 0);
+    localStorage.setItem("Level1.claimedFragments", null);
+    localStorage.setItem("Level2.fragments", 0);
+    localStorage.setItem("Level2.claimedFragments", null);
+    localStorage.setItem("Level3.fragments", 0);
+    localStorage.setItem("Level3.claimedFragments", null);
+
     localStorage.setItem("threeWeirdos", "false");
     localStorage.setItem("sequencer", "false");
     localStorage.setItem("nbGuesser", "false");
+
+    localStorage.setItem("runeSequenceLock", "false");
+    localStorage.setItem("sudoku", "false");
 }
 
 // devMode level selector

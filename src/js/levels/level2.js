@@ -20,12 +20,12 @@ function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
     /** @note ADD TO YOUR LEVEL - Load ruins tileset */
-    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
+    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
     /** @note ADD TO YOUR LEVEL - Load dungeon tileset */
-    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
+    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
     // Load background image collection
-    /*
-    scene.load.tilemapTiledJSON("bgCollection", "/assets/img/backgrounds/l2_map.tmj");
+    
+    scene.load.tilemapTiledJSON("bgCollection", "/assets/img/maps/bg_imgs.tmj");
     scene.load.image("bg2_1", "/assets/img/backgrounds/background_2/Plan_1.png");
     scene.load.image("bg2_2", "/assets/img/backgrounds/background_2/Plan_2.png");
     scene.load.image("bg2_3", "/assets/img/backgrounds/background_2/Plan_3.png");
@@ -35,9 +35,10 @@ function loadAssets(scene) {
     scene.load.image("bg3_2", "/assets/img/backgrounds/background_3/Plan_2.png");
     scene.load.image("bg3_3", "/assets/img/backgrounds/background_3/Plan_3.png");
     scene.load.image("bg3_4", "/assets/img/backgrounds/background_3/Plan_4.png");
-    scene.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");*/
+    scene.load.image("bg3_5", "/assets/img/backgrounds/background_3/Plan_5.png");
     // Load map
     scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
+    scene.load.tilemapTiledJSON("bg", "/assets/img/maps/bg_2.tmj");
 
     /** @note ADD TO YOUR LEVEL - Load player spritesheet */
     scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
@@ -63,11 +64,14 @@ function loadAssets(scene) {
     scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
+    scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
 
     /** @note ADD TO YOUR LEVEL - interact key image */
     scene.load.image("questKey", "/assets/img/interactKey.png");
     scene.load.image("fragment", "/assets/img/fragment.png");
     scene.load.image("heart", "/assets/img/heart.png");
+    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
+    scene.load.image("charm_2", "/assets/img/timecharm_2.png");
     
     scene.load.image("chatBox", "/assets/img/chatBox.png");
 
@@ -121,7 +125,7 @@ class Level2 extends Phaser.Scene {
         });
         music.play();
 
-        /*
+        
         // Loading background images
         const img1 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_3\/Plan_5.png", "bg3_5");
         const img2 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_3\/Plan_2.png", "bg3_2");
@@ -133,12 +137,17 @@ class Level2 extends Phaser.Scene {
         const img8 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_2.png", "bg2_2");
         const img9 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_3.png", "bg2_3");
         const img10 = bgMap.addTilesetImage("..\/Tommy\/Programming\/cjeGD\/Informatique\/Relic\/public\/assets\/img\/backgrounds\/background_2\/Plan_4.png", "bg2_4");
-        //const sky = bgMap.createLayer("Sky", img1, 0, 0);
-        //const clouds = bgMap.createLayer("Clouds", img5, 0, 0);
-        //const bgenv1 = bgMap.createLayer("Background_environment(1)", [img4, img5], 0, 0);
-        //const bgenv2 = bgMap.createLayer("Background_environment(2)", [img1, img3, img4, img7, img8, img9, img10], 0, 0);
-        //const bgenv3 = bgMap.createLayer("Background_environment(3)", [img2, img4, img7, img8], 0, 0);
-        */
+        const Sky = bgMap.createLayer("Sky", img1, 0, 0).setScrollFactor(0.1);
+        const Clouds = bgMap.createLayer("Clouds", img6, 0, 0).setScrollFactor(0.1);
+        const Leaves = bgMap.createLayer("Leaves", [img5, img10], 0, 0).setScrollFactor(0.3);
+        const Walls = bgMap.createLayer("Walls", [img9, img3, img4], 0, 0).setScrollFactor(0.5);
+        const Supplement = bgMap.createLayer("Supplement", [img10, img4], 0, 0).setScrollFactor(0.5);
+        const Supplement2 = bgMap.createLayer("Supplement_2", [img9], 0, 0).setScrollFactor(0.5);
+        const Floor = bgMap.createLayer("Floor", [img8, img7, img2], 0, 0).setScrollFactor(0.75);
+        const bgLayers = [Sky, Clouds, Leaves, Walls, Supplement, Supplement2, Floor];
+        bgLayers.forEach(el => el.setScale(this.scaleMultiplier).setOrigin(0, 0));
+        
+
         // Load main tilesets
         const ruinSet = map.addTilesetImage("Ruins", "ruinSet");
         const dungeonSet = map.addTilesetImage("Dungeon", "dungeonSet");
@@ -149,12 +158,6 @@ class Level2 extends Phaser.Scene {
         const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
         this.ground = ground;
 
-        // Set layer depth
-        //sky.setDepth(-5);
-        //clouds.setDepth(-4);
-        //bgenv1.setDepth(-3);
-        //bgenv2.setDepth(-2);
-        //bgenv3.setDepth(-1);
         walls.setDepth(0);
         decorations.setDepth(1);
         

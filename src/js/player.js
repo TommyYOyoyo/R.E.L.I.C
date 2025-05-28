@@ -8,12 +8,14 @@ import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
 import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
 import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
+import { sudoku } from "./puzzles/sudoku.js";
 import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
 import PlayerUI from "./playerUI.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
+    scene.level = JSON.parse(localStorage.getItem('lastGame')).level;
     scene.nextCheckpoint;
     const fetchedCheckpoint = JSON.parse(localStorage.getItem('lastGame')).checkpoint;
     // Set fetched checkpoints
@@ -67,6 +69,7 @@ function loadPlayer(scene) {
     scene.player.crouchHitboxHeight = 15;
     scene.player.crouchHitboxOffsetX = 20;
     scene.player.crouchHitboxOffsetY = 20;
+    scene.player.fragmentsCount = 0;
     scene.player.health = 10;
     scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
@@ -81,6 +84,29 @@ function loadPlayer(scene) {
     // Create player attack hitbox
     createAttackHitbox(scene);
     scene.player.body.setMaxSpeed(950); // Cap velocity to prevent going through blocks
+    // Fragments count
+    localStorage.getItem(`${scene.level}.fragments`) == null ? scene.player.fragmentsCount = 0 :
+        scene.player.fragmentsCount = localStorage.getItem(`${scene.level}.fragments`);
+
+    // Claimed fragments
+    scene.player.claimedFragments = [];
+    const fetchedFragments = JSON.parse(localStorage.getItem(`${scene.level}.claimedFragments`));
+
+    if (fetchedFragments == null) {
+        scene.player.claimedFragments = []; // New game
+    } else {
+        scene.player.claimedFragments = fetchedFragments;
+
+        fetchedFragments.forEach((fragment) => {
+            if (fragment == 0) return;
+            // Destroy any existing claimed fragments
+            scene.fragments.forEach(existingFragment => {
+                if (fragment.name == existingFragment.name) {
+                    existingFragment.destroy();
+                }
+            });
+        });
+    }
 
     // Reset player isAttacking property when attack animations finish or get interrupted
     scene.player.on("animationcomplete", (anim) => {
@@ -141,6 +167,7 @@ function loadPlayer(scene) {
         scene.player.isNearInteract = true;
         if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
         scene.player.currentInteractable = quest;
+        scene.player.currentInteractable.class = "quest";
     });
 
     // Add interactables detection
@@ -149,10 +176,12 @@ function loadPlayer(scene) {
             scene.player.isNearInteract = true;
             if (!scene.player.isInteractActive) scene.player.interactNotifContainer.setVisible(true);
             scene.player.currentInteractable = interactable;
+            scene.player.currentInteractable.class = "interactable";
         });
     }
 
     scene.playerUI = new PlayerUI(scene);  // Create player UI
+    scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
 }
 
 // Function to create animations for the player
@@ -417,8 +446,7 @@ function updatePlayer(scene) {
     if (scene.keys.f.isDown) {
         if (scene.player.isNearInteract && !scene.player.isInteractActive) {
             scene.player.isInteractActive = true;
-            runQuest(scene);
-            runInteractable(scene);
+            scene.player.currentInteractable.class == "quest" ? runQuest(scene) : runInteractable(scene); // Run quest or interactable accordingly
         }
     }
     
@@ -723,7 +751,7 @@ function runQuest(scene) {
             }, 200);
             break;
 
-        case scene.player.currentInteractable.name.startsWith("runeSequenceLock"):
+        case scene.player.currentInteractable.name.startsWith("RuneSequenceLock"):
             div.style.display = 'block';
             setTimeout(() => {
                 runeSequenceLock(div, scene);
@@ -731,6 +759,14 @@ function runQuest(scene) {
             }, 200);
             break;
             
+        case scene.player.currentInteractable.name.startsWith("Sudoku"):
+                div.style.display = 'block';
+                setTimeout(() => {
+                    sudoku(div, scene);
+                    scene.children.bringToTop(div);
+                }, 200);
+                break;
+
         case scene.player.currentInteractable.name.startsWith("diary"):
             div.style.display = 'block';
             setTimeout(() => {
@@ -738,6 +774,7 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
+            
         default:
             break;
     }
@@ -745,6 +782,12 @@ function runQuest(scene) {
 
 // Function to trigger interactable
 function runInteractable(scene) {
+
+    switch(true) {
+        case scene.player.currentInteractable.name.startsWith("fragment"):
+            fragmentFind(scene);
+            break;
+    }
 
 }
 
@@ -829,7 +872,7 @@ function showGameOverScreen(scene) {
     .on('pointerdown', () => {
         scene.sound.play("click");
         setTimeout(() => {
-            scene.scene.start('MainMenu');
+            window.location.reload();
         }, 300);
     })
     .setDepth(1001);
@@ -846,8 +889,23 @@ function showGameOverScreen(scene) {
 }
 
 // Function to trigger fragment find animation
-function fragmentFind(scene) {
+function fragmentFind(scene, isQuest = false) {
+    // Remove chest if not quest
+    if (!isQuest) {
+        // Update storage
+        scene.player.claimedFragments.push(scene.player.currentInteractable);
+        localStorage.setItem(`${scene.level}.claimedFragments`, JSON.stringify(scene.player.claimedFragments));
+        scene.player.currentInteractable.destroy();
+    }
     
+    scene.player.fragmentsCount++;
+    scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
+    scene.sound.play("pickup");
+    scene.playerUI.flashInventoryBorder();
+
+    scene.player.currentInteractable = null;
+    scene.player.isInteractActive = false;
+    scene.player.isInteractOpen = false;
 }
 
 
