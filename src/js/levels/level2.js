@@ -20,9 +20,9 @@ function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
     /** @note ADD TO YOUR LEVEL - Load ruins tileset */
-    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
+    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
     /** @note ADD TO YOUR LEVEL - Load dungeon tileset */
-    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
+    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
     // Load background image collection
     
     scene.load.tilemapTiledJSON("bgCollection", "/assets/img/maps/bg_imgs.tmj");

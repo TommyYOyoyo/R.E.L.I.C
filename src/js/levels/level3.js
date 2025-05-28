@@ -22,9 +22,9 @@ function loadAssets(scene) {
     scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
 
     // Load ruins tileset
-    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset.png");
+    scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
     // Load dungeon tileset
-    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset.png");
+    scene.load.image("dungeonSet", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
 
     // Background image collection (commented out in your original code, so keeping it commented)
     /*
