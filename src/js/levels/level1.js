@@ -3,7 +3,7 @@
  * @author Ray Lam 
  */
 
-import Phaser from "phaser";
+import Phaser, { Display } from "phaser";
 import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
@@ -230,22 +230,18 @@ class Level1 extends Phaser.Scene {
 const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
 
 // Handle wall visibility and collisions
-if (touchingActivateWalls && this.skeletonsKilled < 10) {
-    // Show walls
+if (touchingActivateWalls && this.skeletonsKilled < 15) {
+    //show walls
     [this.walls1, this.walls2, this.walls3].forEach(wall => {
         wall.setVisible(true);
     });
     
-    // Enable collisions
-    this.walls1.setCollisionByExclusion([-1], true);
-    this.walls2.setCollisionByExclusion([-1], true);
-    
-    // Create collider if it doesn't exist
+    //create collider if it doesn't exist
     if (!this.wallCollider) {
         this.wallCollider = this.physics.add.collider(this.player, this.walls2);
     }
     
-    // Failsafe
+    //problem where player collider is stuck in wall collider
     this.time.addEvent({
         delay: 50,
         callback: () => {
@@ -255,17 +251,55 @@ if (touchingActivateWalls && this.skeletonsKilled < 10) {
         }
     });
 } else {
-    // Hide walls and disable collisions
+    //hide walls and colliders
     [this.walls1, this.walls2, this.walls3].forEach(wall => {
         wall.setVisible(false);
         wall.setCollisionByExclusion([-1], false);
     });
     
-    // Clean up collider
+    //remove it completely
     if (this.wallCollider) {
         this.wallCollider.destroy();
         this.wallCollider = null;
     }
+}
+
+// Debug check - add this right before your text creation
+console.log("Text check - Skeletons:", this.skeletonsKilled, "Has shown:", this.hasShownText);
+
+if (this.skeletonsKilled > 14 && !this.hasShownText) {
+    // Get screen center coordinates
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+    
+    // Create the text (styled like your game over screen)
+    this.territoireText = this.add.text(centerX, centerY - 40, 'TERRITOIRE PURIFIÉ', {
+        fontFamily: 'noita',
+        fontSize: '100px',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(1001); // High depth like your UI elements
+    
+    // Remove after 3 seconds
+    this.time.delayedCall(2000, () => {
+        if (this.territoireText) {
+            this.tweens.add({
+                targets: this.territoireText,
+                alpha: 0,
+                duration: 1000,
+                onComplete: () => {
+                    this.territoireText.destroy();
+                    this.territoireText = null;
+                    }
+            });
+        }
+    });
+    
+    this.hasShownText = true;
 }
     
 //update player
