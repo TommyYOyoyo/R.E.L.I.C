@@ -1,14 +1,14 @@
 /**
  * @author Ray Lam
- * @note Interactive Diary with Pre-written Entries
+ * @note cool diary  
  */
 
 function diary(targetDiv, scene) {
-    // Current page (0-14 for 15 pages)
+    //pages
     let currentPage = 0;
     const totalPages = 15;
     
-    // Add your custom pre-written entries here
+    //texts
     const defaultEntries = [
         "Jour 1: Une météorite brisa la nuit...", 
         "Jour 2: Une étrange barrière est en train de former autour. Le peuple pense que c'est une miracle venu des cieux pour nous protéger.",	
@@ -19,20 +19,20 @@ function diary(targetDiv, scene) {
         "Jour 7: La barrière est en train de nous tuer",
         "Jour 8: Mon groupe de scientifiques commence a faire une recherche sur la météorite pour trouver une solution.",
         "Jour 9: Je ne peut plus sortir de mon lit, les jeunes scienfiques qui avait à peine 20 ans, doivent continuer la recherche sans moi",
-        "Jour 10: Bonne nouvelle, on peut désactiver la barrière en reforgeant l'étrange minerai dans la météorite",
-        "Jour 11: J'avais 40 ans, maintenant je suis 80.", 
-        "Jour 12: L'ainé du village avait une des pières, mais il fut transformé en quelque chose d'autre suite à son décès.", 
-        "Jour 13: Il est trop dangereux pour aller récupérer la pierre, nous sommes tous trop vieux",
-        "Jour 14: C'est la fin pour moi, pour nous", 
-        "Jour 15:" 
+        "Jour 10: Bonne nouvelle, on peut désactiver la barrière en reforgeant l'étrange minerai dans la météorite. Fragments ---> Pierre",
+        "Jour 11: Il y a 10 jours, j'avais 40 ans, maintenant je suis 80.",
+        "Jour 12: Mon équipe trouvé assez de fragments pour forger une pierre, mais il nous en reste 2 pour désactiver la barrière.", 
+        "Jour 13: L'ainé du village avait des fragments, mais il fut transformé en quelque chose d'autre suite à son décès.",
+        "Jour 14: Il est trop dangereux pour aller récupérer les fragments, nous sommes tous trop vieux", 
+        "Jour 15: C'est la fin pour moi, pour nous", 
     ];
     
-    const diaryEntries = [...defaultEntries]; // Copy default entries
+    const diaryEntries = [...defaultEntries]; //copy default entries
 
-    // Create style element
+    //create style element
     const style = document.createElement('style');
     style.setAttribute('data-diary-style', 'true'); 
-
+    //css
       style.textContent = `
         #diaryDiv {
             background-color: #f5e7c8;
@@ -102,48 +102,48 @@ function diary(targetDiv, scene) {
 
     document.head.appendChild(style);
 
-    // Create diary container
+    //create diary container
     const diaryDiv = document.createElement('div');
     diaryDiv.id = 'diaryDiv';
     targetDiv.appendChild(diaryDiv);
 
-    // Day indicator
+    //day indicator
     const dayElement = document.createElement('div');
     dayElement.id = 'day';
     diaryDiv.appendChild(dayElement);
 
-    // Diary text area (content editable for writing)
+    //diary text
     const diaryText = document.createElement('div');
     diaryText.id = 'diaryText';
     diaryText.contentEditable = true;
     diaryText.spellcheck = false;
     diaryDiv.appendChild(diaryText);
 
-    // Controls container
+    //create controls container
     const controlsDiv = document.createElement('div');
     controlsDiv.id = 'diaryControls';
     diaryDiv.appendChild(controlsDiv);
 
-    // Previous page button
+    //create previous page button
     const prevButton = document.createElement('button');
     prevButton.className = 'diaryButton';
     prevButton.id = 'prevPage-button';
     prevButton.textContent = 'Dernière page';	
     controlsDiv.appendChild(prevButton);
 
-    // Page indicator
+    //create page indicator
     const pageIndicator = document.createElement('span');
     pageIndicator.id = 'pageIndicator';
     controlsDiv.appendChild(pageIndicator);
 
-    // Next page button
+    //create next page button
     const nextButton = document.createElement('button');
     nextButton.className = 'diaryButton';
     nextButton.id = 'nextPage-button';
     nextButton.textContent = 'Page suivante';
     controlsDiv.appendChild(nextButton);
 
-    // Close diary button
+    //create close diary button
     const closeButton = document.createElement('button');
     closeButton.className = 'diaryButton';
     closeButton.id = 'close-button';
@@ -165,7 +165,7 @@ function diary(targetDiv, scene) {
         closeButton
     ];
 
-    // Update diary display
+    //update diary 
     function updateDiary() {
         dayElement.textContent = `Jour ${currentPage + 1}`;
         diaryText.textContent = diaryEntries[currentPage];
@@ -175,17 +175,17 @@ function diary(targetDiv, scene) {
         nextButton.disabled = currentPage === totalPages - 1;
     }
 
-    // Save current text before changing pages
+    //save text before changing pages
     function saveCurrentEntry() {
         diaryEntries[currentPage] = diaryText.textContent;
     }
 
-    // Function to leave the puzzle (transferred from numberGuesser)
+    //function to leave the puzzle 
     function leaveGame() {
         scene.player.isQuestActive = false;
         scene.player.isQuestOpen = false;
         scene.input.keyboard.enabled = true;
-        // Destroy all items
+        //destroy all items
         document.getElementById('puzzleDiv').style.display = 'none';
         DOMelements.forEach(element => {
             if (element && element.parentNode) {
@@ -194,15 +194,16 @@ function diary(targetDiv, scene) {
         });
     }
 
-    // Close diary function with proper cleanup
+    //close diary 
     function closeDiary() {
         saveCurrentEntry();
         scene.input.keyboard.enabled = true;
+        //unglitches
         setTimeout(() => {
                 leaveGame();
             }, 1000);
     }
-    // Event listeners
+    //change pages
     prevButton.addEventListener('click', () => {
         saveCurrentEntry();
         currentPage = Math.max(0, currentPage - 1);
@@ -217,7 +218,7 @@ function diary(targetDiv, scene) {
 
     closeButton.addEventListener('click', closeDiary);
 
-    // Initialize diary
+    //initialize diary  
     updateDiary();
 
     return {

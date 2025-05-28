@@ -11,7 +11,7 @@ export default class PlayerUI {
         this.fragmentSlotPosition;
         this.inventoryBoxPosition;
         if (this.level == "Level1") {
-            this.totalTime = 360;
+            this.totalTime = 480;
         } else if (this.level == "Level2") {
             this.addTimeCharm("1"); // Add first time charm
             this.totalTime = 480;

@@ -621,9 +621,9 @@
                 {
                  "height":93.4363547817617,
                  "id":48,
-                 "name":"chest",
+                 "name":"TCchest",
                  "rotation":0,
-                 "type":"Chest",
+                 "type":"TCChest",
                  "visible":true,
                  "width":25.4151397090154,
                  "x":3346.88104949169,

@@ -17,10 +17,11 @@ function loadAssets(scene) {
         frameWidth: 50,
         frameHeight: 37
     });
-
+    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
     scene.load.image("questKey", "/assets/img/interactKey.png");
     scene.load.image("fragment", "/assets/img/fragment.png");
     scene.load.image("heart", "/assets/img/heart.png");
+
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -122,6 +123,12 @@ class Level1 extends Phaser.Scene {
         this.questSpawns = map.createFromObjects("interact", {
             type: "Quest",
         });
+        this.chestSpawns = map.createFromObjects("interact", {
+            type: "TCChest",
+        });
+        this.level2 = map.createFromObjects("interact", {
+            type: "Portal",
+        });
 
         //object spawn
         this.spawnObjects(this.checkpoints);
@@ -131,6 +138,8 @@ class Level1 extends Phaser.Scene {
         this.spawnObjects(this.inout2);
         this.spawnObjects(this.enemySpawns);
         this.spawnObjects(this.questSpawns);
+        this.spawnObjects(this.chestSpawns);
+        this.spawnObjects(this.level2);
         
         //layer references
         this.outsideLayer = layers.outside;
@@ -153,7 +162,8 @@ class Level1 extends Phaser.Scene {
         this.activateWallsGroup = this.physics.add.staticGroup();
         this.enemySpawnsGroup = this.physics.add.staticGroup();
         this.questSpawnsGroup = this.physics.add.staticGroup();
-        
+        this.interactablesGroup = this.physics.add.staticGroup();
+
         //adding objects to groups
         this.addToGroup(this.checkpoints, this.checkpointGroup);
         this.addToGroup(this.ladders, this.climbableGroup);
@@ -162,6 +172,9 @@ class Level1 extends Phaser.Scene {
         this.addToGroup(this.inout2, this.inout2Group);
         this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         this.addToGroup(this.questSpawns, this.questSpawnsGroup);
+        this.addToGroup(this.chestSpawns, this.interactablesGroup);
+        this.addToGroup(this.level2, this.interactablesGroup);
+
         
         //preload walls
         this.walls1.setVisible(false);
@@ -230,22 +243,18 @@ class Level1 extends Phaser.Scene {
 const touchingActivateWalls = this.physics.overlap(this.player, this.activateWallsGroup);
 
 // Handle wall visibility and collisions
-if (touchingActivateWalls && this.skeletonsKilled < 10) {
-    // Show walls
+if (touchingActivateWalls && this.skeletonsKilled < 15) {
+    //show walls
     [this.walls1, this.walls2, this.walls3].forEach(wall => {
         wall.setVisible(true);
     });
     
-    // Enable collisions
-    this.walls1.setCollisionByExclusion([-1], true);
-    this.walls2.setCollisionByExclusion([-1], true);
-    
-    // Create collider if it doesn't exist
+    //create collider if it doesn't exist
     if (!this.wallCollider) {
         this.wallCollider = this.physics.add.collider(this.player, this.walls2);
     }
     
-    // Failsafe
+    //problem where player collider is stuck in wall collider
     this.time.addEvent({
         delay: 50,
         callback: () => {
@@ -255,17 +264,52 @@ if (touchingActivateWalls && this.skeletonsKilled < 10) {
         }
     });
 } else {
-    // Hide walls and disable collisions
+    //hide walls and colliders
     [this.walls1, this.walls2, this.walls3].forEach(wall => {
         wall.setVisible(false);
         wall.setCollisionByExclusion([-1], false);
     });
     
-    // Clean up collider
+    //remove it completely
     if (this.wallCollider) {
         this.wallCollider.destroy();
         this.wallCollider = null;
     }
+}
+
+if (this.skeletonsKilled > 14 && !this.hasShownText) {
+    //screen size
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+    
+    //create the text
+    this.territoireText = this.add.text(centerX, centerY - 40, 'TERRITOIRE PURIFIÉ', {
+        fontFamily: 'noita',
+        fontSize: '100px',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        padding: { left: 30, right: 30, top: 15, bottom: 15 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(100); 
+    
+    //remove after 3 seconds
+    this.time.delayedCall(2000, () => {
+        if (this.territoireText) {
+            this.tweens.add({
+                targets: this.territoireText,
+                alpha: 0,
+                duration: 1000,
+                onComplete: () => {
+                    this.territoireText.destroy();
+                    this.territoireText = null;
+                    }
+            });
+        }
+    });
+    
+    this.hasShownText = true;
 }
     
 //update player
@@ -290,5 +334,6 @@ if (touchingActivateWalls && this.skeletonsKilled < 10) {
         group.setVisible(false);
     }
 }
+
 
 export { Level1 };

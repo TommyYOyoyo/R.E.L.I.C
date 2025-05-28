@@ -814,8 +814,10 @@ function runInteractable(scene) {
         case scene.player.currentInteractable.name.startsWith("end"):
             scene.playerUI.createTimeCharm(scene, scene.end.fragmentReq);
             break;
+        case scene.player.currentInteractable.name.startsWith("TCchest"):
+            TCchestFind(scene);
+            break;
     }
-
 }
 
 // Function to trigger game over
@@ -934,6 +936,11 @@ function fragmentFind(scene, isQuest = false) {
     scene.player.isInteractActive = false;
     scene.player.isInteractOpen = false;
 }
+//RAY CODE >:)
+function TCchestFind(scene) {
+    scene.playerUI.addTimeCharm("1"); //add first time charm 
+    scene.playerUI.flashInventoryBorder();
+}
 
 
-export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind };
+export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind, TCchestFind,};
