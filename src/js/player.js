@@ -9,15 +9,13 @@ import { echoing_chimes_puzzle } from "./puzzles/sequencer.js";
 import { numberGuesser } from "./puzzles/numberGuesser.js";
 
 import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
-import { pressurePads } from "./puzzles/runeSequenceLock.js";
+import { pressurePads } from "./puzzles/pressurePads.js";
 import { sudoku } from "./puzzles/sudoku.js";
-import { slidingTiles } from "./puzzles/runeSequenceLock.js";
+import { slidingTiles } from "./puzzles/slidingTiles.js";
 
 import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
 import PlayerUI from "./playerUI.js";
-import { pressurePads } from "./puzzles/pressurePads.js";
-import { slidingTiles } from "./puzzles/slidingTiles.js";
 
 function loadPlayer(scene) {
     scene.latestCheckpoint;
