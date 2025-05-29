@@ -92,8 +92,8 @@ function spawnSkeleton(x, y, scene) {
     skeleton.attackHitbox = scene.add.rectangle(
         0,
         0,
-        180, // width
-        150, // height
+        100, // width
+        50, // height
         0x000000, // color (red for visualization)
         0 // alpha (for debugging)
     ).setOrigin(0.5, 0.5);
@@ -159,8 +159,8 @@ function hitboxUpdater(enemy) {
     if (enemy.isDead) return;
 
     // Set hitbox size and position based on direction
-    const offsetX = 80; // 20px overlap
-    const attackWidth = 180;
+    const offsetX = 40; // 20px overlap
+    const attackWidth = 100;
     
     // Calculate base position relative to enemy
     enemy.attackHitbox.y = enemy.body.y + enemy.body.height/2;

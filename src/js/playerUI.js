@@ -1,6 +1,13 @@
 /**
  * @author Ray Lam, Honglue Zheng
  */
+
+import { shutdown, clearCache, startNewLevel } from "./utils.js";
+import { Level1 } from "./levels/level1.js";
+import { Level2 } from "./levels/level2.js";
+import { Level3 } from "./levels/level3.js";
+import Checkbox from "phaser3-rex-plugins/plugins/checkbox.js";
+
 export default class PlayerUI {
     constructor(scene) {
         this.scene = scene;
@@ -11,7 +18,7 @@ export default class PlayerUI {
         this.fragmentSlotPosition;
         this.inventoryBoxPosition;
         if (this.level == "Level1") {
-            this.totalTime = 480;
+            this.totalTime = 360;
         } else if (this.level == "Level2") {
             this.addTimeCharm("1"); // Add first time charm
             this.totalTime = 480;
@@ -350,80 +357,91 @@ export default class PlayerUI {
         flash();
     }
 
-    createTimeCharm(scene, fragmentCount) {
-        // Configuration
-        const centerX = scene.cameras.main.centerX;
-        const centerY = scene.cameras.main.centerY;
-        const fragmentSpread = 200; // How far fragments spread from center
-        const mergeDuration = 1000; // Animation duration in ms
-        const fragmentScale = 0.5;
-        const charmScale = 1.5;
+    // Player obtains a timecharm and passes to the next level
+    createTimeCharm(scene) {
 
-        // Create container for fragments
-        const fragments = scene.add.group();
+        scene.player.canMove = false;
 
-        // Create fragments in a circle pattern
-        for (let i = 0; i < fragmentCount; i++) {
-            const angle = (i / fragmentCount) * Math.PI * 2;
-            const x = centerX + Math.cos(angle) * fragmentSpread;
-            const y = centerY + Math.sin(angle) * fragmentSpread;
+        // Current level
+        const currentLevelNum = this.level.substring(this.level.length - 1, this.level.length); // Last letter
 
-            const fragment = scene.add.image(x, y, 'fragment')
-                .setScale(fragmentScale)
-                .setAlpha(0)
-                .setDepth(10);
+        // Create next level
+        const nextLevelText = scene.add.text(
+            scene.cameras.main.centerX, // X: Center of screen
+            scene.cameras.main.centerY - 50, // Y: Slightly above center
+            'CHARME TEMPOREL ACQUIS!\nVEUILLEZ CLIQUER SUR\n"CONTINUER"\nPOUR LE PROCHAIN NIVEAU.', 
+            {
+                fontFamily: 'noita',
+                fontSize: '80px',
+                color: '#ffffff',
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                padding: { left: 30, right: 30, top: 15, bottom: 15 },
+                centerX: true,
+            }
+        )
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(101);
 
-            // Fade in each fragment with slight delay
+        // Player has reached the required fragments count
+        if (scene.player.fragmentsCount == scene.fragmentsReq){
+
+            nextLevelText.setText('CHARME TEMPOREL ACQUIS!\nVEUILLEZ CLIQUER SUR\n"CONTINUER"\nPOUR LE PROCHAIN NIVEAU.');
+
+            // Allow user to play next level when they click on continue
+            localStorage.setItem("lastGame", JSON.stringify({
+                level: `${this.level.substring(0, this.level.length - 1)}${parseInt(currentLevelNum) + 1}`,
+                checkpoint: 0
+            }));
+            
+            // Next level text flashing
             scene.tweens.add({
-                targets: fragment,
-                alpha: 1,
-                duration: 500,
-                delay: i * 100,
-                ease: 'Sine.easeOut'
-            });
-
-            fragments.add(fragment);
-        }
-
-        // After fragments appear, merge them
-        scene.time.delayedCall(500 + (fragmentCount * 100), () => {
-            // Create the final charm (hidden at first)
-            const charm = scene.add.image(centerX, centerY, 'charm_1')
-                .setScale(0)
-                .setAlpha(0)
-                .setDepth(20);
-
-            // Animate fragments moving to center
-            fragments.getChildren().forEach((fragment, index) => {
-                scene.tweens.add({
-                    targets: fragment,
-                    x: centerX,
-                    y: centerY,
-                    scale: 0.1,
-                    alpha: 0,
-                    duration: mergeDuration,
-                    delay: index * 50,
-                    ease: 'Back.easeIn',
-                    onComplete: () => fragment.destroy()
-                });
-            });
-
-            // Animate charm appearing
-            scene.tweens.add({
-                targets: charm,
-                scale: charmScale,
-                alpha: 1,
-                duration: 800,
-                delay: mergeDuration - 200,
-                ease: 'Elastic.out',
+                targets: nextLevelText, 
+                alpha: 0,           
+                duration: 2000,
+                delay: 2000,       
                 onComplete: () => {
-                    // Optional: Add sparkle effect or sound here
-                    scene.sound.play('pickup');
+                    nextLevelText.destroy(); // Remove text after fade
+
+                    switch (this.level) {
+                        case "Level1":
+                            this.addTimeCharm("1"); // Add first time charm
+                            break;
+                        case "Level2":
+                            this.addTimeCharm("2");  // Add second time charm
+                            break;
+                        case "Level3":
+                            this.addTimeCharm("3");  // Add third time charm
+                            break;
+                    }
+                    // Update fragment count and inventory
+                    scene.player.fragmentCount = 0;
+                    this.updateFragmentCount(scene.player.fragmentCount);
+                    this.flashInventoryBorder();
+
+                    // Reload site
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
                 }
             });
-        });
+        // Player has not collected all temporal fragments yet
+        } else {
+            scene.player.isInteractActive = false;
+            scene.player.isInteractOpen = false;
 
-        return fragments;
+            nextLevelText.setText(`IL VOUS RESTE ${scene.fragmentsReq-scene.player.fragmentsCount} FRAGMENTS\nPOUR OBTENIR LA CHARME.`);
+
+            scene.tweens.add({
+                targets: nextLevelText, 
+                alpha: 0,           
+                duration: 2000,
+                delay: 2000,       
+                onComplete: () => {
+                    nextLevelText.destroy(); // Remove text after fade
+                    scene.player.canMove = true;
+                }
+            });
+        }
     }
-
 }

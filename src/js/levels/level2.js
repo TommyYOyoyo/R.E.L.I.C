@@ -90,6 +90,7 @@ class Level2 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint;
         this.nextCheckpoint;
+        this.fragmentsReq = 9;
         this.isPaused = false; // Variable to stop game update loop
         this.weirdos = [];
     }
@@ -192,7 +193,7 @@ class Level2 extends Phaser.Scene {
         });
 
         this.end = map.createFromObjects("Objects", {
-            type: "End",
+            name: "end",
         });
 
         // Spawn all objects
