@@ -21,6 +21,8 @@ function clearStorage() {
 
     localStorage.setItem("runeSequenceLock", "false");
     localStorage.setItem("sudoku", "false");
+    localStorage.setItem("pressurePads", "false");
+    localStorage.setItem("slidingTiles", "false");
 }
 
 // devMode level selector

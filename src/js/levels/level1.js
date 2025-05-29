@@ -62,7 +62,6 @@ class Level1 extends Phaser.Scene {
     }
 //Create everything  
     create() {
-        this.physics.world.createDebugGraphic(); 
 
         const scale = this.scaleMultiplier;  //Scale multiplier
         this.bg2 = this.add.image(0, 0, "bgLayer2") //Create background
