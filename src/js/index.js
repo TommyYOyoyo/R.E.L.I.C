@@ -24,7 +24,7 @@ const speedDown = 300;
 // Configurations for the game page (PHASER game engine)
 const config = {
     // Engine
-    type: Phaser.WEBGL,
+    type: Phaser.CANVAS,
     width: sizes.width,
     height: sizes.height,
     canvas: gameCanvas,
