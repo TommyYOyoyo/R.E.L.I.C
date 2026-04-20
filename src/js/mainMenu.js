@@ -192,11 +192,6 @@ class MainMenu extends Phaser.Scene {
 
     // Preload background image
     preload() {
-        this.load.scenePlugin({
-            key: 'rexuiplugin',
-            url: 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js',
-            sceneKey: 'rexUI',
-        });
         this.load.audio("childrenOfOmnissiah", "/assets/sounds/musics/childrenOfOmnissiah.mp3");
         this.load.audio("hover", "/assets/sounds/sfx/hover.wav");
         this.load.audio("click", "/assets/sounds/sfx/click.mp3");
