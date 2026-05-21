@@ -12,6 +12,8 @@ function clearStorage() {
     localStorage.setItem("Level1.claimedFragments", null);
     localStorage.setItem("Level2.fragments", 0);
     localStorage.setItem("Level2.claimedFragments", null);
+    localStorage.setItem("Level2.1.fragments", 0);
+    localStorage.setItem("Level2.1.claimedFragments", null);
     localStorage.setItem("Level3.fragments", 0);
     localStorage.setItem("Level3.claimedFragments", null);
 
@@ -71,7 +73,22 @@ function devMode(scene, windowWidth, windowHeight) {
                     },
                     align: "center"
                 }).setInteractive({ useHandCursor: true }), 
-                // Button index 3 properties (3rd level button)
+                // Button index 3 properties (2.1 level button)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Niveau 2.1", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }),
+                // Button index 4 properties (3rd level button)
                 scene.rexUI.add.label({
                     width: 100,
                     height: 50,
@@ -86,7 +103,7 @@ function devMode(scene, windowWidth, windowHeight) {
                     },
                     align: "center"
                 }).setInteractive({ useHandCursor: true }),  
-                // Button index 4 properties (clear storage)
+                // Button index 5 properties (clear storage)
                 scene.rexUI.add.label({
                     width: 100,
                     height: 50,
@@ -135,6 +152,13 @@ function devMode(scene, windowWidth, windowHeight) {
                     checkpoint: 0
                 }));
                 newScene("Level2", scene);
+            } else if (button.text == "Niveau 2.1") {
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level2.1",
+                    checkpoint: 0
+                }));
+                newScene("Level2.1", scene);
             } else if (button.text == "Niveau 3"){
                 // Set last game checkpoint to default
                 localStorage.setItem('lastGame', JSON.stringify({

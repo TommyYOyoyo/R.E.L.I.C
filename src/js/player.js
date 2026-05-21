@@ -1,5 +1,5 @@
 /**
- * @author Honglue Zheng
+ * @author Honglue Zheng (ft. Ray Lam)
  * @note Universal player functions
  * @comment I should've made this a Player class... But it's too late to change :(
  */
@@ -11,6 +11,7 @@ import { runeSequenceLock } from "./puzzles/runeSequenceLock.js";
 import { sudoku } from "./puzzles/sudoku.js";
 import { diary } from "./puzzles/diary.js";
 import { shutdown } from "./utils.js";
+import { bossTakeDamage } from "./knightBoss.js";
 import PlayerUI from "./playerUI.js";
 
 function loadPlayer(scene) {
@@ -19,13 +20,13 @@ function loadPlayer(scene) {
     scene.nextCheckpoint;
     const fetchedCheckpoint = JSON.parse(localStorage.getItem('lastGame')).checkpoint;
     // Set fetched checkpoints
-    if (fetchedCheckpoint == 0) { 
+    if (fetchedCheckpoint == 0) {
         scene.latestCheckpoint = scene.checkpoints[0]; // Default spawnpoint
         if (scene.checkpoints.length > 1) {
             scene.nextCheckpoint = scene.checkpoints[1]; // Grab next checkpoint only if it exists
         } else {
             scene.nextCheckpoint = scene.checkpoints[0]; // No more checkpoints
-        } 
+        }
     } else {
         scene.latestCheckpoint = fetchedCheckpoint;
         const fetchedCheckpointIndex = fetchedCheckpoint.name.substr(fetchedCheckpoint.name.length - 1);
@@ -73,7 +74,7 @@ function loadPlayer(scene) {
     scene.player.health = 10;
     scene.player.maxHealth = 10;
     scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
-                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
+        .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY);
     // Set player collision detection
     scene.player.setCollideWorldBounds(true);
     // Enable floor/wall collision detection, dealt by Phaser game engine
@@ -150,9 +151,9 @@ function loadPlayer(scene) {
     const keyPopup = scene.add.image(0, 0, "questKey").setOrigin(0.5, 0.5).setScale(0.125);
     // "Interact" text warning
     const notif = scene.add.text(0, 0, "Intéragir", {
-            fontSize: "16px",
-            fontFamily: 'minecraft',
-            color: "white"
+        fontSize: "16px",
+        fontFamily: 'minecraft',
+        color: "white"
     }).setOrigin(0.5, 0.5);
 
     // Ensure texts always stay on top of all other objects
@@ -316,7 +317,7 @@ function updatePlayer(scene) {
     // Player is dead
     if (scene.player.isDead && !scene.isPaused) {
         setTimeout(() => {
-            gameOver(scene); 
+            gameOver(scene);
         }, 500);
         return;
     };
@@ -332,7 +333,7 @@ function updatePlayer(scene) {
     if ((!scene.player.isCrouching && !scene.player.isSliding) ||
         (scene.player.isJumping && scene.player.isCrouching)) {
         scene.player.setScale(3).setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
-                            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
+            .setOffset(scene.player.hitboxOffsetX, scene.player.hitboxOffsetY); // Reset player hitbox
     }
 
     // Check if player overlaps with the climbable objects (ladders/vines) (enable climbing), or else disable player climbing
@@ -389,10 +390,10 @@ function updatePlayer(scene) {
     // Move left
     if (scene.keys.a.isDown) {
         moveLeft(scene);
-    // Move right
+        // Move right
     } else if (scene.keys.d.isDown) {
         moveRight(scene);
-    // Stop x-axis movement and put player in idle
+        // Stop x-axis movement and put player in idle
     } else {
         idle(scene);
     }
@@ -430,7 +431,7 @@ function updatePlayer(scene) {
         const hasHorizontalInput = scene.keys.a.isDown || scene.keys.d.isDown;
         const hasAttackInput = scene.keys.space.isDown;
         const hasConflictingInput = hasHorizontalInput || hasAttackInput;
-        
+
         if (!hasConflictingInput) {
             enterClimb(scene); // Enter climbing state if no conflicting input detected
         } else {
@@ -449,7 +450,7 @@ function updatePlayer(scene) {
             scene.player.currentInteractable.class == "quest" ? runQuest(scene) : runInteractable(scene); // Run quest or interactable accordingly
         }
     }
-    
+
 }
 
 // Function to update player direction
@@ -470,7 +471,7 @@ function updateDirection(scene, direction) {
 function startSlide(scene) {
     scene.player.isSliding = true;
     scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
-                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
+        .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
     scene.player.play("slide", true); // Play slide animation
     scene.sound.play("jump"); // Play jump sound effect
     // Reset after 500ms
@@ -548,7 +549,7 @@ function attack(scene) {
             if (!enemy.isDead) {
                 enemy.health -= 1;
                 enemy.play('skeletonHit', true);
-                
+
                 // Enemy has been killed
                 if (enemy.health <= 0) {
                     enemy.isDead = true;
@@ -560,11 +561,19 @@ function attack(scene) {
                 }
             }
         });
+        if (scene.boss && !scene.boss.isDead) {
+    // Only damage boss if attack hitbox overlaps boss's physics body
+    if (scene.physics.overlap(scene.attackHitbox, scene.boss)) {
+        const isBehind = (scene.boss.flipX && scene.player.x > scene.boss.x) ||
+            (!scene.boss.flipX && scene.player.x < scene.boss.x);
+        bossTakeDamage(scene.boss, scene, 1, isBehind);
+    }
+}
 
         // Ground attack 
         if (scene.player.body.onFloor()) {
             scene.player.play("attack", true);
-        // Air attack
+            // Air attack
         } else {
             scene.player.play("airAttack", true);
         }
@@ -576,7 +585,7 @@ function attack(scene) {
 // Player move left functions
 function moveLeft(scene) {
     updateDirection(scene, 0);
-    scene.player.setVelocityX(-300); 
+    scene.player.setVelocityX(-3000);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
@@ -587,7 +596,7 @@ function moveLeft(scene) {
 // Player move right function
 function moveRight(scene) {
     updateDirection(scene, 1);
-    scene.player.setVelocityX(300);
+    scene.player.setVelocityX(3000);
     if (scene.player.body.onFloor() && !scene.player.isSliding && !scene.player.isAttacking && !scene.player.isHurting) {
         scene.player.play("run", true);
         if (scene.gameTick % 30 == 0) scene.sound.play("run"); // Play run sound effect
@@ -622,11 +631,11 @@ function crouch(scene) {
     // Player is moving
     if (!scene.player.isSliding && scene.player.body.velocity.x != 0 && scene.player.body.onFloor()) {
         startSlide(scene);
-    // Player is not moving
+        // Player is not moving
     } else if (scene.player.body.velocity.x == 0 && scene.player.body.onFloor()) {
         scene.player.play("crouch", true);
         scene.player.setScale(3).setSize(scene.player.crouchHitboxWidth, scene.player.crouchHitboxHeight)
-                            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
+            .setOffset(scene.player.crouchHitboxOffsetX, scene.player.crouchHitboxOffsetY); // Shrink player hitbox
         scene.player.isCrouching = true;
     }
 }
@@ -650,7 +659,7 @@ function exitClimb(scene, impulse) {
 
     // Apply small vertical impulse when exiting
     if (impulse) jump(scene);
-    
+
     // Transition to appropriate animation
     if (!scene.player.body.onFloor()) {
         scene.player.play("jump", true);
@@ -705,7 +714,7 @@ function updateCheckpoint(scene) {
         const checkpointText = scene.add.text(
             scene.cameras.main.centerX, // X: Center of screen
             scene.cameras.main.centerY - 50, // Y: Slightly above center
-            'CHECKPOINT ENREGISTRÉ', 
+            'CHECKPOINT ENREGISTRÉ',
             {
                 fontFamily: 'noita',
                 fontSize: '100px',
@@ -718,12 +727,12 @@ function updateCheckpoint(scene) {
             .setScrollFactor(0)
             .setDepth(101);
         scene.tweens.add({
-            targets: checkpointText, 
-            alpha: 0,           
+            targets: checkpointText,
+            alpha: 0,
             duration: 1000,
-            delay: 2000,       
+            delay: 2000,
             onComplete: () => {
-               checkpointText.destroy(); // Remove text after fade
+                checkpointText.destroy(); // Remove text after fade
             }
         });
         const nextCheckpointIndex = scene.checkpoints.indexOf(scene.nextCheckpoint) + 1;
@@ -754,8 +763,8 @@ function runQuest(scene) {
     setTimeout(() => {
         scene.input.keyboard.enabled = false; // Disable keyboard input after a certain delay to prevent glitch
     }, 200);
-    
-    switch(true) {
+
+    switch (true) {
         case scene.player.currentInteractable.name.startsWith("threeweirdos"):
             interactWithWeirdos(scene);
             break;
@@ -783,14 +792,14 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
-            
+
         case scene.player.currentInteractable.name.startsWith("Sudoku"):
-                div.style.display = 'block';
-                setTimeout(() => {
-                    sudoku(div, scene);
-                    scene.children.bringToTop(div);
-                }, 200);
-                break;
+            div.style.display = 'block';
+            setTimeout(() => {
+                sudoku(div, scene);
+                scene.children.bringToTop(div);
+            }, 200);
+            break;
 
         case scene.player.currentInteractable.name.startsWith("diary"):
             div.style.display = 'block';
@@ -799,7 +808,7 @@ function runQuest(scene) {
                 scene.children.bringToTop(div);
             }, 200);
             break;
-            
+
         default:
             break;
     }
@@ -807,7 +816,7 @@ function runQuest(scene) {
 
 // Function to trigger interactable
 function runInteractable(scene) {
-    switch(true) {
+    switch (true) {
         case scene.player.currentInteractable.name.startsWith("fragment"):
             fragmentFind(scene);
             break;
@@ -835,10 +844,10 @@ function gameOver(scene) {
         scene.cameras.main.height,
         0x000000
     )
-    .setOrigin(0)
-    .setScrollFactor(0)
-    .setDepth(50)
-    .setAlpha(0);
+        .setOrigin(0)
+        .setScrollFactor(0)
+        .setDepth(50)
+        .setAlpha(0);
 
     // Slow zoom in on timer (3 seconds)
     scene.cameras.main.zoomTo(2, 3000, 'Linear', true, (camera, progress) => {
@@ -862,54 +871,54 @@ function showGameOverScreen(scene) {
     const { width, height } = scene.cameras.main;
 
     // Create RETRY button
-    const retryButton = scene.add.text(width/2, height/2 - 40, 'RÉESSAYER', {
+    const retryButton = scene.add.text(width / 2, height / 2 - 40, 'RÉESSAYER', {
         fontFamily: 'noita',
         fontSize: '32px',
         color: '#ffffff',
         backgroundColor: 'rgba(0, 0, 0, 0)',
         padding: { left: 30, right: 30, top: 15, bottom: 15 }
     })
-    .setOrigin(0.5)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerover', () => retryButton.setColor('#916100'))
-    .on('pointerout', () => retryButton.setColor('#ffffff'))
-    .on('pointerdown', () => {
-        scene.sound.play("click");
-        setTimeout(() => {
-            shutdown(scene);
-            scene.playerUI = undefined;
-            scene.isPaused = false;
-            scene.scene.restart();
-        }, 300);
-    })
-    .setDepth(1001);
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => retryButton.setColor('#916100'))
+        .on('pointerout', () => retryButton.setColor('#ffffff'))
+        .on('pointerdown', () => {
+            scene.sound.play("click");
+            setTimeout(() => {
+                shutdown(scene);
+                scene.playerUI = undefined;
+                scene.isPaused = false;
+                scene.scene.restart();
+            }, 300);
+        })
+        .setDepth(1001);
 
     // Create RETURN TO MAIN MENU button
-    const menuButton = scene.add.text(width/2, height/2 + 40, 'RETOUR AU MENU', {
+    const menuButton = scene.add.text(width / 2, height / 2 + 40, 'RETOUR AU MENU', {
         fontFamily: 'noita',
         fontSize: '32px',
         color: '#ffffff',
         backgroundColor: '#rgba(0, 0, 0, 0)',
         padding: { left: 30, right: 30, top: 15, bottom: 15 }
     })
-    .setOrigin(0.5)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerover', () => menuButton.setColor('#916100'))
-    .on('pointerout', () => menuButton.setColor('#ffffff'))
-    .on('pointerdown', () => {
-        scene.sound.play("click");
-        setTimeout(() => {
-            window.location.reload();
-        }, 300);
-    })
-    .setDepth(1001);
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => menuButton.setColor('#916100'))
+        .on('pointerout', () => menuButton.setColor('#ffffff'))
+        .on('pointerdown', () => {
+            scene.sound.play("click");
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        })
+        .setDepth(1001);
 
     // Fade in buttons
     retryButton.setAlpha(0);
     menuButton.setAlpha(0);
-    
+
     scene.tweens.add({
         targets: [retryButton, menuButton],
         alpha: 1,
@@ -926,7 +935,7 @@ function fragmentFind(scene, isQuest = false) {
         localStorage.setItem(`${scene.level}.claimedFragments`, JSON.stringify(scene.player.claimedFragments));
         scene.player.currentInteractable.destroy();
     }
-    
+
     scene.player.fragmentsCount++;
     scene.playerUI.updateFragmentCount(scene.player.fragmentsCount);
     scene.sound.play("pickup");
@@ -942,5 +951,4 @@ function TCchestFind(scene) {
     scene.playerUI.flashInventoryBorder();
 }
 
-
-export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind, TCchestFind,};
+export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind, TCchestFind, };

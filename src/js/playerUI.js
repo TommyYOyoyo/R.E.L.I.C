@@ -12,7 +12,7 @@ export default class PlayerUI {
         this.inventoryBoxPosition;
         if (this.level == "Level1") {
             this.totalTime = 480;
-        } else if (this.level == "Level2") {
+        } else if (this.level == "Level2" || this.level == "Level2.1") {
             this.addTimeCharm("1"); // Add first time charm
             this.totalTime = 480;
         } else if (this.level == "Level3") {

@@ -9,6 +9,7 @@ import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 import { MainMenu } from "./mainMenu.js";
 import { Level1 } from "./levels/level1.js";
 import { Level2 } from "./levels/level2.js";
+import { Level2_1 } from "./levels/level2.1.js";
 import { Level3 } from "./levels/level3.js";
 
 const sizes = {
@@ -41,6 +42,7 @@ const config = {
         MainMenu,
         Level1,
         Level2,
+        Level2_1,
         Level3
     ],
     plugins: {
