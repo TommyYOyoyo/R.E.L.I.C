@@ -5,9 +5,9 @@
  */
 
 import Phaser from "phaser";
-// Ensure loadPlayer, updatePlayer, and hitboxUpdater are correctly exported from player.js
-import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import Player from "../player.js";
 import { runeSequenceLock } from "../puzzles/runeSequenceLock.js";
+import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
 // import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 
 const sizes = {
@@ -17,9 +17,10 @@ const sizes = {
     //mapHeight: window.innerHeight * 3, // Not directly used in current map bounds, but good to have
 };
 
-// Load assets for the current level
+// Load level-specific assets
 function loadAssets(scene) {
-    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+    // Load common assets shared across all levels
+    loadCommonAssets(scene);
 
     // Load ruins tileset
     scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
@@ -44,31 +45,8 @@ function loadAssets(scene) {
     // Load map for Level 3
     scene.load.tilemapTiledJSON("map", "/assets/img/maps/l3_map.tmj");
 
-    // Load player spritesheet
-    // frameWidth and frameHeight should be the dimensions of a single frame in the spritesheet
-    scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
-        frameWidth: 50,  // Original width of one frame in the spritesheet
-        frameHeight: 37 // Original height of one frame in the spritesheet
-    });
-
     // Load musics and sound effects
     scene.load.audio("jailBreak", "/assets/sounds/musics/jailBreak.mp3");
-    scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
-    scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
-    scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
-    scene.load.audio("jump", "/assets/sounds/sfx/jump.wav");
-    scene.load.audio("run", "/assets/sounds/sfx/step.mp3");
-    scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
-    scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
-    scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
-    scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
-
-    /** @note ADD TO YOUR LEVEL - interact key image */
-    scene.load.image("questKey", "/assets/img/interactKey.png");
-    scene.load.image("fragment", "/assets/img/fragment.png");
-    scene.load.image("heart", "/assets/img/heart.png");
-    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
-    scene.load.image("charm_2", "/assets/img/timecharm_2.png");
 
     // Load enemy assets
     // loadEnemyAssets(scene);
@@ -93,15 +71,8 @@ class Level3 extends Phaser.Scene {
         // Load all game assets
         loadAssets(this);
 
-        // Load new keyboard keys
-        this.keys = this.input.keyboard.addKeys({
-            a:  Phaser.Input.Keyboard.KeyCodes.A,
-            s:  Phaser.Input.Keyboard.KeyCodes.S,
-            d:  Phaser.Input.Keyboard.KeyCodes.D,
-            w:  Phaser.Input.Keyboard.KeyCodes.W,
-            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            f: Phaser.Input.Keyboard.KeyCodes.F
-        });
+        // Load standard keyboard keys
+        loadKeyboardKeys(this);
     }
 
     // Create all game objects
@@ -149,10 +120,10 @@ class Level3 extends Phaser.Scene {
         // this.enemySpawns = map.createFromObjects("Objects", { type: "EnemySpawn" }); // Commented in your original
         this.interactables = map.createFromObjects("interactables", { type: "interactables" });
 
-        // Spawn and scale all objects from tilemap object layers
+        // Spawn and scale all objects from tilemap object layers (using level loader utility)
         const objects = [this.checkpoints, this.questSpawns, this.ladders, /*this.enemySpawns*/, this.interactables];
         objects.forEach(element => {
-            this.spawnObjects(element);
+            spawnObjects(element, this.scaleMultiplier, this);
         });
 
         // Initialize physics groups for object collections
@@ -162,12 +133,12 @@ class Level3 extends Phaser.Scene {
         // this.enemySpawnsGroup = this.physics.add.staticGroup() // Commented in your original
         this.checkpointsGroup = this.physics.add.staticGroup();
 
-        // Add object collections to their respective physics groups
-        this.addToGroup(this.ladders, this.climbableGroup);
-        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
-        this.addToGroup(this.interactables, this.interactablesGroup);
+        // Add object collections to their respective physics groups (using level loader utility)
+        addToGroup(this.ladders, this.climbableGroup);
+        addToGroup(this.questSpawns, this.questSpawnsGroup);
+        addToGroup(this.interactables, this.interactablesGroup);
         // this.addToGroup(this.enemySpawns, this.enemySpawnsGroup); // Commented in your original
-        this.addToGroup(this.checkpoints, this.checkpointsGroup);
+        addToGroup(this.checkpoints, this.checkpointsGroup);
 
         // Scale visual map layers
         const layers = [background_back, background_ground, ground, decorations2, decorations1, interactables_not];
@@ -177,7 +148,8 @@ class Level3 extends Phaser.Scene {
         const camera = this.cameras.main;
 
         // --- PLAYER LOADING AND SCALING ---
-        loadPlayer(this); // Call loadPlayer which creates 'this.player'
+        this.playerInstance = new Player(this);
+        this.playerInstance.load(); // Call load which creates 'this.player'
         // runeSequenceLock(this);
 
         // Scale the player sprite (visual and physics body)
@@ -231,40 +203,11 @@ class Level3 extends Phaser.Scene {
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
 
         // Update player logic (movement, animations, etc.)
-        updatePlayer(this);
-        hitboxUpdater(this);
+        this.playerInstance.update();
+        this.playerInstance.hitboxUpdater();
         // updateSkeleton(this)
         // Call hitboxUpdater only if you have specific dynamic hitbox adjustments based on animation/state
         // hitboxUpdater(this);
-    }
-
-    // Spawn all objects from tilemap, scale them and enable physics
-    spawnObjects(objects) {
-        objects.forEach(element => {
-            element.setOrigin(0.5, 0.5); // Set origin to center for consistent scaling
-            // Scale object position based on the global scale multiplier
-            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
-
-            // Enable physics for the element (static body)
-            this.physics.add.existing(element, true); // 'true' makes it a static body
-
-            // Scale the physics collision body
-            // IMPORTANT: element.body.width/height initially come from Tiled's object size.
-            // If Tiled exports objects with their unscaled pixel dimensions, then multiplying by
-            // this.scaleMultiplier here is correct. If Tiled exports them already scaled relative
-            // to your map's initial size, you might need to adjust this.
-            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
-        });
-    }
-
-    // Add object to group
-    addToGroup(objects, group) {
-        // Add each object from the collection to the appropriate physics group
-        objects.forEach(element => {
-            group.add(element);
-        });
-        // Set group visibility (can be set to true for debugging specific group boundaries)
-        group.setVisible(false);
     }
 }
 

@@ -4,34 +4,21 @@
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import Player from "../player.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
+import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
 
-//Load all assets  
+//Load level-specific assets  
 function loadAssets(scene) {
-    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+    // Load common assets shared across all levels
+    loadCommonAssets(scene);
+
     scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset-extruded.png");
     scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
     scene.load.tilemapTiledJSON("map", "assets/img/maps/l1_map.tmj");
-    scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {
-        frameWidth: 50,
-        frameHeight: 37
-    });
-    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
-    scene.load.image("questKey", "/assets/img/interactKey.png");
-    scene.load.image("fragment", "/assets/img/fragment.png");
-    scene.load.image("heart", "/assets/img/heart.png");
 
     //Sounds
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
-    scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
-    scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
-    scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
-    scene.load.audio("jump", "/assets/sounds/sfx/jump.wav");
-    scene.load.audio("run", "/assets/sounds/sfx/step.mp3");
-    scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
-    scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
-    scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
 
     loadEnemyAssets(scene);
 }
@@ -51,14 +38,8 @@ class Level1 extends Phaser.Scene {
     //Preload player movement
     preload() {
         loadAssets(this);
-        this.keys = this.input.keyboard.addKeys({
-            a: Phaser.Input.Keyboard.KeyCodes.A,
-            s: Phaser.Input.Keyboard.KeyCodes.S,
-            d: Phaser.Input.Keyboard.KeyCodes.D,
-            w: Phaser.Input.Keyboard.KeyCodes.W,
-            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            f: Phaser.Input.Keyboard.KeyCodes.F
-        });
+        // Load standard keyboard keys
+        loadKeyboardKeys(this);
     }
 //Create everything  
     create() {
@@ -129,16 +110,16 @@ class Level1 extends Phaser.Scene {
             type: "Portal",
         });
 
-        //object spawn
-        this.spawnObjects(this.checkpoints);
-        this.spawnObjects(this.ladders);
-        this.spawnObjects(this.activateWalls);
-        this.spawnObjects(this.inout1);
-        this.spawnObjects(this.inout2);
-        this.spawnObjects(this.enemySpawns);
-        this.spawnObjects(this.questSpawns);
-        this.spawnObjects(this.chestSpawns);
-        this.spawnObjects(this.level2);
+        //object spawn (using level loader utility)
+        spawnObjects(this.checkpoints, this.scaleMultiplier, this);
+        spawnObjects(this.ladders, this.scaleMultiplier, this);
+        spawnObjects(this.activateWalls, this.scaleMultiplier, this);
+        spawnObjects(this.inout1, this.scaleMultiplier, this);
+        spawnObjects(this.inout2, this.scaleMultiplier, this);
+        spawnObjects(this.enemySpawns, this.scaleMultiplier, this);
+        spawnObjects(this.questSpawns, this.scaleMultiplier, this);
+        spawnObjects(this.chestSpawns, this.scaleMultiplier, this);
+        spawnObjects(this.level2, this.scaleMultiplier, this);
         
         //layer references
         this.outsideLayer = layers.outside;
@@ -163,16 +144,16 @@ class Level1 extends Phaser.Scene {
         this.questSpawnsGroup = this.physics.add.staticGroup();
         this.interactablesGroup = this.physics.add.staticGroup();
 
-        //adding objects to groups
-        this.addToGroup(this.checkpoints, this.checkpointGroup);
-        this.addToGroup(this.ladders, this.climbableGroup);
-        this.addToGroup(this.activateWalls, this.activateWallsGroup);
-        this.addToGroup(this.inout1, this.inoutGroup);
-        this.addToGroup(this.inout2, this.inout2Group);
-        this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
-        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
-        this.addToGroup(this.chestSpawns, this.interactablesGroup);
-        this.addToGroup(this.level2, this.interactablesGroup);
+        //adding objects to groups (using level loader utility)
+        addToGroup(this.checkpoints, this.checkpointGroup);
+        addToGroup(this.ladders, this.climbableGroup);
+        addToGroup(this.activateWalls, this.activateWallsGroup);
+        addToGroup(this.inout1, this.inoutGroup);
+        addToGroup(this.inout2, this.inout2Group);
+        addToGroup(this.enemySpawns, this.enemySpawnsGroup);
+        addToGroup(this.questSpawns, this.questSpawnsGroup);
+        addToGroup(this.chestSpawns, this.interactablesGroup);
+        addToGroup(this.level2, this.interactablesGroup);
 
         
         //preload walls
@@ -186,7 +167,8 @@ class Level1 extends Phaser.Scene {
 
 
         //load and scale player
-        loadPlayer(this);
+        this.playerInstance = new Player(this);
+        this.playerInstance.load();
         this.player.setScale(scale).setDepth(11);
         
         //ground collider reference
@@ -312,26 +294,10 @@ if (this.skeletonsKilled > 14 && !this.hasShownText) {
 }
     
 //update player
-    updatePlayer(this);
-    hitboxUpdater(this);
+    this.playerInstance.update();
+    this.playerInstance.hitboxUpdater();
     updateSkeleton(this)
 }
-//spawn objects with the scale multiplier
-    spawnObjects(objects) {
-        objects.forEach(element => {
-            element.setOrigin(0.5, 0.5);
-            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
-            this.physics.add.existing(element, true);
-            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
-        });
-    }
-//add objects to groups
-    addToGroup(objects, group) {
-        objects.forEach(element => {
-            group.add(element);
-        });
-        group.setVisible(false);
-    }
 }
 
 

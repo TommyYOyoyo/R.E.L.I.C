@@ -1,4 +1,4 @@
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 function pressurePads(targetDiv, scene) {
     console.log("This puzzle runs!");
@@ -249,7 +249,7 @@ function pressurePads(targetDiv, scene) {
             puzzleSolved = true;
             localStorage.setItem("pressurePads", "true");
 
-            fragmentFind(scene, true);
+            Player.fragmentFind(scene, true);
 
             scene.input.keyboard.enabled = true;
 

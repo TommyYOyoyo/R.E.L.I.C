@@ -1,4 +1,4 @@
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 function slidingTiles(targetDiv, scene) {
   console.log("This puzzle runs!");
@@ -389,7 +389,7 @@ function slidingTiles(targetDiv, scene) {
       if (!puzzleSolved) {
         puzzleSolved = true; // Mark as solved for the current puzzle session
         localStorage.setItem("slidingTiles", "true"); // Persist the solved state in the browser's local storage
-        fragmentFind(scene, true); // Call the game's function to give the player a fragment
+        Player.fragmentFind(scene, true); // Call the game's function to give the player a fragment
         console.log("Fragment awarded!");
       } else {
         console.log(
