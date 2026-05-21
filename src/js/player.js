@@ -1159,6 +1159,3 @@ export default class Player {
         scene.playerUI.flashInventoryBorder();
     }
 }
-
-
-export { loadPlayer, createAnimation, updatePlayer, updateDirection, createAttackHitbox, hitboxUpdater, fragmentFind, TCchestFind,};

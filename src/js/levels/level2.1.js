@@ -1,20 +1,24 @@
 /**
  * Level 2.1 game file
- * @author Ray Lam 
+ * @author Ray Lam
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import Player from "../player.js";
+import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 import { loadBossAssets, createBossAnimations, spawnBoss, updateBoss, bossTakeDamage } from "../knightBoss.js";
 
 function loadAssets(scene) {
-    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
-    scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset-extruded.png");
-    scene.load.image("ruinTileset", "assets/img/Ruins_Pack/Tileset-extruded.png");
-    scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
-    scene.load.tilemapTiledJSON("map", "assets/img/maps/l2.1_map.tmj");
-    scene.load.spritesheet("playerSheet", "assets/img/Player/spritesheet.png", {
+
+    // Load common assets shared across all levels
+    loadCommonAssets(scene);
+    
+    scene.load.image("dungeonTileset", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
+    scene.load.image("ruinTileset", "/assets/img/Ruins_Pack/Tileset-extruded.png");
+    scene.load.image("bgLayer2", "/assets/img/backgrounds/background_4/Plan_5.png");
+    scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2.1_map.tmj");
+    scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
         frameWidth: 50,
         frameHeight: 37
     });
@@ -52,14 +56,7 @@ class Level2_1 extends Phaser.Scene {
 
     preload() {
         loadAssets(this);
-        this.keys = this.input.keyboard.addKeys({
-            a: Phaser.Input.Keyboard.KeyCodes.A,
-            s: Phaser.Input.Keyboard.KeyCodes.S,
-            d: Phaser.Input.Keyboard.KeyCodes.D,
-            w: Phaser.Input.Keyboard.KeyCodes.W,
-            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            f: Phaser.Input.Keyboard.KeyCodes.F
-        });
+        loadKeyboardKeys(this);
     }
 
     create() {
@@ -126,13 +123,13 @@ class Level2_1 extends Phaser.Scene {
         this.knightActTriggers = map.createFromObjects("interact", { type: "KnightAct" }); // NEW: trigger zone
 
         // Spawn objects
-        this.spawnObjects(this.checkpoints);
-        this.spawnObjects(this.ladders);
-        this.spawnObjects(this.enemySpawns);
-        this.spawnObjects(this.questSpawns);
-        this.spawnObjects(this.chestSpawns);
-        this.spawnObjects(this.level2);
-        this.spawnObjects(this.knightActTriggers); // NEW
+        spawnObjects(this.checkpoints, scale, this);
+        spawnObjects(this.ladders, scale, this);
+        spawnObjects(this.enemySpawns, scale, this);
+        spawnObjects(this.questSpawns, scale, this);
+        spawnObjects(this.chestSpawns, scale, this);
+        spawnObjects(this.level2, scale, this);
+        spawnObjects(this.knightActTriggers, scale, this); // NEW
 
         // Groups
         this.climbableGroup = this.physics.add.staticGroup();
@@ -142,13 +139,13 @@ class Level2_1 extends Phaser.Scene {
         this.interactablesGroup = this.physics.add.staticGroup();
         this.knightActGroup = this.physics.add.staticGroup(); // NEW
 
-        this.addToGroup(this.checkpoints, this.checkpointGroup);
-        this.addToGroup(this.ladders, this.climbableGroup);
-        this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
-        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
-        this.addToGroup(this.chestSpawns, this.interactablesGroup);
-        this.addToGroup(this.level2, this.interactablesGroup);
-        this.addToGroup(this.knightActTriggers, this.knightActGroup); // NEW
+        addToGroup(this.checkpoints, this.checkpointGroup);
+        addToGroup(this.ladders, this.climbableGroup);
+        addToGroup(this.enemySpawns, this.enemySpawnsGroup);
+        addToGroup(this.questSpawns, this.questSpawnsGroup);
+        addToGroup(this.chestSpawns, this.interactablesGroup);
+        addToGroup(this.level2, this.interactablesGroup);
+        addToGroup(this.knightActTriggers, this.knightActGroup); // NEW
 
         // Player
         loadPlayer(this);
@@ -197,19 +194,6 @@ class Level2_1 extends Phaser.Scene {
         if (this.boss) this.boss.setHealthbarVisible(inKnightActZone);
     }
 
-    spawnObjects(objects) {
-        objects.forEach(element => {
-            element.setOrigin(0.5, 0.5);
-            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
-            this.physics.add.existing(element, true);
-            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
-        });
-    }
-
-    addToGroup(objects, group) {
-        objects.forEach(element => group.add(element));
-        group.setVisible(false);
-    }
 }
 
 export { Level2_1 };
