@@ -3,7 +3,7 @@
  * @comment This file has real bad coding habits... such heresy...
  */
 
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 const variations = [
     [
@@ -243,7 +243,7 @@ function interactWithWeirdos(scene) {
                             setTimeout(() => {
                                 // If succeed, trigger fragment find animation
                                 if (succeed) {
-                                    fragmentFind(scene, true);
+                                    Player.fragmentFind(scene, true);
                                     localStorage.setItem('threeWeirdos', "true");
                                 }
                                 // Destroy all dialogues and chatboxes

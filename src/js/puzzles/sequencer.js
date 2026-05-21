@@ -3,7 +3,7 @@
  * @note echoing chimes sequencer puzzle
  */
 
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 function echoing_chimes_puzzle(targetDiv, scene) {
     // Initiate variables
@@ -302,7 +302,7 @@ function echoing_chimes_puzzle(targetDiv, scene) {
                 messageDiv.style.color = '#28a745';
                 startButton.disabled = true;
                 localStorage.setItem('sequencer', "true"); // Set sequencer solved to true
-                fragmentFind(scene, true); // Trigger fragment find animation
+                Player.fragmentFind(scene, true); // Trigger fragment find animation
                 // Reenable keyboard input
                 scene.input.keyboard.enabled = true;
                 // Leave game

@@ -1,4 +1,4 @@
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 function runeSequenceLock(targetDiv, scene) {
     console.log("This puzzle runs!");
@@ -249,7 +249,7 @@ function runeSequenceLock(targetDiv, scene) {
                 puzzleSolved = true;
                 localStorage.setItem("runeSequenceLock", "true"); // *** Set localStorage IMMEDIATELY ***
 
-                fragmentFind(scene, true); // Trigger fragment find animation
+                Player.fragmentFind(scene, true); // Trigger fragment find animation
                 scene.input.keyboard.enabled = true; // Re-enable keyboard input for the scene
 
                 setTimeout(() => {
@@ -340,7 +340,7 @@ function runeSequenceLock(targetDiv, scene) {
         devSolveButton.disabled = true;
 
         // Also call leaveGame after a delay for dev solve
-        fragmentFind(scene, true); // Trigger fragment find animation
+        Player.fragmentFind(scene, true); // Trigger fragment find animation
         scene.input.keyboard.enabled = true; // Re-enable keyboard input for the scene
 
         setTimeout(() => {

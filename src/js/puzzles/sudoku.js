@@ -1,4 +1,4 @@
-import { fragmentFind } from "../player.js";
+import Player from "../player.js";
 
 function sudoku(targetDiv, scene) {
   console.log("This puzzle runs!");
@@ -312,7 +312,7 @@ function sudoku(targetDiv, scene) {
       const wasAlreadySolved = localStorage.getItem("sudoku") === "true";
       if (!wasAlreadySolved) {
         localStorage.setItem("sudoku", "true");
-        fragmentFind(scene, true);
+        Player.fragmentFind(scene, true);
         console.log("Sudoku puzzle solved! Fragment awarded.");
       } else {
         console.log("Sudoku puzzle already solved. No new fragment awarded.");

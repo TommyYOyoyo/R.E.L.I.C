@@ -4,9 +4,10 @@
  */
 
 import Phaser from "phaser";
-import { loadPlayer, updatePlayer, hitboxUpdater } from "../player.js";
+import Player from "../player.js";
 import { spawnWeirdos } from "../puzzles/threeWeirdos.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
+import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
 
 const sizes = {
     width: window.innerWidth,
@@ -15,9 +16,10 @@ const sizes = {
     mapHeight: window.innerHeight * 3,
 };
 
-// Load assets for the current level
+// Load level-specific assets
 function loadAssets(scene) {
-    scene.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+    // Load common assets shared across all levels
+    loadCommonAssets(scene);
 
     /** @note ADD TO YOUR LEVEL - Load ruins tileset */
     scene.load.image("ruinSet", "/assets/img/Ruins_Pack/Tileset-extruded.png");
@@ -40,12 +42,6 @@ function loadAssets(scene) {
     scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2_map.tmj");
     scene.load.tilemapTiledJSON("bg", "/assets/img/maps/bg_2.tmj");
 
-    /** @note ADD TO YOUR LEVEL - Load player spritesheet */
-    scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
-        frameWidth: 50,
-        frameHeight: 37
-    });
-
     // Load weirdos spritesheet
     scene.load.spritesheet("weirdoSheet", "/assets/img/Weirdos/Idle.png", {
         frameWidth: 231,
@@ -56,23 +52,7 @@ function loadAssets(scene) {
 
     /** @note ADD TO YOUR LEVEL - Load musics & sfx */
     scene.load.audio("onceInALullaby", "/assets/sounds/musics/onceInALullaby.mp3");
-    scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
-    scene.load.audio("climb", "/assets/sounds/sfx/climb.wav");
-    scene.load.audio("hurt", "/assets/sounds/sfx/hurt.mp3");
-    scene.load.audio("jump", "/assets/sounds/sfx/jump.wav");
-    scene.load.audio("run", "/assets/sounds/sfx/step.mp3");
-    scene.load.audio("teleport", "/assets/sounds/sfx/teleport.wav");
-    scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
-    scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
-    scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
 
-    /** @note ADD TO YOUR LEVEL - interact key image */
-    scene.load.image("questKey", "/assets/img/interactKey.png");
-    scene.load.image("fragment", "/assets/img/fragment.png");
-    scene.load.image("heart", "/assets/img/heart.png");
-    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
-    scene.load.image("charm_2", "/assets/img/timecharm_2.png");
-    
     scene.load.image("chatBox", "/assets/img/chatBox.png");
 
     // Load enemy assets
@@ -90,6 +70,7 @@ class Level2 extends Phaser.Scene {
         this.gameTick = 0;
         this.latestCheckpoint;
         this.nextCheckpoint;
+        this.fragmentsReq = 9;
         this.isPaused = false; // Variable to stop game update loop
         this.weirdos = [];
     }
@@ -99,15 +80,8 @@ class Level2 extends Phaser.Scene {
         // Load assets
         loadAssets(this);
 
-        // Load new keyboard keys
-        this.keys = this.input.keyboard.addKeys({
-            a:  Phaser.Input.Keyboard.KeyCodes.A,
-            s:  Phaser.Input.Keyboard.KeyCodes.S,
-            d:  Phaser.Input.Keyboard.KeyCodes.D,
-            w:  Phaser.Input.Keyboard.KeyCodes.W,
-            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            f: Phaser.Input.Keyboard.KeyCodes.F
-        });
+        // Load standard keyboard keys
+        loadKeyboardKeys(this);
     }
 
     // Create all game objects
@@ -192,13 +166,13 @@ class Level2 extends Phaser.Scene {
         });
 
         this.end = map.createFromObjects("Objects", {
-            type: "End",
+            name: "end",
         });
 
-        // Spawn all objects
+        // Spawn all objects (using level loader utility)
         const objects = [this.vines, this.checkpoints, this.fragments, this.enemySpawns, this.levers, this.questSpawns, this.end];
         objects.forEach(element => {
-            this.spawnObjects(element);
+            spawnObjects(element, this.scaleMultiplier, this);
         });
 
         // Object groups
@@ -209,14 +183,14 @@ class Level2 extends Phaser.Scene {
         this.questSpawnsGroup = this.physics.add.staticGroup();
         this.climbableGroup = this.physics.add.staticGroup();
 
-        // Add object collections to physics groups
-        this.addToGroup(this.vines, this.climbableGroup);
-        this.addToGroup(this.checkpoints, this.checkpointsGroup);
-        this.addToGroup(this.fragments, this.interactablesGroup);
-        this.addToGroup(this.enemySpawns, this.enemySpawnsGroup);
-        this.addToGroup(this.levers, this.leversGroup);
-        this.addToGroup(this.questSpawns, this.questSpawnsGroup);
-        this.addToGroup(this.end, this.interactablesGroup);
+        // Add object collections to physics groups (using level loader utility)
+        addToGroup(this.vines, this.climbableGroup);
+        addToGroup(this.checkpoints, this.checkpointsGroup);
+        addToGroup(this.fragments, this.interactablesGroup);
+        addToGroup(this.enemySpawns, this.enemySpawnsGroup);
+        addToGroup(this.levers, this.leversGroup);
+        addToGroup(this.questSpawns, this.questSpawnsGroup);
+        addToGroup(this.end, this.interactablesGroup);
 
         // Scale layers
         const layers = [walls, ground, decorations, decorations2, vines];
@@ -226,7 +200,8 @@ class Level2 extends Phaser.Scene {
         const camera = this.cameras.main;
 
         // Spawn player
-        loadPlayer(this);
+        this.playerInstance = new Player(this);
+        this.playerInstance.load();
         spawnWeirdos(this); // Spawn first quest
         
         // Set world bounds
@@ -247,32 +222,9 @@ class Level2 extends Phaser.Scene {
         this.gameTick++;
         if (this.gameTick > 100000) this.gameTick = 0; // Prevent overflow
 
-        updatePlayer(this);
-        hitboxUpdater(this);
+        this.playerInstance.update();
+        this.playerInstance.hitboxUpdater();
         updateSkeleton(this)
-    }
-
-    // Spawn all objects from tilemap, scale them and enable physics
-    spawnObjects(objects) {
-        // Scale vines and enable physics
-        objects.forEach(element => {
-            element.setOrigin(0.5, 0.5);
-            // Scale the vine sprite and position it accordingly
-            element.setPosition(element.x * this.scaleMultiplier, element.y * this.scaleMultiplier);
-
-            // Enable physics and scale collision body
-            this.physics.add.existing(element, true);
-            element.body.setSize(element.body.width * this.scaleMultiplier, element.body.height * this.scaleMultiplier);
-        });
-    }
-
-    // Add object to group
-    addToGroup(objects, group) {
-        // Add each objects collection to the appropriate physics objects group
-        objects.forEach(element => {
-            group.add(element);
-        });
-        group.setVisible(false);
     }
 
 }
