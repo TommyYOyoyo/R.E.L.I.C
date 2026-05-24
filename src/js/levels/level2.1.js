@@ -7,25 +7,13 @@ import Phaser from "phaser";
 import Player from "../player.js";
 import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
-import { loadBossAssets, createBossAnimations, spawnBoss, updateBoss, bossTakeDamage } from "../knightBoss.js";
+import { loadBossAssets, createBossAnimations, spawnBoss, updateBoss } from "../knightBoss.js";
 
 function loadAssets(scene) {
-
-    // Load common assets shared across all levels
     loadCommonAssets(scene);
-    
-    scene.load.image("dungeonTileset", "/assets/img/Dungeon_Pack/Tileset-extruded.png");
-    scene.load.image("ruinTileset", "/assets/img/Ruins_Pack/Tileset-extruded.png");
-    scene.load.image("bgLayer2", "/assets/img/backgrounds/background_4/Plan_5.png");
-    scene.load.tilemapTiledJSON("map", "/assets/img/maps/l2.1_map.tmj");
-    scene.load.spritesheet("playerSheet", "/assets/img/Player/spritesheet.png", {
-        frameWidth: 50,
-        frameHeight: 37
-    });
-    scene.load.image("charm_1", "/assets/img/timecharm_1.png");
-    scene.load.image("questKey", "/assets/img/interactKey.png");
-    scene.load.image("fragment", "/assets/img/fragment.png");
-    scene.load.image("heart", "/assets/img/heart.png");
+    scene.load.image("dungeonTileset", "assets/img/Dungeon_Pack/Tileset-extruded.png");
+    scene.load.image("bgLayer2", "assets/img/backgrounds/background_4/Plan_5.png");
+    scene.load.tilemapTiledJSON("map", "assets/img/maps/l2.1_map.tmj");
 
     scene.load.audio("wellDead", "/assets/sounds/musics/wellDead.mp3");
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
@@ -52,6 +40,11 @@ class Level2_1 extends Phaser.Scene {
         this.ground;
         this.skeletonsKilled = 0;
         this.climbableGroup;
+        this.puzzleDoorLayer;
+        this.puzzleDoorCollider;
+        this.tutorialPuzzleGroup;
+        this.puzzleSolved = false;
+        this.puzzleActive = false;
     }
 
     preload() {
@@ -61,10 +54,10 @@ class Level2_1 extends Phaser.Scene {
 
     create() {
         const scale = this.scaleMultiplier;
-        
+
         this.bg2 = this.add.image(0, 0, "bgLayer2")
             .setOrigin(0)
-            .setScrollFactor(1)
+            .setScrollFactor(0.0000000001)
             .setDepth(-2)
             .setScale(scale);
 
@@ -72,100 +65,172 @@ class Level2_1 extends Phaser.Scene {
         music.play();
 
         const map = this.make.tilemap({ key: "map" });
-        const TILE_SIZE = 16;
-        const MARGIN = 1;
-        const SPACING = 2;
-        
-        const tileset1 = map.addTilesetImage("Tileset", "dungeonTileset", TILE_SIZE, TILE_SIZE, MARGIN, SPACING);
-        const tileset2 = map.addTilesetImage("Dungeon tileset", "ruinTileset", TILE_SIZE, TILE_SIZE, MARGIN, SPACING);
-        
+        const tileset = map.addTilesetImage("Tileset", "dungeonTileset", 16, 16, 1, 2);
+
         const layers = {
-            bg: map.createLayer("BG", [tileset1, tileset2]),
-            bg2: map.createLayer("BG2", [tileset1, tileset2]),
-            backwall3: map.createLayer("backwall3", [tileset1, tileset2]),
-            backwall2: map.createLayer("backwall2", [tileset1, tileset2]),
-            backwall: map.createLayer("backwall", [tileset1, tileset2]),
-            deco: map.createLayer("deco", [tileset1, tileset2]),
-            arenaWalls: map.createLayer("arenaWalls", [tileset1, tileset2]),
-            collidables: map.createLayer("collidables", [tileset1, tileset2]),
-            floor: map.createLayer("floor", [tileset1, tileset2])
+            floor:       map.createLayer("floor", tileset, 0, 0),
+            collidables: map.createLayer("collidables", tileset, 0, 0),
+            BG:          map.createLayer("BG", tileset, 0, 0),
+            BG2:         map.createLayer("BG2", tileset, 0, 0),
+            backwall:    map.createLayer("backwall", tileset, 0, 0),
+            deco:        map.createLayer("deco", tileset, 0, 0),
+            puzzleDoor:  map.createLayer("puzzleDoor", tileset, 0, 0),
         };
 
         Object.values(layers).forEach(layer => {
             if (layer) {
-                layer.setScale(scale);
-                layer.setOrigin(0, 0);
-                layer.setPosition(0, 0);
-                layer.setScrollFactor(1);
+                layer.setScale(scale).setOrigin(0, 0).setScrollFactor(1);
             }
         });
 
-        layers.bg.setDepth(1);
-        layers.bg2.setDepth(2);
-        layers.backwall3.setDepth(3);
-        layers.backwall2.setDepth(5);
-        layers.backwall.setDepth(6);
-        layers.deco.setDepth(4);
-        layers.arenaWalls.setDepth(9);
-        layers.collidables.setDepth(8);
-        layers.floor.setDepth(10);
-        
-        this.ground = layers.floor;
+        if (layers.puzzleDoor) {
+            layers.puzzleDoor.x = 0;
+            layers.puzzleDoor.y = 0;
+        }
+
+        if (layers.BG) layers.BG.setDepth(1);
+        if (layers.BG2) layers.BG2.setDepth(2);
+        if (layers.backwall) layers.backwall.setDepth(6);
+        if (layers.deco) layers.deco.setDepth(4);
+        if (layers.collidables) layers.collidables.setDepth(8);
+        if (layers.floor) layers.floor.setDepth(10);
+        if (layers.puzzleDoor) layers.puzzleDoor.setDepth(11);
+
         if (layers.collidables) layers.collidables.setCollisionByExclusion([-1], true);
-        
-        // Object pulls
-        this.checkpoints = map.createFromObjects("interact", { type: "Checkpoint" });
-        this.ladders = map.createFromObjects("interact", { type: "Ladder" });
-        this.enemySpawns = map.createFromObjects("interact", { type: "EnemySpawn" });
-        this.questSpawns = map.createFromObjects("interact", { type: "Quest" });
-        this.chestSpawns = map.createFromObjects("interact", { type: "TCChest" });
-        this.level2 = map.createFromObjects("interact", { type: "Portal" });
-        this.knightActTriggers = map.createFromObjects("interact", { type: "KnightAct" }); // NEW: trigger zone
+        if (layers.puzzleDoor) {
+            layers.puzzleDoor.setCollisionByExclusion([-1], true);
+            this.puzzleDoorLayer = layers.puzzleDoor;
+        }
 
-        // Spawn objects
-        spawnObjects(this.checkpoints, scale, this);
-        spawnObjects(this.ladders, scale, this);
-        spawnObjects(this.enemySpawns, scale, this);
-        spawnObjects(this.questSpawns, scale, this);
-        spawnObjects(this.chestSpawns, scale, this);
-        spawnObjects(this.level2, scale, this);
-        spawnObjects(this.knightActTriggers, scale, this); // NEW
+        this.ground = layers.floor;
 
-        // Groups
-        this.climbableGroup = this.physics.add.staticGroup();
-        this.checkpointGroup = this.physics.add.staticGroup();
-        this.enemySpawnsGroup = this.physics.add.staticGroup();
-        this.questSpawnsGroup = this.physics.add.staticGroup();
-        this.interactablesGroup = this.physics.add.staticGroup();
-        this.knightActGroup = this.physics.add.staticGroup(); // NEW
+        // ---- Interactive objects ----
+        this.checkpoints = map.createFromObjects("interact", { type: "Checkpoint" }) || [];
+        this.ladders           = map.createFromObjects("interact", { type: "Ladder" }) || [];
+        this.enemySpawns       = map.createFromObjects("interact", { type: "EnemySpawn" }) || [];
+        this.knightActTriggers = map.createFromObjects("interact", { type: "KnightAct" }) || [];
+        this.tutorialPuzzles   = map.createFromObjects("interact", { type: "tutorialPuzzle" }) || [];
 
-        addToGroup(this.checkpoints, this.checkpointGroup);
-        addToGroup(this.ladders, this.climbableGroup);
-        addToGroup(this.enemySpawns, this.enemySpawnsGroup);
-        addToGroup(this.questSpawns, this.questSpawnsGroup);
-        addToGroup(this.chestSpawns, this.interactablesGroup);
-        addToGroup(this.level2, this.interactablesGroup);
-        addToGroup(this.knightActTriggers, this.knightActGroup); // NEW
+        this.level2      = [];
+        this.questSpawns = [];
+        this.chestSpawns = [];
 
-        // Player
-        loadPlayer(this);
+        spawnObjects(this.checkpoints,       scale, this);
+        spawnObjects(this.ladders,           scale, this);
+        spawnObjects(this.enemySpawns,       scale, this);
+        spawnObjects(this.knightActTriggers, scale, this);
+        spawnObjects(this.tutorialPuzzles,   scale, this);
+
+        this.climbableGroup      = this.physics.add.staticGroup();
+        this.checkpointGroup     = this.physics.add.staticGroup();
+        this.enemySpawnsGroup    = this.physics.add.staticGroup();
+        this.knightActGroup      = this.physics.add.staticGroup();
+        this.tutorialPuzzleGroup = this.physics.add.staticGroup();
+
+        addToGroup(this.checkpoints,       this.checkpointGroup);
+        addToGroup(this.ladders,           this.climbableGroup);
+        addToGroup(this.enemySpawns,       this.enemySpawnsGroup);
+        addToGroup(this.knightActTriggers, this.knightActGroup);
+        addToGroup(this.tutorialPuzzles,   this.tutorialPuzzleGroup);
+
+        // ---- Player ----
+        this.playerInstance = new Player(this);
+        this.playerInstance.load();
         this.player.setScale(scale).setDepth(10);
-        this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
 
+        // Colliders (before spawn override so they exist)
+        this.groundCollider = this.physics.add.collider(this.player, layers.collidables);
+        if (this.puzzleDoorLayer) {
+            this.puzzleDoorCollider = this.physics.add.collider(this.player, this.puzzleDoorLayer);
+        }
+
+        // ---- TESTING: Force spawn at checkpoint_1 ----
+        const checkpoint1 = this.checkpoints.find(cp => cp.name === "checkpoint_1");
+        if (checkpoint1) {
+            // Move player to the checkpoint position
+            this.player.x = checkpoint1.x;
+            this.player.y = checkpoint1.y - 10;
+
+            // Set nextCheckpoint to this one so the activation guard passes
+            this.nextCheckpoint = checkpoint1;
+
+            // Activate the checkpoint (updates latestCheckpoint, nextCheckpoint, saves to localStorage)
+            this.activateCheckpoint(checkpoint1);
+        }
+
+        // ---- RELIABLE CHECKPOINT DETECTION (overlap) ----
+        this.physics.add.overlap(this.player, this.checkpointGroup, (player, checkpoint) => {
+            // Only trigger if it’s the correct next checkpoint
+            if (checkpoint === this.nextCheckpoint) {
+                this.activateCheckpoint(checkpoint);
+            }
+        }, null, this);
+
+        // Camera & world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.startFollow(this.player);
-       
+
         this.events.on('skeletonKilled', () => {
             this.skeletonsKilled++;
             console.log(`Skeletons killed: ${this.skeletonsKilled}`);
         });
         createSkeleton(this, layers.collidables, 1, 350);
 
-        // Boss
         createBossAnimations(this);
-        const boss = spawnBoss(this);
-        if (boss) this.physics.add.collider(boss, layers.collidables);
+        this.boss = spawnBoss(this);
+        if (this.boss) {
+            this.physics.add.collider(this.boss, layers.collidables);
+        }
+    }
+
+    // Called whenever the player physically touches the next checkpoint
+    activateCheckpoint(checkpoint) {
+        // Avoid double activation
+        if (this.latestCheckpoint === checkpoint) return;
+
+        // Display "CHECKPOINT ENREGISTRÉ"
+        const text = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 50,
+            "CHECKPOINT ENREGISTRÉ",
+            {
+                fontFamily: "noita",
+                fontSize: "100px",
+                color: "#ffffff",
+                backgroundColor: "rgba(0, 0, 0, 0)",
+                padding: { left: 30, right: 30, top: 15, bottom: 15 },
+            }
+        )
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+
+        this.tweens.add({
+            targets: text,
+            alpha: 0,
+            duration: 1000,
+            delay: 2000,
+            onComplete: () => text.destroy(),
+        });
+
+        // Update checkpoint state
+        const nextIndex = this.checkpoints.indexOf(checkpoint) + 1;
+        this.latestCheckpoint = checkpoint;
+        localStorage.setItem(
+            "lastGame",
+            JSON.stringify({
+                level: JSON.parse(localStorage.getItem("lastGame")).level,
+                checkpoint: this.latestCheckpoint,
+            })
+        );
+
+        // Set next checkpoint (keep last if no more)
+        if (nextIndex < this.checkpoints.length) {
+            this.nextCheckpoint = this.checkpoints[nextIndex];
+        } else {
+            this.nextCheckpoint = this.checkpoints[this.checkpoints.length - 1];
+        }
     }
 
     update() {
@@ -184,16 +249,82 @@ class Level2_1 extends Phaser.Scene {
                 this.player.body.setAllowGravity(true);
             }
         }
-        
-        updatePlayer(this);
-        hitboxUpdater(this);
-        updateSkeleton(this); // duplicate call – you can keep or remove
 
-        // NEW: Check if player is inside any knightAct trigger zone
+        this.playerInstance.update();
+        this.playerInstance.hitboxUpdater();
+
         const inKnightActZone = this.physics.overlap(this.player, this.knightActGroup);
-        if (this.boss) this.boss.setHealthbarVisible(inKnightActZone);
+        if (this.boss) {
+            this.boss.setHealthbarVisible(inKnightActZone);
+        }
+
+        // Tutorial puzzle trigger
+        if (!this.puzzleSolved && !this.puzzleActive &&
+            this.tutorialPuzzleGroup &&
+            this.physics.overlap(this.player, this.tutorialPuzzleGroup)) {
+            this.startTutorialPuzzle();
+        }
     }
 
+    // ------------------ Multiplication Puzzle ------------------
+    startTutorialPuzzle() {
+        this.puzzleActive = true;
+
+        this.time.delayedCall(200, () => {
+            this.player.setVelocityX(0);
+            this.player.setVelocityY(0);
+            this.input.keyboard.enabled = false;
+        });
+
+        const a = Phaser.Math.Between(1, 10);
+        const b = Phaser.Math.Between(1, 10);
+        const correctAnswer = a * b;
+
+        const div = document.getElementById("puzzleDiv");
+        div.style.display = "block";
+        div.innerHTML = `
+            <div style="text-align:center; font-family:'noita'; color:white;">
+                <h2>Combien font ${a} × ${b} ?</h2>
+                <input type="number" id="multAnswer" style="font-size:24px; width:100px; text-align:center;">
+                <br><br>
+                <button id="submitMult" style="font-size:24px; padding:10px 30px;">Valider</button>
+                <p id="feedback" style="color:red; margin-top:10px;"></p>
+            </div>
+        `;
+
+        const submitBtn = document.getElementById("submitMult");
+        const inputField = document.getElementById("multAnswer");
+        const feedback = document.getElementById("feedback");
+
+        const checkAnswer = () => {
+            const userAnswer = parseInt(inputField.value, 10);
+            if (userAnswer === correctAnswer) {
+                feedback.innerHTML = "Correct ! La porte s'ouvre.";
+
+                // Remove puzzle door
+                this.puzzleDoorLayer.setVisible(false);
+                if (this.puzzleDoorCollider) {
+                    this.puzzleDoorCollider.destroy();
+                    this.puzzleDoorCollider = null;
+                }
+                this.puzzleSolved = true;
+                div.style.display = "none";
+                this.input.keyboard.enabled = true;
+                this.puzzleActive = false;
+            } else {
+                feedback.innerHTML = "Faux. Essayez encore.";
+                inputField.value = "";
+                inputField.focus();
+            }
+        };
+
+        submitBtn.addEventListener("click", checkAnswer);
+        inputField.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") checkAnswer();
+        });
+
+        this.time.delayedCall(100, () => inputField.focus());
+    }
 }
 
 export { Level2_1 };
