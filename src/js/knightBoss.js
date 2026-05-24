@@ -1,7 +1,6 @@
-// knightBoss.js – final: SENTINEL name, larger no-number healthbar, all mechanics intact
-
 let debugHitboxes = false;
 
+// Load boss assets
 function loadBossAssets(scene) {
     const folder = "assets/enemySheet/Skeleton/Sprite Sheets/Knight_1/";
     scene.load.spritesheet("bossAttack1", folder + "Attack 1.png", { frameWidth: 86, frameHeight: 86 });
@@ -16,6 +15,7 @@ function loadBossAssets(scene) {
     scene.load.spritesheet("bossDefend", folder + "Defend.png", { frameWidth: 80, frameHeight: 86 });
 }
 
+// Create boss animations
 function createBossAnimations(scene) {
     function getFrames(key, count) {
         const frames = [];
@@ -46,6 +46,7 @@ function createBossAnimations(scene) {
         scene.anims.create({ key: "bossDefend", frames: scene.anims.generateFrameNumbers("bossDefend", { start: 0, end: 4 }), frameRate: 10, repeat: 0 });
 }
 
+// Spawn boss
 function spawnBoss(scene) {
     let spawnPoint = scene.enemySpawns?.find(sp => sp.name === "knightSpawn");
     if (!spawnPoint) {
