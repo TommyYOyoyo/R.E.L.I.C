@@ -144,24 +144,19 @@ class Level2_1 extends Phaser.Scene {
             this.puzzleDoorCollider = this.physics.add.collider(this.player, this.puzzleDoorLayer);
         }
 
-        // ---- TESTING: Force spawn at checkpoint_1 ----
-        const checkpoint1 = this.checkpoints.find(cp => cp.name === "checkpoint_1");
+        // ---- Force spawn at checkpoint_0 ----
+        const checkpoint1 = this.checkpoints.find(cp => cp.name === "checkpoint_0"); //so that i can spawn at any checkpoint in map
         if (checkpoint1) {
-            // Move player to the checkpoint position
             this.player.x = checkpoint1.x;
             this.player.y = checkpoint1.y - 10;
-
-            // Set nextCheckpoint to this one so the activation guard passes
-            this.nextCheckpoint = checkpoint1;
-
-            // Activate the checkpoint (updates latestCheckpoint, nextCheckpoint, saves to localStorage)
+            // Force activation without relying on overlap
             this.activateCheckpoint(checkpoint1);
         }
 
-        // ---- RELIABLE CHECKPOINT DETECTION (overlap) ----
+        // ---- Checkpoint overlap detection (safe by name) ----
         this.physics.add.overlap(this.player, this.checkpointGroup, (player, checkpoint) => {
-            // Only trigger if it’s the correct next checkpoint
-            if (checkpoint === this.nextCheckpoint) {
+            // Only trigger if it's the correct next checkpoint (compare by name)
+            if (this.nextCheckpoint && checkpoint.name === this.nextCheckpoint.name) {
                 this.activateCheckpoint(checkpoint);
             }
         }, null, this);
@@ -184,7 +179,7 @@ class Level2_1 extends Phaser.Scene {
         }
     }
 
-    // Called whenever the player physically touches the next checkpoint
+    // Called whenever the player touches the next checkpoint (or forced at start)
     activateCheckpoint(checkpoint) {
         // Avoid double activation
         if (this.latestCheckpoint === checkpoint) return;
@@ -215,7 +210,8 @@ class Level2_1 extends Phaser.Scene {
         });
 
         // Update checkpoint state
-        const nextIndex = this.checkpoints.indexOf(checkpoint) + 1;
+        const currentIndex = this.checkpoints.indexOf(checkpoint);
+        const nextIndex = currentIndex + 1;
         this.latestCheckpoint = checkpoint;
         localStorage.setItem(
             "lastGame",
