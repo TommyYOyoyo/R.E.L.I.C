@@ -1,5 +1,5 @@
 /**
- * @author Honglue Zheng (ft. Ray Lam)
+ * @author Honglue Zheng, Ray Lam, Rui Qi Ren
  * @note Universal player functions, refactored into a Player class from last year
  */
 

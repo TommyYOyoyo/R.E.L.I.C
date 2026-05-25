@@ -1,5 +1,5 @@
 /**
- * @author Ray Lam, Honglue Zheng
+ * @author Ray Lam, Honglue Zheng, Rui Qi Ren
  * @comment should've been a class
  */
 
