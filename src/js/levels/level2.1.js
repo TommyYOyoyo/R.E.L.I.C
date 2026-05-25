@@ -4,6 +4,15 @@
  */
 
 //FINISHED SUNDAY BTW I DONT KNOW MY TEAMATES
+
+//NEWLY ADDED THINGS COMPARED TO LAST YEAR (BY RAY ONLY):
+//ADDED 1 PUZZLE
+//ADDED 1 BOSSFIGHT WITH A COMPLETELY INDEPENDANT AI (knightBoss.js)
+//ADDED 1 NEW LEVEL (where the puzzle and bossfight are)
+//ADDED NEW MUSIC/SOUNDS
+//REVAMPED THE DIARY SO INSTEAD OF LORE IT NOW DISPLAYS HINTS FOR GAMEPLAY
+
+
 import Phaser from "phaser";
 import Player from "../player.js";
 import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
