@@ -16,6 +16,8 @@ function clearStorage() {
     localStorage.setItem("Level2.1.claimedFragments", null);
     localStorage.setItem("Level3.fragments", 0);
     localStorage.setItem("Level3.claimedFragments", null);
+    localStorage.setItem("Level5.fragments", 0);
+    localStorage.setItem("Level5.claimedFragments", null);
 
     localStorage.setItem("threeWeirdos", "false");
     localStorage.setItem("sequencer", "false");
@@ -105,6 +107,21 @@ function devMode(scene, windowWidth, windowHeight) {
                     },
                     align: "center"
                 }).setInteractive({ useHandCursor: true }),  
+                // Button index 5 properties (5th level button)
+                scene.rexUI.add.label({
+                    width: 100,
+                    height: 50,
+                    background: scene.rexUI.add.roundRectangle(0, 0, 0, 0, 10, 0x000000, 0.5),
+                    text: scene.add.text(0, 0, "Niveau 5", {
+                        fontSize: "16px",
+                        fontFamily: 'minecraft',
+                    }),
+                    space: {
+                        left: 20,
+                        right: 20,
+                    },
+                    align: "center"
+                }).setInteractive({ useHandCursor: true }),
                 // Button index 5 properties (clear storage)
                 scene.rexUI.add.label({
                     width: 100,
@@ -168,6 +185,13 @@ function devMode(scene, windowWidth, windowHeight) {
                     checkpoint: 0
                 }));
                 newScene("Level3", scene);
+            } else if (button.text == "Niveau 5"){
+                // Set last game checkpoint to default
+                localStorage.setItem('lastGame', JSON.stringify({
+                    level: "Level5",
+                    checkpoint: 0
+                }));
+                newScene("Level5", scene);
             } else {
                 clearStorage();
             }

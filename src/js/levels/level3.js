@@ -81,6 +81,7 @@ class Level3 extends Phaser.Scene {
         const interactables_not = map.createLayer("interactables_not", [ruinSet, dungeonSet], 0, 0);
 
         this.ground = ground; // Store reference to ground layer
+        this.playerCollisionLayers = [ground];
 
         // Set layer depths for proper rendering order
         background_back.setDepth(-5)
@@ -143,7 +144,7 @@ class Level3 extends Phaser.Scene {
 
         // Camera setup
         this.cameras.main.setBounds(0, 0, map.widthInPixels * this.scaleMultiplier, map.heightInPixels * this.scaleMultiplier);
-        camera.startFollow(this.player);
+        camera.startFollow(this.player, true);
 
         // this.physics.world.createDebugGraphic();
         // this.physics.world.debugGraphic.setDepth(999);

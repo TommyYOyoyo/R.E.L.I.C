@@ -50,7 +50,13 @@ function createBossAnimations(scene) {
 function spawnBoss(scene) {
     let spawnPoint = scene.enemySpawns?.find(sp => sp.name === "knightSpawn");
     if (!spawnPoint) {
-        console.error("❌ knightSpawn not found");
+        spawnPoint = scene.bossSpawns?.find(sp => sp.name === "boss");
+    }
+    if (!spawnPoint) {
+        spawnPoint = scene.bossSpawns?.[0];
+    }
+    if (!spawnPoint) {
+        console.error("❌ knightSpawn/boss not found");
         return null;
     }
     const x = spawnPoint.x;

@@ -1,6 +1,10 @@
 /**
  * @author Honglue Zheng, Ray Lam, Rui Qi Ren
- * @note Universal player functions, refactored into a Player class from last year
+ * 
+ * @note Improvements from 2025:
+ * - Refactored the entire player.js ino a Player class for easier implementation
+ * - Patched player clipping abuse
+ * - Improved player attack animation logic
  */
 
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
@@ -65,6 +69,7 @@ export default class Player {
         scene.player.direction = 1; // Set player direction (0 = left, 1 = right)
         scene.player.disabledCrouch = false;
         scene.player.isSliding = false;
+        scene.player.slideLocked = false;
         scene.player.isAttacking = false;
         scene.player.canClimb = false;
         scene.player.isClimbing = false;
@@ -79,6 +84,7 @@ export default class Player {
         scene.player.isImmune = false;
         scene.player.currentInteractable;
         scene.player.attackCooldown = 0;
+        scene.player.attackDirection = scene.player.direction;
         scene.player.hitboxWidth = 15;
         scene.player.hitboxHeight = 32;
         scene.player.hitboxOffsetX = 18;
@@ -150,6 +156,7 @@ export default class Player {
         scene.player.on("animationstop", (anim) => {
             if (anim.key === "slide") {
                 scene.player.isSliding = false; // Reset if sliding anims are interrupted by other anims
+                scene.player.slideLocked = false;
             }
         });
         scene.player.on("animationcomplete", (anim) => {
@@ -375,6 +382,14 @@ export default class Player {
 
         // Player disable crouch hitbox if not sliding nor crouching, or is in the air while trying to crouch/slide
         // To prevent crouch+jump thru wall glitch abuse
+        if (scene.player.slideLocked) {
+            if (this.canStandUp()) {
+                scene.player.slideLocked = false;
+                scene.player.isSliding = false;
+            } else {
+                scene.player.isSliding = true;
+            }
+        }
         if (
             (!scene.player.isCrouching && !scene.player.isSliding) ||
             (scene.player.isJumping && scene.player.isCrouching)
@@ -446,6 +461,23 @@ export default class Player {
 
         // MOVEMENTS TRIGGERS BELOW ----------------------------------------------------------
         if (!scene.player.canMove) return; // Player cannot move nor interact
+
+        // Only allow horizontal movement if sliding is locked
+        if (scene.player.slideLocked) {
+            if (scene.keys.a.isDown) {
+                this.moveLeft();
+            } else if (scene.keys.d.isDown) {
+                this.moveRight();
+            } else {
+                scene.player.setVelocityX(0);
+            }
+
+            if (!scene.player.isSliding) {
+                scene.player.isSliding = true;
+            }
+
+            return;
+        }
 
         // Move left
         if (scene.keys.a.isDown) {
@@ -529,6 +561,8 @@ export default class Player {
     updateDirection(direction) {
         const scene = this.scene;
 
+        if (scene.player.isAttacking) return;
+
         // Don't flip sprites if player is facing right
         if (direction == 1) {
             scene.player.direction = 1;
@@ -546,6 +580,7 @@ export default class Player {
         const scene = this.scene;
 
         scene.player.isSliding = true;
+        scene.player.slideLocked = false;
         scene.player
             .setScale(3)
             .setSize(
@@ -567,7 +602,15 @@ export default class Player {
     endSlide() {
         const scene = this.scene;
 
-        scene.disableCrouch = true; // Disable crouching until key release to prevent abuse
+        scene.disableCrouch = true; // Disable crouching until key release to prevent abuse (clipping)
+        if (!this.canStandUp()) {
+            scene.player.isSliding = true;
+            scene.player.slideLocked = true;
+            scene.player.play("slide", true);
+            return;
+        }
+
+        scene.player.slideLocked = false;
         scene.player.isSliding = false; // Reset sliding flag
         // Resume appropriate animation
         if (scene.player.body.velocity.x > 0) {
@@ -611,14 +654,45 @@ export default class Player {
         // Update player attack hitbox
         scene.attackHitbox.body.y = scene.player.body.y - 20;
 
-        // Change player's hitbox according to direction
-        if (scene.player.direction == 1) {
-            scene.attackHitbox.body.x =
-                scene.player.x - scene.player.width / 2 - 25;
+        // Choose facing: lock to attackDirection while attacking
+        const facing = scene.player.isAttacking ? scene.player.attackDirection : scene.player.direction;
+
+        // Change player's hitbox according to facing
+        if (facing == 1) {
+            scene.attackHitbox.body.x = scene.player.x - scene.player.width / 2 - 25;
         } else {
-            scene.attackHitbox.body.x =
-                scene.player.x - 145 + scene.player.width / 2;
+            scene.attackHitbox.body.x = scene.player.x - 145 + scene.player.width / 2;
         }
+    }
+
+    // Check whether the player can safely expand back to the standing hitbox
+    canStandUp() {
+        const scene = this.scene;
+        const body = scene.player.body;
+        // Collision layers 
+        const collisionLayers = Array.isArray(scene.playerCollisionLayers)
+            ? scene.playerCollisionLayers.filter(Boolean)
+            : (scene.ground ? [scene.ground] : []);
+
+        // If no collision layers or no player physics body, return true
+        if (!body || collisionLayers.length === 0) return true;
+
+        const standingX = body.x + (scene.player.hitboxOffsetX - scene.player.crouchHitboxOffsetX);
+        const standingY = body.y + (scene.player.hitboxOffsetY - scene.player.crouchHitboxOffsetY);
+
+        // Check if player is standing up
+        return !collisionLayers.some((layer) => {
+            if (!layer?.getTilesWithinWorldXY) return false;
+
+            const tiles = layer.getTilesWithinWorldXY(
+                standingX,
+                standingY,
+                scene.player.hitboxWidth,
+                scene.player.hitboxHeight,
+            );
+
+            return tiles.some((tile) => tile && tile.collides);
+        });
     }
 
     // Functions to initiate and end player attacking appropriately
@@ -629,6 +703,8 @@ export default class Player {
         if (scene.player.attackCooldown == 0) {
             // Prevent other animations from overriding
             scene.player.isAttacking = true;
+            scene.player.attackDirection = scene.player.direction;
+            scene.player.setFlipX(scene.player.attackDirection == 0);
 
             // Set player attack cooldown
             scene.player.attackCooldown = 50;
@@ -747,6 +823,12 @@ export default class Player {
     // Player jump function
     jump() {
         const scene = this.scene;
+
+        // Prevent player from clipping through walls
+        if (scene.player.slideLocked || (scene.player.isSliding && !this.canStandUp())) {
+            scene.player.isJumping = false;
+            return;
+        }
 
         scene.player.isJumping = true;
         if (

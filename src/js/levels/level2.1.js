@@ -103,6 +103,7 @@ class Level2_1 extends Phaser.Scene {
         }
 
         this.ground = layers.floor;
+        this.playerCollisionLayers = [layers.collidables, layers.puzzleDoor];
 
         // ---- Interactive objects ----
         this.checkpoints = map.createFromObjects("interact", { type: "Checkpoint" }) || [];
@@ -164,7 +165,7 @@ class Level2_1 extends Phaser.Scene {
         // Camera & world bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
-        this.cameras.main.startFollow(this.player);
+        this.cameras.main.startFollow(this.player, true);
 
         this.events.on('skeletonKilled', () => {
             this.skeletonsKilled++;

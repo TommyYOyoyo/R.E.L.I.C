@@ -1,6 +1,10 @@
 /**
  * Level 2 game file
  * @author Honglue Zheng
+ * 
+ * @note Improvements from 2025
+ * - Added animated tiles
+ * - R
  */
 
 import Phaser from "phaser";
@@ -8,6 +12,7 @@ import Player from "../player.js";
 import { spawnWeirdos } from "../puzzles/threeWeirdos.js";
 import { loadEnemyAssets, spawnSkeleton, createSkeleton, updateSkeleton } from "../enemy.js";
 import { loadCommonAssets, loadKeyboardKeys, spawnObjects, addToGroup } from "../levelLoader.js";
+import AnimatedTiles from 'phaser-animated-tiles/dist/AnimatedTiles.js';
 
 const sizes = {
     width: window.innerWidth,
@@ -18,6 +23,9 @@ const sizes = {
 
 // Load level-specific assets
 function loadAssets(scene) {
+    // Load animated tiles plugin
+    scene.load.scenePlugin("animatedTiles", AnimatedTiles, "animatedTiles", "animatedTiles");
+
     // Load common assets shared across all levels
     loadCommonAssets(scene);
 
@@ -91,6 +99,7 @@ class Level2 extends Phaser.Scene {
         
         // Map creation
         const map = this.add.tilemap("map");
+        
         const bgMap = this.add.tilemap("bgCollection");
 
         const music = this.sound.add('onceInALullaby', {
@@ -125,14 +134,16 @@ class Level2 extends Phaser.Scene {
         // Load main tilesets
         const ruinSet = map.addTilesetImage("Ruins", "ruinSet");
         const dungeonSet = map.addTilesetImage("Dungeon", "dungeonSet");
+        const tilesetExtruded = map.addTilesetImage("Tileset-extruded", "ruinSet");
 
         // Loading structures
-        const walls = map.createLayer("Walls", [ruinSet, dungeonSet], 0, 0);
-        const ground = map.createLayer("Ground", [dungeonSet, ruinSet], 0, 0);
-        const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet], 0, 0);
-        const decorations2 = map.createLayer("Decorations2", [ruinSet, dungeonSet], 0, 0);
-        const vines = map.createLayer("Vines", [ruinSet, dungeonSet], 0, 0);
+        const walls = map.createLayer("Walls", [ruinSet, dungeonSet, tilesetExtruded], 0, 0);
+        const ground = map.createLayer("Ground", [dungeonSet, ruinSet, tilesetExtruded], 0, 0);
+        const decorations = map.createLayer("Decorations", [ruinSet, dungeonSet, tilesetExtruded], 0, 0);
+        const decorations2 = map.createLayer("Decorations2", [ruinSet, dungeonSet, tilesetExtruded], 0, 0);
+        const vines = map.createLayer("Vines", [ruinSet, dungeonSet, tilesetExtruded], 0, 0);
         this.ground = ground;
+        this.playerCollisionLayers = [ground];
 
         walls.setDepth(0);
         vines.setDepth(3);
@@ -199,6 +210,9 @@ class Level2 extends Phaser.Scene {
         // Get main camera
         const camera = this.cameras.main;
 
+        // Initialize animated tiles
+        this.animatedTiles.init(map);
+
         // Spawn player
         this.playerInstance = new Player(this);
         this.playerInstance.load();
@@ -209,7 +223,7 @@ class Level2 extends Phaser.Scene {
         
         // Camera movement and delimitation
         this.cameras.main.setBounds(0, 0, map.widthInPixels*this.scaleMultiplier, map.heightInPixels*this.scaleMultiplier);
-        camera.startFollow(this.player);
+        camera.startFollow(this.player, true);
 
         createSkeleton(this, this.ground, 1, 75);
     }

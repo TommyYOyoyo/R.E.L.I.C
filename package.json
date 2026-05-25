@@ -4,7 +4,7 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --port 5174 --strictPort false",
         "build": "vite build",
         "preview": "vite preview"
     },
@@ -13,7 +13,8 @@
     },
     "dependencies": {
         "phaser": "^3.88.2",
-        "phaser3-rex-plugins": "^1.80.15",
+        "phaser-animated-tiles": "^2.0.2",
+        "phaser3-rex-plugins": "^1.1.81",
         "tile-extruder": "^2.1.1"
     }
 }

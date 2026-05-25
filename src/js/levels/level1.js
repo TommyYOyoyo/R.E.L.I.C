@@ -128,6 +128,7 @@ class Level1 extends Phaser.Scene {
         this.walls3 = layers.backwalls3;
         this.walls2 = layers.arenaWalls;
         this.walls = layers.collidables
+        this.playerCollisionLayers = [layers.collidables, this.walls2];
 
         //scale all layers
         Object.values(layers).forEach(layer => {
@@ -177,7 +178,7 @@ class Level1 extends Phaser.Scene {
         //setup camera and bounds
         this.physics.world.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
         this.cameras.main.setBounds(0, 0, map.widthInPixels * scale, map.heightInPixels * scale);
-        this.cameras.main.startFollow(this.player);
+        this.cameras.main.startFollow(this.player, true);
        
         this.events.on('skeletonKilled', () => {
             this.skeletonsKilled++;
