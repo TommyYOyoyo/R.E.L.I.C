@@ -575,6 +575,18 @@
                  "width":17.0691299764044,
                  "x":1583.41282192881,
                  "y":286.158943722074
+                }, 
+                {
+                 "height":49.3400377121307,
+                 "id":65,
+                 "name":"vine",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"Ladder",
+                 "visible":true,
+                 "width":1.5713387806411,
+                 "x":1334.38089252043,
+                 "y":78.8812067881835
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -583,7 +595,7 @@
          "y":0
         }],
  "nextlayerid":16,
- "nextobjectid":65,
+ "nextobjectid":66,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
