@@ -10,21 +10,11 @@ function diary(targetDiv, scene) {
     
     //texts
     const defaultEntries = [
-        "Jour 1: Une météorite brisa la nuit...", 
-        "Jour 2: Une étrange barrière est en train de former autour. Le peuple pense que c'est une miracle venu des cieux pour nous protéger.",	
-        "Jour 3: Mes cheveux commencent à devenir blanchatre, mais la progression de ma recherche est bien plus importante que mon apparence.",
-        "Jour 4: Mes cheveux commencent à tomber. Je ne me sens pas très bien.",
-        "Jour 5: Mes muscles deviennent de plus en plus faibles.",
-        "Jour 6: Je sors pour voir ma nièce, son bébé de 5 mois était devenu un enfant de 5 ans. Je ne sais pas quoi penser.", 
-        "Jour 7: La barrière est en train de nous tuer",
-        "Jour 8: Mon groupe de scientifiques commence a faire une recherche sur la météorite pour trouver une solution.",
-        "Jour 9: Je ne peut plus sortir de mon lit, les jeunes scienfiques qui avait à peine 20 ans, doivent continuer la recherche sans moi",
-        "Jour 10: Bonne nouvelle, on peut désactiver la barrière en reforgeant l'étrange minerai dans la météorite. Fragments ---> Pierre",
-        "Jour 11: Il y a 10 jours, j'avais 40 ans, maintenant je suis 80.",
-        "Jour 12: Mon équipe trouvé assez de fragments pour forger une pierre, mais il nous en reste 2 pour désactiver la barrière.", 
-        "Jour 13: L'ainé du village avait des fragments, mais il fut transformé en quelque chose d'autre suite à son décès.",
-        "Jour 14: Il est trop dangereux pour aller récupérer les fragments, nous sommes tous trop vieux", 
-        "Jour 15: C'est la fin pour moi, pour nous", 
+        "Journal d'aventure: Avant ma mort, je laisse quelque chose à vous", 
+        "Combat: Utilisez les touches directionnelles pour vous déplacer et l'espace pour attaquer.",
+        "Quand coincer: Tuer tous les ennemies dans la zone",	
+        "Collecter: Collecter les fragments pour forger les trois pierres OU trouver des pierres directement(en haut du barre de vie)",
+        "Dans le prochain niveau: le Sentinel après utiliser son reflexion, est vulnerable pendant deux secondes.",
     ];
     
     const diaryEntries = [...defaultEntries]; //copy default entries
