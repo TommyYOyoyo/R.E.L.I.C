@@ -20,6 +20,7 @@ function loadCommonAssets(scene) {
     scene.load.image("heart", "/assets/img/heart.png");
     scene.load.image("charm_1", "/assets/img/timecharm_1.png");
     scene.load.image("charm_2", "/assets/img/timecharm_2.png");
+    scene.load.image("charm_3", "/assets/img/timecharm_3.png");
 
     // Common sound effects
     scene.load.audio("click", "/assets/sounds/sfx/click.mp3");
