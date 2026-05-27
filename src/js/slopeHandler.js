@@ -9,15 +9,15 @@
  * ====================== Global Tile IDs for non-regular tiles in Collidable layer ======================
  * 45º tiles, right-side up
  * - 45º tile that looks like this "/|":        2147485410
- * - 45º tile that looks like this "|\":        1762
+ * - 45º tile that looks like this "|\\":        1762
  * 45º tiles, upside down
- * - 45º tile that looks like this "\|":        3221227234
+ * - 45º tile that looks like this "\\|":        3221227234
  * - 45º tile that looks like this "|/":        1073743586
  * 65º tiles, right-side up
  * - 65º tile that looks like this "/|":        2147485439
- * - 65º tile that looks like this "|\":        1791
+ * - 65º tile that looks like this "|\\":        1791
  * 65º tiles, upside down
- * - 65º tile that looks like this "\|":        3221227263
+ * - 65º tile that looks like this "\\|":        3221227263
  * - 65º tile that looks like this "|/":        1073743615
  * 
  * Half tiles
@@ -32,20 +32,18 @@
 const SLOPE_TYPES = {
     // 45º tiles
     UP_RIGHT_45: 2147485410,    // "/|"
-    UP_LEFT_45: 1762,           // "|\"
-    DOWN_LEFT_45: 3221227234,   // "\|"
+    UP_LEFT_45: 1762,           // "|\\"
+    DOWN_LEFT_45: 3221227234,   // "\\|"
     DOWN_RIGHT_45: 1073743586,  // "|/"
 
     // 65º tiles
     UP_RIGHT_65: 2147485439,    // "/|"
-    UP_LEFT_65: 1791,           // "|\"
-    DOWN_LEFT_65: 3221227263,   // "\|"
+    UP_LEFT_65: 1791,           // "|\\"
+    DOWN_LEFT_65: 3221227263,   // "\\|"
     DOWN_RIGHT_65: 1073743615,  // "|/"
 
     // Half tiles
     HALF_VERTICAL_TOP: 1758,
-    HALF_HORIZONTAL_LEFT: 1760,
-    HALF_HORIZONTAL_RIGHT: 2147485408
 };
 
 const SOLID_TILE = 1757;
@@ -59,219 +57,154 @@ function getTileGid(tile) {
     return gid;
 }
 
-// Initialize slopes
+// Initialize slopes — disable all collision on slope tiles so Phaser ignores them
 function initSlopes(scene) {
-    if (!scene.ground) return;                  // If no ground (collidable) layer, exit
-    const slopes = Object.values(SLOPE_TYPES);  // Return all GID constants const
+    if (!scene.ground) return;
+    const slopes = Object.values(SLOPE_TYPES);
     
-    // Enable/disable specific collisions depending on slope shape
     scene.ground.forEachTile(tile => {
-        let gid = getTileGid(tile); // Get GID of tile
-        switch (gid) {
-            //              /|
-            case SLOPE_TYPES.UP_RIGHT_45:
-            case SLOPE_TYPES.UP_RIGHT_65:
-                tile.collideUp = false;        // Disable upper face collision to calculate in the new way
-                tile.collideLeft = false;      // Disable left face to calculate in the new way
-                break;
-            //              |\
-            case SLOPE_TYPES.UP_LEFT_45:
-            case SLOPE_TYPES.UP_LEFT_65:
-                tile.collideUp = false;
-                tile.collideRight = false;
-                break;
-            //              \|
-            case SLOPE_TYPES.DOWN_LEFT_45:
-            case SLOPE_TYPES.DOWN_LEFT_65:
-                tile.collideDown = false;
-                tile.collideRight = false;
-                break;
-            //              |/
-            case SLOPE_TYPES.DOWN_RIGHT_45:
-            case SLOPE_TYPES.DOWN_RIGHT_65:
-                tile.collideDown = false;
-                tile.collideLeft = false;
-                break;
-            // Half tiles
-            case SLOPE_TYPES.HALF_VERTICAL_TOP:
-                tile.collideDown = false;
-                tile.collideUp = false;
-                break;
-            case SLOPE_TYPES.HALF_HORIZONTAL_LEFT:
-            case SLOPE_TYPES.HALF_HORIZONTAL_RIGHT:
-                tile.collideLeft = false;
-                tile.collideRight = false;
-                break;
-            // Solid tiles
-            case SOLID_TILE:
-                // Renable all faces default collision methods
-                tile.collideUp = true;
-                tile.collideDown = true;
-                tile.collideLeft = true;
-                tile.collideRight = true;
-                break;
+        let gid = getTileGid(tile);
+
+        if (gid == SOLID_TILE) return;
+
+        if (slopes.includes(gid)) {
+            // Disable ALL collision faces on slope tiles — Phaser won't touch these.
+            // The custom slope engine in processEntitySlope handles them instead.
+            tile.collideUp = false;
+            tile.collideDown = false;
+            tile.collideLeft = false;
+            tile.collideRight = false;
         }
+        // Solid tiles keep their default collision — Phaser's arcade physics handles them normally.
+        // This prevents the clipping issue with vertical blocks because Phaser resolves those collisions
+        // without interference from the slope engine.
     });
 
-    scene._slopesInitialized = true; // Set flag to prevent re-initialization
+    scene.slopesInitialized = true;
+    scene.slopeGroundRef = scene.ground;
 }
 
 // Process entity slope collider
 function processEntitySlope(scene, entity) {
-    if (!entity || !entity.body) return;    // Entity does not have a physics body
+    if (!entity || !entity.body) return;
 
     const body = entity.body;
-    const isCeiling = body.velocity.y < 0; // Negative = player jump up (hitting ceiling); positive = player fall down (hitting floor)
+    const isCeiling = body.velocity.y < 0; // Negative = player jump up; positive = player fall down
 
     // Check multiple points to ensure the entity doesn't fall through
     const checkX = body.center.x;
 
-    // Get tile at the bottom of the entity
+    // Get tile at the bottom/top of the entity
     let tile = scene.ground.getTileAtWorldXY(checkX, isCeiling ? body.top - 2 : body.bottom - 2, true);
     let gid = tile ? getTileGid(tile) : -1;
 
     const slopes = Object.values(SLOPE_TYPES);
 
-    // If no slope tile is overlapping the top 2 pixels while jumping up,
-    // check up to 12 pixels up to catch steep slopes
+    // Fallback check — look further to catch steep slopes
     if (!tile || !slopes.includes(gid)) {
-        tile = scene.ground.getTileAtWorldXY(checkX, isCeiling ? body.top + 2 : body.bottom - 12, true); // If player is hitting the ceiling, check up to 2 pixels above, otherwise, check down to 12 pixels below
-        gid = tile ? getTileGid(tile) : -1; // Get GID of tile
+        tile = scene.ground.getTileAtWorldXY(checkX, isCeiling ? body.top + 2 : body.bottom - 12, true);
+        gid = tile ? getTileGid(tile) : -1;
     }
-    // Final fallback check below the feet if falling onto the slope
+    // Final fallback
     if (!tile || !slopes.includes(gid)) {
         tile = scene.ground.getTileAtWorldXY(checkX, isCeiling ? body.top - 8 : body.bottom + 2, true);
         gid = tile ? getTileGid(tile) : -1;
     }
 
-    if (!tile || tile.index === -1) return; // No tile
+    if (!tile || tile.index === -1) return;
 
-    // If slope tile
-    if (slopes.includes(gid)) {
-        const tileW = tile.width * scene.ground.scaleX;
-        const tileH = tile.height * scene.ground.scaleY;
-        const tileX = scene.ground.tileToWorldX(tile.x);
-        const tileY = scene.ground.tileToWorldY(tile.y);
+    // Only process slope tiles — solid/regular tiles are handled by Phaser's arcade physics
+    if (!slopes.includes(gid)) return;
 
-        // Normalize player position within tile 0 = left 1 = right
-        let tx = (checkX - tileX) / tileW; // 
-        if (tx < 0) tx = 0; // Player on left side
-        if (tx > 1) tx = 1; // Player on right side
+    const tileW = tile.width * scene.ground.scaleX;
+    const tileH = tile.height * scene.ground.scaleY;
+    const tileX = scene.ground.tileToWorldX(tile.x);
+    const tileY = scene.ground.tileToWorldY(tile.y);
 
-        let ty = -1; // -1 means no surface found, 0 = top, 1 = bottom
+    // Normalize player position within tile (0 = left, 1 = right)
+    let tx = (checkX - tileX) / tileW;
+    if (tx < 0) tx = 0;
+    if (tx > 1) tx = 1;
 
-        // Player-tile y relative position updater
-        switch (gid) {
-            // 45 degree slopes
-            case SLOPE_TYPES.UP_RIGHT_45: // |\
-                ty = 1 - tx; 
-                break;
-            case SLOPE_TYPES.UP_LEFT_45: // /|
-                ty = tx;
-                break;
-            case SLOPE_TYPES.DOWN_LEFT_45: // \|
-                ty = 1 - tx;
-                break;
-            case SLOPE_TYPES.DOWN_RIGHT_45: // |/
-                ty = tx;
-                break;
+    let ty = -1; // -1 means no surface found
 
-            // 65 degrees slope (around y=2x)
-            case SLOPE_TYPES.UP_RIGHT_65: // |\
-                ty = 1 - (tx * 2); // Rises twice as fast
-                if (ty < 0) ty = 0; // Limit
-                break;
-            case SLOPE_TYPES.UP_LEFT_65: // /|
-                ty = tx * 2; // Drops twice as fast
-                if (ty > 1) ty = 1; 
-                break;
-            case SLOPE_TYPES.DOWN_LEFT_65: // \|
-                ty = 1 - (tx * 2); 
-                if (ty < 0) ty = 0;
-                break;
-            case SLOPE_TYPES.DOWN_RIGHT_65: // |/
-                ty = tx * 2; 
-                if (ty > 1) ty = 1; 
-                break;
-            
-            // Half tile vertical top
-            case SLOPE_TYPES.HALF_VERTICAL_TOP:
-                ty = isCeiling ? 0.5 : 0; // Ceiling is at middle, Floor is at top
-                break;
-            // Half tile horizontal left
-            case SLOPE_TYPES.HALF_HORIZONTAL_LEFT:
-            case SLOPE_TYPES.HALF_HORIZONTAL_RIGHT:
-                ty = isCeiling ? 1.0 : 0.5; // Ceiling is at bottom edge, Floor is at middle
-                break;
-        }
+    // Player-tile y relative position updater
+    switch (gid) {
+        // 45 degree slopes
+        case SLOPE_TYPES.UP_RIGHT_45:
+            ty = 1 - tx; 
+            break;
+        case SLOPE_TYPES.UP_LEFT_45:
+            ty = tx;
+            break;
+        case SLOPE_TYPES.DOWN_LEFT_45:
+            ty = 1 - tx;
+            break;
+        case SLOPE_TYPES.DOWN_RIGHT_45:
+            ty = tx;
+            break;
 
+        // 65 degrees slope (around y=2x)
+        case SLOPE_TYPES.UP_RIGHT_65:
+            ty = 1 - (tx * 2);
+            if (ty < 0) ty = 0;
+            break;
+        case SLOPE_TYPES.UP_LEFT_65:
+            ty = tx * 2;
+            if (ty > 1) ty = 1; 
+            break;
+        case SLOPE_TYPES.DOWN_LEFT_65:
+            ty = 1 - (tx * 2); 
+            if (ty < 0) ty = 0;
+            break;
+        case SLOPE_TYPES.DOWN_RIGHT_65:
+            ty = tx * 2; 
+            if (ty > 1) ty = 1; 
+            break;
+        
+        // Half tile vertical top
+        case SLOPE_TYPES.HALF_VERTICAL_TOP:
+            ty = isCeiling ? 0.5 : 0;
+            break;
+    }
 
-        if (ty !== -1) {
-            // Actual world Y height of the slope surface at this X
-            const slopeWorldY = tileY + (ty * tileH);
-            
-            // Tiles above player
-            if (isCeiling) {
-                // Upside down slopes and half slabs
-                if (gid === SLOPE_TYPES.DOWN_LEFT_45 || gid === SLOPE_TYPES.DOWN_LEFT_65 || 
-                    gid === SLOPE_TYPES.DOWN_RIGHT_45 || gid === SLOPE_TYPES.DOWN_RIGHT_65 ||
-                    gid === SLOPE_TYPES.HALF_VERTICAL_TOP || gid === SLOPE_TYPES.HALF_HORIZONTAL_LEFT || 
-                    gid === SLOPE_TYPES.HALF_HORIZONTAL_RIGHT) {
-                    
-                    // If top of player has already reached beyond the surface but not largely penetrated into the tile
-                    if (body.top < slopeWorldY && body.top >= slopeWorldY - 14) {
-                        body.y = slopeWorldY;       // Stop player y movement
-                        body.velocity.y = 0;
-                        body.blocked.up = true;
-                    // If top of player has reached beyond the surface but is largely penetrated into the tile
-                    } else if (body.top < slopeWorldY - 14) {
-                        body.y = slopeWorldY;
-                        // Stop player when clipping horizontally from the left side
-                        if (body.velocity.x > 0 || (body.velocity.x === 0 && checkX < tileX + tileW / 2)) {
-                            body.x = tileX - body.width;    // Stop player x movement 
-                            body.velocity.x = 0;
-                            body.blocked.right = true;
-                        } else {    // Clipping from right side
-                            body.x = tileX + tileW;
-                            body.velocity.x = 0;
-                            body.blocked.left = true;
-                        }
-                        // Also stop vertical movement and mark ceiling collision
-                        body.y = slopeWorldY;
-                        body.velocity.y = 0;
-                        body.blocked.up = true;
-                    }
+    if (ty !== -1) {
+        // Actual world Y height of the slope surface at this X
+        const slopeWorldY = tileY + (ty * tileH);
+        
+        // Tiles above player (ceiling slopes)
+        if (isCeiling) {
+            if (gid === SLOPE_TYPES.DOWN_LEFT_45 || gid === SLOPE_TYPES.DOWN_LEFT_65 || 
+                gid === SLOPE_TYPES.DOWN_RIGHT_45 || gid === SLOPE_TYPES.DOWN_RIGHT_65 ||
+                gid === SLOPE_TYPES.HALF_VERTICAL_TOP) {
+                
+                if (body.top < slopeWorldY && body.top >= slopeWorldY - 14) {
+                    body.y = slopeWorldY;
+                    body.velocity.y = 0;
+                    body.blocked.up = true;
+                } else if (body.top < slopeWorldY - 14) {
+                    body.y = slopeWorldY;
+                    body.velocity.y = 0;
+                    body.blocked.up = true;
                 }
-            // Tiles below player
-            } else {
-                // Regular slopes and slabs
-                if (gid !== SLOPE_TYPES.DOWN_LEFT_45 && gid !== SLOPE_TYPES.DOWN_LEFT_65 && 
-                    gid !== SLOPE_TYPES.DOWN_RIGHT_45 && gid !== SLOPE_TYPES.DOWN_RIGHT_65) {
-                    
-                    const snapThreshold = 14;
-                    // Player bottom is near / in the slope surface
-                    if (body.bottom >= slopeWorldY - 10 && body.bottom <= slopeWorldY + snapThreshold) { 
-                        // pull down slightly if going down slope, or stand natively on slope
-                        body.y = slopeWorldY - body.height;
-                        body.velocity.y = 0;
-                        body.blocked.down = true;
-                    // Player body is deeply clipped into the slope surface
-                    } else if (body.bottom > slopeWorldY + snapThreshold) {
-                        // Hitting a steep wall inside the tile
-                        if (body.velocity.x > 0 || (body.velocity.x === 0 && checkX < tileX + tileW / 2)) {
-                            body.x = tileX - body.width;
-                            body.velocity.x = 0;
-                            body.blocked.right = true;
-                        } else {
-                            body.x = tileX + tileW;
-                            body.velocity.x = 0;
-                            body.blocked.left = true;
-                        }
-                        // After lateral ejection, snap onto top of slope and stop vertical movement
-                        body.y = slopeWorldY - body.height;
-                        body.velocity.y = 0;
-                        body.blocked.down = true;
-                    }
+            }
+        // Tiles below player (floor slopes)
+        } else {
+            if (gid !== SLOPE_TYPES.DOWN_LEFT_45 && gid !== SLOPE_TYPES.DOWN_LEFT_65 && 
+                gid !== SLOPE_TYPES.DOWN_RIGHT_45 && gid !== SLOPE_TYPES.DOWN_RIGHT_65) {
+                
+                const snapThreshold = 8;
+                // Player bottom is near / in the slope surface
+                if (body.bottom >= slopeWorldY - 10 && body.bottom <= slopeWorldY + snapThreshold) { 
+                    body.y = slopeWorldY - body.height;
+                    body.velocity.y = 0;
+                    body.blocked.down = true;
+                // Player body is deeply clipped into the slope surface
+                } else if (body.bottom > slopeWorldY + snapThreshold) {
+                    // Snap onto top of slope
+                    body.y = slopeWorldY - body.height;
+                    body.velocity.y = 0;
+                    body.blocked.down = true;
                 }
             }
         }
@@ -279,8 +212,13 @@ function processEntitySlope(scene, entity) {
 }
 
 function slopeHandler(scene) {
+    // Reinitialize slopes if ground layer changed (happens on scene restart/retry)
+    if (scene.slopesInitialized && scene.slopeGroundRef !== scene.ground) {
+        scene.slopesInitialized = false;
+    }
+
     // Intialize slopes if not already initialized
-    if (!scene._slopesInitialized) {
+    if (!scene.slopesInitialized) {
         initSlopes(scene);
     }
 
@@ -293,7 +231,6 @@ function slopeHandler(scene) {
     if (scene.enemies) {
         if (scene.enemies.children) {
             scene.enemies.children.iterate((enemy) => {
-                // Process enemy if alive and active
                 if (enemy && enemy.active) {
                     processEntitySlope(scene, enemy);
                 }

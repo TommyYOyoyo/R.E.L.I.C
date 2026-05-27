@@ -218,7 +218,7 @@ function updateSkeleton(scene) {
                     if (scene.player.health > 0) {
                         scene.player.isHurting = true;
                         scene.player.isImmune = true;
-                        if (!scene.isHurting && !scene.player._deathPlayed)
+                        if (!scene.isHurting && !scene.player.deathPlayed)
                             scene.player.play('hurt', true);
                         scene.sound.play('hurt', {
                             volume: 0.5
@@ -228,7 +228,7 @@ function updateSkeleton(scene) {
                         scene.player.canMove = false;
                         scene.player.isDead = true;
                         scene.player.isImmune = true;
-                        scene.player._deathPlayed = true;
+                        scene.player.deathPlayed = true;
                         scene.player.play('death', true);
                         scene.sound.play('hurt', {
                             volume: 0.5

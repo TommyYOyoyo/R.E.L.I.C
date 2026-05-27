@@ -213,10 +213,10 @@ function applyPermanentTint(boss) {
 
 //boss takes damages. Complicated because had to micro nerf or micro buff the boss to make it not too easy not too hard
 function bossTakeDamage(boss, scene, damage = 1, fromBack = false) {
-    // If this is a magma boss wrapper, delegate to its logic
-    if (boss && boss._isMagmaBoss) {
-        if (typeof boss._magmaTakeDamage === 'function') {
-            boss._magmaTakeDamage(damage);
+    // If this is the final boss wrapper, delegate to its logic
+    if (boss && boss.isFinalBoss) {
+        if (typeof boss.finalBossTakeDamage === 'function') {
+            boss.finalBossTakeDamage(damage);
         }
         return;
     }
@@ -257,11 +257,11 @@ function bossTakeDamage(boss, scene, damage = 1, fromBack = false) {
             if (scene.player.health > 0) {
                 scene.player.isHurting = true;
                 scene.player.isImmune = true;
-                if (!scene.player._deathPlayed) scene.player.play("hurt", true);
+                if (!scene.player.deathPlayed) scene.player.play("hurt", true);
             } else {
                 scene.player.canMove = false;
                 scene.player.isDead = true;
-                scene.player._deathPlayed = true;
+                scene.player.deathPlayed = true;
                 scene.player.play("death", true);
             }
             scene.sound.play("hurt", { volume: 0.5 });
@@ -603,11 +603,11 @@ function updateBoss(scene) {
                 if (player.health > 0) {
                     player.isHurting = true;
                     player.isImmune = true;
-                    if (!player._deathPlayed) player.play("hurt", true);
+                    if (!player.deathPlayed) player.play("hurt", true);
                 } else {
                     player.canMove = false;
                     player.isDead = true;
-                    player._deathPlayed = true;
+                    player.deathPlayed = true;
                     player.play("death", true);
                 }
                 scene.sound.play("hurt", { volume: 0.5 });

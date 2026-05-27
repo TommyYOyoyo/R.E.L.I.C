@@ -33,7 +33,7 @@ function clearStorage() {
 function devMode(scene, windowWidth, windowHeight) {
     if (!scene.devActive) {
         // Spawn title
-        scene.devText = scene.add.text(0, 0, "Les niveaux sont suggérés d'être joués en ordre.", {
+        scene.devText = scene.add.text(0, 0, "", {
             fontSize: "16px",
             fontFamily: 'minecraft',
             color: "red"

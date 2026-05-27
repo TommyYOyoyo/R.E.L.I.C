@@ -31,6 +31,7 @@ function loadCommonAssets(scene) {
     scene.load.audio("landing", "/assets/sounds/sfx/landing.wav");
     scene.load.audio("attack", "/assets/sounds/sfx/attack.mp3");
     scene.load.audio("pickup", "/assets/sounds/sfx/pickup.mp3");
+    scene.load.audio("gameOver", "/assets/sounds/sfx/game-over.mp3");
 }
 
 // Load standard keyboard keys used by the player

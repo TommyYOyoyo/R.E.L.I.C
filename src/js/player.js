@@ -5,6 +5,9 @@
  * - Refactored the entire player.js ino a Player class for easier implementation
  * - Patched player clipping abuse
  * - Improved player attack animation logic
+ * - Added sloped tiles collider
+ * - Improved death handling
+ * -
  */
 
 import { interactWithWeirdos } from "./puzzles/threeWeirdos.js";
@@ -96,7 +99,8 @@ export default class Player {
         scene.player.fragmentsCount = 0;
         scene.player.health = 10;
         scene.player.maxHealth = 10;
-        scene.player._deathPlayed = false; // Death animation override flag
+        scene.player.deathPlayed = false; // Death animation override flag
+        scene.gameOverQueued = false;
         scene.player
             .setScale(3)
             .setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
@@ -369,15 +373,19 @@ export default class Player {
 
         // Player is dead
         if (scene.player.isDead && !scene.isPaused) {
+            if (scene.gameOverQueued) return;
+            scene.gameOverQueued = true;
+
+            // Zero velocity
+            if (scene.player.body) {
+                scene.player.body.setVelocity(0, 0);
+                scene.player.body.setAcceleration(0, 0);
+            }
             // Ensure death animation always overrides other animations once
-            if (!scene.player._deathPlayed) {
-                scene.player._deathPlayed = true;
-                // Stop any current animations and zero velocity
+            if (!scene.player.deathPlayed) {
+                scene.player.deathPlayed = true;
+                // Stop any current animations
                 if (scene.player.anims) scene.player.anims.stop();
-                if (scene.player.body) {
-                    scene.player.body.setVelocity(0, 0);
-                    scene.player.body.setAcceleration(0, 0);
-                }
                 // Play death animation (force)
                 scene.player.anims.play("death");
             }
@@ -1114,6 +1122,7 @@ export default class Player {
         const scene = this.scene;
 
         scene.sound.stopAll();
+        scene.sound.play("gameOver", { volume: 0.8 });
 
         // Create full-black overlay
         scene.blackOverlay = scene.add
