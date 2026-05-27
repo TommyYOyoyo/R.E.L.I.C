@@ -222,8 +222,8 @@ function slopeHandler(scene) {
         initSlopes(scene);
     }
 
-    // Process player – slope collider
-    if (scene.player) {
+    // Process player slope collider (skip if climbin, player phases through tiles on vines)
+    if (scene.player && !scene.player.isClimbing) {
         processEntitySlope(scene, scene.player);
     }
     

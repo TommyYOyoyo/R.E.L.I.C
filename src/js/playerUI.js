@@ -29,6 +29,11 @@ export default class PlayerUI {
             this.addTimeCharm("1"); // Add first time charm
             this.addTimeCharm("2");  // Add second time charm
             this.totalTime = 620;
+        } else if (this.level == "Level5") {
+            this.addTimeCharm("1"); // Add first time charm
+            this.addTimeCharm("2"); // Add second time charm
+            this.addTimeCharm("3"); // Add third time charm
+            this.totalTime = 300;   // 5 minutes for boss level
         }
         this.createTimerText();
         this.createHealthBar();
@@ -392,7 +397,9 @@ export default class PlayerUI {
             nextLevelText.setText('CHARME TEMPOREL ACQUIS!\nVEUILLEZ CLIQUER SUR\n"CONTINUER"\nPOUR LE PROCHAIN NIVEAU.');
 
             // Allow user to play next level when they click on continue
+            const savedGame = JSON.parse(localStorage.getItem("lastGame") || "{}");
             localStorage.setItem("lastGame", JSON.stringify({
+                ...savedGame,
                 level: `${this.level.substring(0, this.level.length - 1)}${parseInt(currentLevelNum) + 1}`,
                 checkpoint: 0
             }));

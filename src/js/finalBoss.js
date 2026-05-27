@@ -16,6 +16,83 @@ function playBossSfx(scene, key, config = {}) {
     scene.sound.play(key, config);
 }
 
+// When player wins
+function playVictorySequence(scene) {
+    if (!scene || scene._finalBossVictoryPlayed) return;
+    scene._finalBossVictoryPlayed = true;
+
+    const { width, height } = scene.cameras.main;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const burstRadius = Math.max(width, height) * 1.35;
+
+    if (scene.sound && scene.sound.get && scene.sound.get("chaos-construct")) {
+        scene.sound.get("chaos-construct").stop();
+    }
+
+    if (scene.music && scene.music.stop) {
+        scene.music.stop();
+    }
+
+    scene.sound.play("victory");
+
+    // Burst effect
+    const burst = scene.add.circle(centerX, centerY, 6, 0xffffff, 1)
+        .setDepth(5000)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setScrollFactor(0);
+
+    // White wash effect
+    const whiteWash = scene.add.rectangle(0, 0, width, height, 0xffffff, 0)
+        .setOrigin(0)
+        .setDepth(5001)
+        .setScrollFactor(0);
+
+    // Victory text
+    const victoryText = scene.add.text(centerX, centerY, "Espace temporel restauré!", {
+        fontFamily: "noita",
+        fontSize: "150px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+    })
+        .setOrigin(0.5)
+        .setAlpha(0)
+        .setDepth(5002)
+        .setScrollFactor(0);
+
+    scene.tweens.add({
+        targets: burst,
+        radius: burstRadius,
+        alpha: 0,
+        duration: 1400,
+        ease: "Cubic.easeOut",
+        onUpdate: () => {
+            whiteWash.setAlpha(Math.min(1, burst.radius / burstRadius));
+        },
+        onComplete: () => {
+            burst.destroy();
+        },
+    });
+
+    scene.tweens.add({
+        targets: whiteWash,
+        alpha: 1,
+        duration: 1500,
+        ease: "Sine.easeOut",
+    });
+
+    scene.time.delayedCall(900, () => {
+        scene.tweens.add({
+            targets: victoryText,
+            alpha: 1,
+            duration: 500,
+            ease: "Sine.easeOut",
+        });
+    });
+}
+
 // ─── ASSET LOADING ─────────────────────────────────────────────────────────────
 
 // Load boss spritesheet
@@ -312,8 +389,8 @@ function spawnFinalBoss(scene) {
     // =============== BOSS PROPERTIES ===============
 
     // Health system
-    boss.health = 40;
-    boss.maxHealth = 40;
+    boss.health = 35;
+    boss.maxHealth = 35;
     boss.isDead = false;
     boss.isFinalBoss = true;
 
@@ -810,6 +887,7 @@ function updateFinalBoss(scene) {
             boss.play('fbDeath');
             boss.setVelocityX(0);
             boss.setVelocityY(0);
+            playVictorySequence(scene);
 
             // Clean up projectiles
             for (const ps of boss.projectileSprites) {

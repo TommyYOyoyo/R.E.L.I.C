@@ -1100,15 +1100,46 @@ export default class Player {
     // Function to trigger interactable
     runInteractable() {
         const scene = this.scene;
+        const interactable = scene.player.currentInteractable;
+
+        // Lever interaction: play switch.mp3, disable lever, increment counter
+        // Check by tag first (set in level5.js) since Tiled object names may vary
+        if (interactable._isLever) {
+            if (!interactable._activated) {
+                interactable._activated = true;
+                scene.sound.play("lever", { volume: 0.5 });
+                if (typeof scene.enabledLevers === "undefined") scene.enabledLevers = 0;
+                scene.enabledLevers++;
+
+                const leverId = interactable._saveId || interactable.name || `${Math.round(interactable.x)},${Math.round(interactable.y)}`;
+                scene._leverSaveState = scene._leverSaveState || [];
+                if (!scene._leverSaveState.includes(leverId)) {
+                    scene._leverSaveState.push(leverId);
+                }
+
+                const lastGame = JSON.parse(localStorage.getItem("lastGame") || "{}");
+                lastGame.leverStates = scene._leverSaveState;
+                localStorage.setItem("lastGame", JSON.stringify(lastGame));
+
+                // Notify level-specific lever handler if it exists
+                if (typeof scene.onLeverActivated === "function") {
+                    scene.onLeverActivated(interactable);
+                }
+            }
+            // Reset interaction state so player can walk away
+            scene.player.isInteractActive = false;
+            scene.player.isInteractOpen = false;
+            return;
+        }
 
         switch (true) {
-            case scene.player.currentInteractable.name.startsWith("fragment"):
+            case interactable.name.startsWith("fragment"):
                 Player.fragmentFind(scene);
                 break;
-            case scene.player.currentInteractable.name == "end":
+            case interactable.name == "end":
                 scene.playerUI.createTimeCharm(scene);
                 break;
-            case scene.player.currentInteractable.name.startsWith("TCchest"):
+            case interactable.name.startsWith("TCchest"):
                 Player.TCchestFind(scene);
                 break;
         }

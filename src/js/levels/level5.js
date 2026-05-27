@@ -70,6 +70,9 @@ function loadAssets(scene) {
     scene.load.audio("crit", "/assets/sounds/sfx/crit.mp3");
     scene.load.audio("ender", "/assets/sounds/sfx/ender.mp3");
     scene.load.audio("smash", "/assets/sounds/sfx/totem-pop.mp3");
+    scene.load.audio("lever", "/assets/sounds/sfx/switch.mp3");
+    scene.load.audio("gate", "/assets/sounds/sfx/gate.mp3");
+    scene.load.audio("victory", "/assets/sounds/sfx/victory.mp3");
 
     // Load enemy and boss assets
     loadEnemyAssets(scene);
@@ -94,6 +97,8 @@ class Level5 extends Phaser.Scene {
         this.bossSpawnsGroup;
         this.ground;
         this.playerCollisionLayers = [];
+        this.fragmentsReq = 0; // No fragments required for level 5 (boss level)
+        this.enabledLevers = 0; // Lever counter for gate system
         this.isPaused = false;
         this.music;
     }
@@ -149,6 +154,7 @@ class Level5 extends Phaser.Scene {
         bgLayers.forEach(el => el.setScale(7.2).setOrigin(0, 0));
 
         // Loading structures
+        const alterable = map.createLayer("Alterable", [forestSet, dungeonSet, ruinSet], 0, 0);
         const wall0 = map.createLayer("Wall0", [forestSet, dungeonSet, ruinSet], 0, 0);
         const wall1 = map.createLayer("Wall1", [forestSet, dungeonSet, ruinSet], 0, 0);
         const ground = map.createLayer("Ground", [forestSet, dungeonSet, ruinSet], 0, 0);
@@ -158,7 +164,7 @@ class Level5 extends Phaser.Scene {
         const climbable = map.createLayer("Climbable", [forestSet, dungeonSet, ruinSet], 0, 0);
 
         // Scale layers
-        [wall0, wall1, ground, collidable, decorations, decorations2, climbable].forEach((layer) => {
+        [alterable, wall0, wall1, ground, collidable, decorations, decorations2, climbable].forEach((layer) => {
             if (layer) layer.setScale(this.scaleMultiplier).setOrigin(0, 0);
         });
 
@@ -170,7 +176,12 @@ class Level5 extends Phaser.Scene {
         if (decorations) decorations.setDepth(5);
         if (decorations2) decorations2.setDepth(6);
         if (climbable) climbable.setDepth(3);
+        if (alterable) alterable.setDepth(30);
         if (collidable) collidable.setCollisionByExclusion([-1], true);
+
+        // Store alterable layer reference for gate removal
+        this.alterableLayer = alterable;
+        if (alterable) alterable.setCollisionByExclusion([-1], true);
 
         this.ground = collidable;
         // Climbable group for player overlap checks (same as Level2)
@@ -198,19 +209,41 @@ class Level5 extends Phaser.Scene {
         this.checkpoints = map.createFromObjects("Objects", { type: "Checkpoint" }) || [];
         this.enemySpawns = map.createFromObjects("Objects", { type: "EnemySpawn" }) || [];
         this.bossSpawns = map.createFromObjects("Objects", { type: "Boss" }) || [];
+        this.fragments = map.createFromObjects("Objects", { type: "Fragment" }) || []; // Needed by player.js for claimed fragment cleanup
         // Load vine/ladder objects for climbing (same pattern as level2)
         this.vines = map.createFromObjects("Objects", { type: "Ladder" }) || [];
+
+        // Levers kept separate for gate system tracking
+        this.levers = map.createFromObjects("Objects", { type: "Lever" }) || [];
+        this.levers.forEach((l) => { l._isLever = true; }); // Tag for detection in player.js
+        this.levers.forEach((l, index) => {
+            l._saveId = l.name && l.name.length ? l.name : `lever_${index}`;
+        });
+
+        // Other interactables (non-lever)
         this.interactables = [
-            ...(map.createFromObjects("Objects", { type: "Lever" }) || []),
             ...(map.createFromObjects("Objects", { type: "Control_room" }) || []),
-            ...(map.createFromObjects("Objects", { type: "Control_gate" }) || []),
-            ...(map.createFromObjects("Objects", { type: "Final_gate" }) || []),
             ...(map.createFromObjects("Objects", { type: "end" }) || []),
         ];
 
+        // Gate marker objects to define the world-space bounds of each gate region
+        this.gateMarkers = {
+            entrance_0: (map.createFromObjects("Objects", { name: "entrance_0" }) || [])[0],
+            gate0: (map.createFromObjects("Objects", { name: "gate0" }) || [])[0],
+            gate1: (map.createFromObjects("Objects", { name: "gate1" }) || [])[0],
+            final_gate: (map.createFromObjects("Objects", { name: "final_gate" }) || [])[0],
+        };
+
         // Spawn all objects (using level loader utility)
-        [this.checkpoints, this.enemySpawns, this.bossSpawns, this.vines, this.interactables].forEach((elements) => {
+        [this.checkpoints, this.enemySpawns, this.bossSpawns, this.fragments, this.vines, this.levers, this.interactables].forEach((elements) => {
             spawnObjects(elements, this.scaleMultiplier, this);
+        });
+        // Scale gate markers so their positions/sizes match world coordinates
+        Object.values(this.gateMarkers).forEach((marker) => {
+            if (marker) {
+                marker.setPosition(marker.x * this.scaleMultiplier, marker.y * this.scaleMultiplier);
+                marker.setVisible(false);
+            }
         });
 
         // Object groups
@@ -224,17 +257,60 @@ class Level5 extends Phaser.Scene {
         addToGroup(this.checkpoints, this.checkpointGroup);
         addToGroup(this.enemySpawns, this.enemySpawnsGroup);
         addToGroup(this.bossSpawns, this.bossSpawnsGroup);
+        addToGroup(this.fragments, this.interactablesGroup);
+        addToGroup(this.levers, this.interactablesGroup); // Levers are interactable via F key
         addToGroup(this.interactables, this.interactablesGroup);
         addToGroup(this.vines, this.climbableGroup);
+
+        // Restore lever progress from saved game state if present
+        this._leverSaveState = [];
+        const savedGame = JSON.parse(localStorage.getItem("lastGame") || "{}");
+        const savedLeverStates = Array.isArray(savedGame.leverStates) ? savedGame.leverStates : [];
+        if (savedLeverStates.length) {
+            this._leverSaveState = savedLeverStates.slice();
+            this.enabledLevers = savedLeverStates.length;
+
+            this.levers.forEach((lever) => {
+                if (savedLeverStates.includes(lever._saveId)) {
+                    lever._activated = true;
+                    lever.setAlpha(0.35);
+                    lever.body.enable = false;
+                }
+            });
+
+            const entranceMarker = this.gateMarkers.entrance_0;
+            const entranceActivated = this.levers.some((lever) => {
+                if (!lever._activated || !entranceMarker) return false;
+                const dist = Phaser.Math.Distance.Between(
+                    lever.x, lever.y,
+                    entranceMarker.x, entranceMarker.y,
+                );
+                return dist < 80 * this.scaleMultiplier;
+            });
+
+            if (entranceActivated) {
+                this._gate0Opened = true;
+                if (this.gateMarkers.gate0) this.removeTilesInBounds(this.gateMarkers.gate0);
+                if (this.gateMarkers.gate1) this.removeTilesInBounds(this.gateMarkers.gate1);
+            }
+
+            if (this.enabledLevers >= 2) {
+                this._finalGateOpened = true;
+                if (this.gateMarkers.final_gate) this.removeTilesInBounds(this.gateMarkers.final_gate);
+            }
+        }
 
         // Spawn player
         this.playerInstance = new Player(this);
         this.playerInstance.load();
         this.player.setScale(this.scaleMultiplier).setDepth(4);
 
-        // Ground collider with process callback — skips collision on tiles that have vines
+        // Ground collider with process callback (skips collision on tiles that have vines)
         // so the player can phase through blocks with climbable tiles (same behavior as level2)
+        // Destroy the default collider from player.js first, otherwise two colliders exist
+        // and enterClimb() can only disable one, blocking vine phasing
         const climbableCoords = this.climbableTileCoords;
+        if (this.groundCollider) this.groundCollider.destroy();
         this.groundCollider = collidable ? this.physics.add.collider(
             this.player, collidable, null,
             function (player, tile) {
@@ -243,6 +319,11 @@ class Level5 extends Phaser.Scene {
                 return true;
             }
         ) : null;
+
+        // Alterable layer collider — blocks player until gates are opened by levers
+        if (alterable) {
+            this.alterableCollider = this.physics.add.collider(this.player, alterable);
+        }
 
         // Camera movement and delimitation
         this.physics.world.setBounds(
@@ -284,7 +365,7 @@ class Level5 extends Phaser.Scene {
         if (collidable && this.enemies) this.physics.add.collider(this.enemies, collidable);
 
         // Spawn skeleton and boss
-        createSkeleton(this, collidable || ground, 1, 350);
+        createSkeleton(this, collidable || ground, 1, 100);
         if (collidable && this.enemies) this.physics.add.collider(this.enemies, collidable);
 
         createFinalBossAnimations(this);
@@ -292,6 +373,73 @@ class Level5 extends Phaser.Scene {
         if (this.boss) {
             if (collidable) this.physics.add.collider(this.boss, collidable);
         }
+
+        // ==================== Lever / Gate system ====================
+        // Track which gates have already been opened to prevent duplicate removals
+        this._gate0Opened = false;
+        this._finalGateOpened = false;
+
+        /**
+         * @note Called by player.js when a lever is activated (F key)
+         * - If the activated lever is at the entrance_0 position -> open gate0 and gate1
+         * - If both levers are activated -> open final_gate
+         */
+
+        this.onLeverActivated = (lever) => {
+            const sm = this.scaleMultiplier;
+            const markers = this.gateMarkers;
+
+            // Check if this lever is at the entrance_0 position (within tolerance)
+            if (!this._gate0Opened && markers.entrance_0) {
+                const dist = Phaser.Math.Distance.Between(
+                    lever.x, lever.y,
+                    markers.entrance_0.x, markers.entrance_0.y,
+                );
+                if (dist < 80 * sm) {
+                    // Remove alterable tiles spanning gate0 and gate1
+                    this._gate0Opened = true;
+                    if (markers.gate0) this.removeTilesInBounds(markers.gate0);
+                    if (markers.gate1) this.removeTilesInBounds(markers.gate1);
+                    this.sound.play("gate", { volume: 0.5 });
+                }
+            }
+
+            // When both levers are enabled → open final_gate
+            if (!this._finalGateOpened && this.enabledLevers >= 2) {
+                this._finalGateOpened = true;
+                if (markers.final_gate) this.removeTilesInBounds(markers.final_gate);
+                this.sound.play("gate", { volume: 0.5 });
+            }
+        };
+    }
+
+    // Remove all tiles in the Alterable layer that fall within a gate marker's bounds
+    // Gate markers are Tiled rectangle objects whose position/size define the gate region
+    removeTilesInBounds(marker) {
+        if (!this.alterableLayer || !marker) return;
+
+        const sm = this.scaleMultiplier;
+        // Marker world-space bounds (already scaled in create())
+        const mx = marker.x;
+        const my = marker.y;
+        const mw = (marker.width || marker.displayWidth || 16) * sm;
+        const mh = (marker.height || marker.displayHeight || 16) * sm;
+
+        // Get all tiles within the marker's world-space region
+        const tiles = this.alterableLayer.getTilesWithinWorldXY(mx - mw / 2, my - mh / 2, mw, mh);
+        if (!tiles) return;
+
+        // Remove each tile (set index to -1 and disable collision)
+        tiles.forEach((tile) => {
+            if (tile && tile.index !== -1) {
+                tile.index = -1;
+                tile.collideUp = false;
+                tile.collideDown = false;
+                tile.collideLeft = false;
+                tile.collideRight = false;
+                tile.setVisible(false);
+            }
+        });
     }
 
     update() {
