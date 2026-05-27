@@ -96,6 +96,7 @@ export default class Player {
         scene.player.fragmentsCount = 0;
         scene.player.health = 10;
         scene.player.maxHealth = 10;
+        scene.player._deathPlayed = false; // Death animation override flag
         scene.player
             .setScale(3)
             .setSize(scene.player.hitboxWidth, scene.player.hitboxHeight)
@@ -368,6 +369,18 @@ export default class Player {
 
         // Player is dead
         if (scene.player.isDead && !scene.isPaused) {
+            // Ensure death animation always overrides other animations once
+            if (!scene.player._deathPlayed) {
+                scene.player._deathPlayed = true;
+                // Stop any current animations and zero velocity
+                if (scene.player.anims) scene.player.anims.stop();
+                if (scene.player.body) {
+                    scene.player.body.setVelocity(0, 0);
+                    scene.player.body.setAcceleration(0, 0);
+                }
+                // Play death animation (force)
+                scene.player.anims.play("death");
+            }
             setTimeout(() => {
                 this.gameOver();
             }, 500);
@@ -735,31 +748,15 @@ export default class Player {
                     }
                 },
             );
-        // Add enemy damage detection
-        scene.physics.overlap(scene.attackHitbox, scene.enemies, (hitbox, enemy) => {
-            if (!enemy.isDead) {
-                enemy.health -= 1;
-                enemy.play('skeletonHit', true);
-
-                // Enemy has been killed
-                if (enemy.health <= 0) {
-                    enemy.isDead = true;
-                    enemy.play('skeletonDead', true);
-                    enemy.body.enable = false;
-                    enemy.attackHitbox.destroy();
-                    scene.events.emit('skeletonKilled');
-                    scene.time.delayedCall(1000, () => enemy.destroy());
+            
+            if (scene.boss && !scene.boss.isDead) {
+                // Only damage boss if attack hitbox overlaps boss's physics body
+                if (scene.physics.overlap(scene.attackHitbox, scene.boss)) {
+                    const isBehind = (scene.boss.flipX && scene.player.x > scene.boss.x) ||
+                        (!scene.boss.flipX && scene.player.x < scene.boss.x);
+                    bossTakeDamage(scene.boss, scene, 1, isBehind);
                 }
             }
-        });
-        if (scene.boss && !scene.boss.isDead) {
-    // Only damage boss if attack hitbox overlaps boss's physics body
-    if (scene.physics.overlap(scene.attackHitbox, scene.boss)) {
-        const isBehind = (scene.boss.flipX && scene.player.x > scene.boss.x) ||
-            (!scene.boss.flipX && scene.player.x < scene.boss.x);
-        bossTakeDamage(scene.boss, scene, 1, isBehind);
-    }
-}
 
             // Ground attack
             if (scene.player.body.onFloor()) {

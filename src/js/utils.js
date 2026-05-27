@@ -84,8 +84,4 @@ function startNewLevel(currentScene, newLevelKey) {
     });
 }
 
-function universalSlopeTileAdapter(scene, object, slope) {
-    // Get slope properties
-}
-
 export { shutdown, clearCache, startNewLevel }

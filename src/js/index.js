@@ -54,7 +54,7 @@ const config = {
                 key: 'rexUI',
                 plugin: UIPlugin,
                 mapping: 'rexUI'
-            },
+            }
         ]
     },
 };
