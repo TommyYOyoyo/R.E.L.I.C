@@ -446,18 +446,6 @@
                  "y":105.64124234101
                 }, 
                 {
-                 "height":14.9765498758522,
-                 "id":7,
-                 "name":"checkpoint_2",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"Checkpoint",
-                 "visible":true,
-                 "width":14.5824301422772,
-                 "x":465.455405352146,
-                 "y":737.003901785362
-                }, 
-                {
                  "height":13.056960992329,
                  "id":8,
                  "name":"entrance_1",
@@ -636,6 +624,18 @@
                  "width":113.46908734053,
                  "x":1043.30225711482,
                  "y":653.213935230618
+                }, 
+                {
+                 "height":30.9834638816362,
+                 "id":29,
+                 "name":"checkpoint_2",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"Checkpoint",
+                 "visible":true,
+                 "width":16.710182767624,
+                 "x":464.403829416884,
+                 "y":721.671018276762
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -766,7 +766,7 @@
          "y":0
         }],
  "nextlayerid":10,
- "nextobjectid":29,
+ "nextobjectid":30,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
